@@ -23,14 +23,60 @@ enum CourseLevel {
   C2
 }
 
-model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  password      String?
-  role          UserRole  @default(STUDENT)
-  isVerified    Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+enum OAuthProvider {
+  GOOGLE
+  GITHUB
+}
 
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  password          String?
+  role              UserRole       @default(STUDENT)
+  isEmailVerified   Boolean        @default(false)
+  isPhoneVerified   Boolean        @default(false)
+  phone             String?        @unique
+  firstName         String?
+  lastName          String?
+  avatar            String?
+  oauthProvider     OAuthProvider?
+  oauthId           String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  verificationTokens VerificationToken[]
+  passwordResets     PasswordReset[]
+
+  @@unique([oauthProvider, oauthId])
   @@map("users")
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  type      String   // EMAIL, PHONE
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("verification_tokens")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_resets")
 }

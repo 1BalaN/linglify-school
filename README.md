@@ -68,19 +68,33 @@ cp frontend/.env.example frontend/.env
 4. Запустите базу данных и примените миграции:
 ```bash
 cd backend
-yarn prisma:migrate
 yarn prisma:generate
+yarn prisma:migrate
 ```
 
-5. Запустите проект в режиме разработки:
+5. Сгенерируйте JWT секреты и добавьте в `backend/.env`:
 ```bash
-# Из корневой директории
+# Генерация (Node.js)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+6. Запустите проект:
+```bash
+cd ..
 yarn dev
 ```
 
-Приложение будет доступно:
 - Frontend: http://localhost:3000
 - Backend: http://localhost:5000
+
+### 🧪 Тестирование
+
+Читайте: **[TESTING_GUIDE.md](./TESTING_GUIDE.md)**
+
+Импортируйте Postman коллекцию:
+```
+backend/postman/Linglify-Auth-Complete.postman_collection.json
+```
 
 ## 📁 Структура проекта
 
@@ -174,10 +188,35 @@ yarn prisma:studio    # Prisma Studio GUI
 - `*.router.ts` - маршруты
 - `*.schema.ts` - Zod схемы валидации
 
+## ✨ Реализовано
+
+### ✅ Авторизация (100% готово)
+- **15 API endpoints** (8 public + 2 OAuth + 5 protected)
+- Регистрация с email/password
+- JWT токены (access 15min + refresh 7days)
+- Email подтверждение (Resend интеграция)
+- SMS верификация (Twilio интеграция)
+- Восстановление пароля
+- Google OAuth 2.0
+- Управление профилем
+- Rate limiting & Security (bcrypt 12 rounds)
+
 ## 📖 Документация
 
-- [Техническое задание](./docs/tech-spec.md)
-- [Правила разработки](./.cursor/rules/AGENTS.md)
+### 🚀 Быстрый старт
+- **[README.md](./README.md)** - Этот файл (обзор проекта)
+- **[GIT_CHECKLIST.md](./GIT_CHECKLIST.md)** - ✅ Чеклист перед Git push
+- **[BACKEND_HOSTING.md](./BACKEND_HOSTING.md)** - Хостинг backend на Railway
+
+### 🔧 Настройка сервисов
+- **[docs/THIRD_PARTY_SERVICES.md](./docs/THIRD_PARTY_SERVICES.md)** - Resend, Twilio, Google OAuth
+- **[docs/STRIPE_TEST_MODE.md](./docs/STRIPE_TEST_MODE.md)** - 🎓 Stripe для дипломной (тестовый режим)
+
+### 📚 Для разработчиков
+- **[backend/API_REFERENCE.md](./backend/API_REFERENCE.md)** - Справка по API
+- **[backend/MIGRATION_GUIDE.md](./backend/MIGRATION_GUIDE.md)** - Миграции БД
+- **[docs/architecture.md](./docs/architecture.md)** - Архитектура приложения
+- **[docs/tech-spec.md](./docs/tech-spec.md)** - Техническое задание
 
 ## 👨‍💻 Разработка
 
@@ -207,3 +246,14 @@ yarn prisma:studio    # Prisma Studio GUI
 
 **Дата начала**: 10.02.2026  
 **Планируемая дата завершения**: 15.05.2026
+
+---
+
+## 🎯 Roadmap
+
+- [x] **Phase 1**: Базовая настройка проекта
+- [x] **Phase 2**: Полная система авторизации (15 endpoints)
+- [ ] **Phase 3**: Курсы и уроки
+- [ ] **Phase 4**: Тесты и прогресс
+- [ ] **Phase 5**: Платежи и сертификаты
+- [ ] **Phase 6**: Production деплой

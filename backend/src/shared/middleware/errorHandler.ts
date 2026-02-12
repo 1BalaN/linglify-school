@@ -33,7 +33,7 @@ export function errorHandler(
     return res.status(400).json({
       error: {
         code: 'VALIDATION_ERROR',
-        message: 'Invalid input data',
+        message: 'Неверные данные',
         details: err.errors,
       },
     })
@@ -42,7 +42,7 @@ export function errorHandler(
   return res.status(500).json({
     error: {
       code: 'INTERNAL_SERVER_ERROR',
-      message: 'Something went wrong',
+      message: 'Что-то пошло не так :(',
     },
   })
 }

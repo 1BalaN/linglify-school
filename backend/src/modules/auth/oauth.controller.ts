@@ -1,0 +1,46 @@
+import type { Request, Response } from 'express'
+import { oauthService } from './oauth.service'
+import { googleOAuthSchema } from './auth.schema'
+import { config } from '../../config/env'
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+
+export class OAuthController {
+  async getGoogleAuthUrl(_req: Request, res: Response): Promise<void> {
+    const url = await oauthService.getGoogleAuthUrl()
+    res.json({ data: { url } })
+  }
+
+  async googleCallback(req: Request, res: Response): Promise<void> {
+    const { code } = req.query
+
+    if (!code || typeof code !== 'string') {
+      res.status(400).json({
+        error: {
+          code: 'MISSING_CODE',
+          message: 'Код авторизации обязателен !',
+        },
+      })
+      return
+    }
+
+    const data = googleOAuthSchema.parse({ code })
+    const result = await oauthService.handleGoogleCallback(data.code)
+
+    res.cookie('refreshToken', result.tokens.refreshToken, {
+      httpOnly: true,
+      secure: config.isProduction,
+      sameSite: 'lax',
+      maxAge: SEVEN_DAYS_MS,
+    })
+
+    // Редирект на frontend с токеном
+    const redirectUrl = new URL(config.frontendUrl)
+    redirectUrl.searchParams.set('accessToken', result.tokens.accessToken)
+    redirectUrl.pathname = '/auth/callback'
+
+    res.redirect(redirectUrl.toString())
+  }
+}
+
+export const oauthController = new OAuthController()

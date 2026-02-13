@@ -12,7 +12,7 @@ interface GoogleUserInfo {
 }
 
 export class OAuthService {
-  async getGoogleAuthUrl(): Promise<string> {
+  async getGoogleAuthUrl(mode: 'login' | 'register' = 'login'): Promise<string> {
     const { clientId, redirectUri } = config.oauth.google
 
     if (!clientId || !redirectUri) {
@@ -25,13 +25,14 @@ export class OAuthService {
       response_type: 'code',
       scope: 'openid email profile',
       access_type: 'offline',
-      prompt: 'consent',
+      prompt: 'select_account', // Всегда показывать выбор аккаунта
+      state: mode, // Передаем mode через state
     })
 
     return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
   }
 
-  async handleGoogleCallback(code: string) {
+  async handleGoogleCallback(code: string, mode: 'login' | 'register' = 'login') {
     const { clientId, clientSecret, redirectUri } = config.oauth.google
 
     if (!clientId || !clientSecret || !redirectUri) {
@@ -55,11 +56,14 @@ export class OAuthService {
       throw new AppError(400, 'OAUTH_TOKEN_ERROR', 'Failed to exchange code for token')
     }
 
-    const tokenData = (await tokenResponse.json()) as { access_token: string }
+    const tokenData = (await tokenResponse.json()) as { 
+      access_token: string
+      id_token: string 
+    }
     const accessToken = tokenData.access_token
 
-    // Получение информации о пользователе
-    const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    // Получение информации о пользователе - используем правильный endpoint
+    const userResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
@@ -69,17 +73,47 @@ export class OAuthService {
 
     const userInfo = (await userResponse.json()) as GoogleUserInfo
 
-    // Найти или создать пользователя
+    // Логируем для отладки (включая весь ответ от Google)
+    console.log('🔍 Google OAuth - Full response:', userInfo)
+    console.log('🔍 Google OAuth:', {
+      mode,
+      email: userInfo.email,
+      sub: userInfo.sub,
+      name: `${userInfo.given_name} ${userInfo.family_name}`,
+    })
+
+    // Проверка наличия sub
+    if (!userInfo.sub) {
+      throw new AppError(400, 'OAUTH_MISSING_SUB', 'Google не вернул уникальный ID пользователя')
+    }
+
+    // Ищем пользователя по Google ID (самый надёжный способ)
     let user = await prisma.user.findFirst({
       where: {
-        OR: [
-          { email: userInfo.email },
-          { oauthProvider: 'GOOGLE', oauthId: userInfo.sub },
-        ],
+        oauthProvider: 'GOOGLE',
+        oauthId: userInfo.sub,
       },
     })
 
+    // Если не нашли по Google ID, ищем по email
     if (!user) {
+      user = await prisma.user.findUnique({
+        where: { email: userInfo.email },
+      })
+    }
+
+    console.log('👤 Found user:', user ? `${user.email} (id: ${user.id}, oauth: ${user.oauthProvider})` : 'none')
+
+    if (mode === 'register') {
+      // Регистрация: пользователь не должен существовать
+      if (user) {
+        throw new AppError(
+          409,
+          'USER_ALREADY_EXISTS',
+          `Аккаунт с email ${userInfo.email} уже существует. Используйте форму входа.`
+        )
+      }
+
       // Создаем нового пользователя через OAuth
       user = await prisma.user.create({
         data: {
@@ -93,17 +127,34 @@ export class OAuthService {
           role: 'STUDENT',
         },
       })
-    } else if (!user.oauthProvider) {
-      // Привязываем Google к существующему аккаунту
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          oauthProvider: 'GOOGLE',
-          oauthId: userInfo.sub,
-          isEmailVerified: true,
-          avatar: user.avatar ?? userInfo.picture,
-        },
-      })
+    } else {
+      // Вход: создаем если не существует, или привязываем Google
+      if (!user) {
+        // Создаем нового пользователя при первом входе
+        user = await prisma.user.create({
+          data: {
+            email: userInfo.email,
+            firstName: userInfo.given_name,
+            lastName: userInfo.family_name,
+            avatar: userInfo.picture,
+            oauthProvider: 'GOOGLE',
+            oauthId: userInfo.sub,
+            isEmailVerified: true,
+            role: 'STUDENT',
+          },
+        })
+      } else if (!user.oauthProvider) {
+        // Привязываем Google к существующему аккаунту
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            oauthProvider: 'GOOGLE',
+            oauthId: userInfo.sub,
+            isEmailVerified: true,
+            avatar: user.avatar ?? userInfo.picture,
+          },
+        })
+      }
     }
 
     // Генерируем токены

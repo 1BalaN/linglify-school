@@ -10,8 +10,8 @@ export const registerSchema = z.object({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
       'Пароль должен содержать хотя бы одну заглавную букву, одну строчную букву и одну цифру'
     ),
-  firstName: z.string().min(1).max(50).optional(),
-  lastName: z.string().min(1).max(50).optional(),
+  firstName: z.string().min(2, 'Имя должно содержать минимум 2 символа').max(50, 'Имя не должно превышать 50 символов'),
+  lastName: z.string().min(2, 'Фамилия должна содержать минимум 2 символа').max(50, 'Фамилия не должна превышать 50 символов'),
 })
 
 export const loginSchema = z.object({
@@ -51,6 +51,12 @@ export const updateProfileSchema = z.object({
   firstName: z.string().min(1).max(50).optional(),
   lastName: z.string().min(1).max(50).optional(),
   phone: z.string().regex(/^\+?\d{10,15}$/).optional(),
+  bio: z.string().max(500).optional(),
+  dateOfBirth: z.string().datetime().optional().or(z.literal('')),
+  preferredLanguage: z.string().max(50).optional(),
+  targetLanguages: z.array(z.string()).optional(),
+  timezone: z.string().max(50).optional(),
+  avatar: z.string().optional(), // Принимаем URL или base64
 })
 
 export const changePasswordSchema = z.object({

@@ -79,7 +79,7 @@
 #### Внешние интеграции
 - Платежи: Stripe (Test Mode)
 - SMS: Twilio (trial)
-- Email: Resend (free tier)
+- Email: Gmail SMTP
 - Соцсети: Google OAuth, GitHub OAuth
 - Аналитика: Google Analytics
 

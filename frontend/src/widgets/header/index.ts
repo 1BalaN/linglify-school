@@ -1,2 +1,0 @@
-// Header widget
-export {}

@@ -2,26 +2,28 @@ import rateLimit from 'express-rate-limit'
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
+  max: 20, // 20 requests per window
   message: {
     error: {
       code: 'TOO_MANY_REQUESTS',
-      message: 'Слишком много запросов, попробуйте позже',
+      message: 'Слишком много попыток входа. Пожалуйста, попробуйте через 15 минут',
     },
   },
   standardHeaders: true,
   legacyHeaders: false,
+  statusCode: 429,
 })
 
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  max: 200, // 200 requests per window
   message: {
     error: {
       code: 'TOO_MANY_REQUESTS',
-      message: 'Слишком много запросов, попробуйте позже',
+      message: 'Превышен лимит запросов. Пожалуйста, подождите немного',
     },
   },
   standardHeaders: true,
   legacyHeaders: false,
+  statusCode: 429,
 })

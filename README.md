@@ -205,18 +205,17 @@ yarn prisma:studio    # Prisma Studio GUI
 
 ### 🚀 Быстрый старт
 - **[README.md](./README.md)** - Этот файл (обзор проекта)
-- **[GIT_CHECKLIST.md](./GIT_CHECKLIST.md)** - ✅ Чеклист перед Git push
-- **[BACKEND_HOSTING.md](./BACKEND_HOSTING.md)** - Хостинг backend на Railway
+- **[DEPLOY_GUIDE.md](./DEPLOY_GUIDE.md)** - Деплой backend на Railway
+- **[READY_FOR_GIT.md](./READY_FOR_GIT.md)** - ✅ Финальная проверка и Git push
 
 ### 🔧 Настройка сервисов
-- **[docs/THIRD_PARTY_SERVICES.md](./docs/THIRD_PARTY_SERVICES.md)** - Resend, Twilio, Google OAuth
-- **[docs/STRIPE_TEST_MODE.md](./docs/STRIPE_TEST_MODE.md)** - 🎓 Stripe для дипломной (тестовый режим)
+- **[docs/THIRD_PARTY_SERVICES.md](./docs/THIRD_PARTY_SERVICES.md)** - Настройка всех сервисов (Resend, Twilio, Google OAuth, Stripe)
 
 ### 📚 Для разработчиков
 - **[backend/API_REFERENCE.md](./backend/API_REFERENCE.md)** - Справка по API
 - **[backend/MIGRATION_GUIDE.md](./backend/MIGRATION_GUIDE.md)** - Миграции БД
-- **[docs/architecture.md](./docs/architecture.md)** - Архитектура приложения
-- **[docs/tech-spec.md](./docs/tech-spec.md)** - Техническое задание
+- **[docs/architecture.md](./docs/architecture.md)** - Архитектура
+- **[docs/tech-spec.md](./docs/tech-spec.md)** - Тех. задание
 
 ## 👨‍💻 Разработка
 

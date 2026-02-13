@@ -1,0 +1,72 @@
+import { useState } from 'react'
+import { useSelector } from 'react-redux'
+import { Navigate } from 'react-router-dom'
+import { RootState } from '@/app/store'
+import { User, Settings, Shield, Phone } from 'lucide-react'
+import { ProfileInfo } from './components/ProfileInfo'
+import { ProfileEdit } from './components/ProfileEdit'
+import { PasswordChange } from './components/PasswordChange'
+import { PhoneVerification } from './components/PhoneVerification'
+
+type Tab = 'info' | 'edit' | 'password' | 'phone'
+
+export const ProfilePage = () => {
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
+  const [activeTab, setActiveTab] = useState<Tab>('info')
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  const tabs = [
+    { id: 'info' as Tab, label: 'Профиль', icon: User },
+    { id: 'edit' as Tab, label: 'Редактировать', icon: Settings },
+    { id: 'password' as Tab, label: 'Безопасность', icon: Shield },
+    { id: 'phone' as Tab, label: 'Телефон', icon: Phone },
+  ]
+
+  return (
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-violet-50/50 via-background to-indigo-50/50 dark:from-violet-950/20 dark:via-background dark:to-indigo-950/20 py-12">
+      <div className="container mx-auto max-w-5xl px-4">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-gradient mb-3">
+            Настройки профиля
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Управляйте своим аккаунтом и настройками
+          </p>
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-6 flex flex-wrap gap-2 rounded-2xl glass-card p-2 backdrop-blur-xl">
+          {tabs.map(tab => {
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-300 ${
+                  activeTab === tab.id
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30 scale-105'
+                    : 'text-muted-foreground hover:bg-primary/5 hover:text-primary hover:scale-105'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Content */}
+        <div className="rounded-2xl glass-card p-8 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
+          {activeTab === 'info' && <ProfileInfo user={user!} />}
+          {activeTab === 'edit' && <ProfileEdit user={user!} />}
+          {activeTab === 'password' && <PasswordChange />}
+          {activeTab === 'phone' && <PhoneVerification user={user!} />}
+        </div>
+      </div>
+    </div>
+  )
+}

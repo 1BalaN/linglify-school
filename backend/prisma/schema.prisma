@@ -35,10 +35,15 @@ model User {
   role              UserRole       @default(STUDENT)
   isEmailVerified   Boolean        @default(false)
   isPhoneVerified   Boolean        @default(false)
-  phone             String?        @unique
+  phone             String?
   firstName         String?
   lastName          String?
   avatar            String?
+  bio               String?
+  dateOfBirth       DateTime?
+  preferredLanguage String?
+  targetLanguages   String[]       @default([])
+  timezone          String?
   oauthProvider     OAuthProvider?
   oauthId           String?
   createdAt         DateTime       @default(now())

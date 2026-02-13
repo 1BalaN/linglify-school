@@ -26,15 +26,24 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_REDIRECT_URI: z.string().optional(),
 
-  // Email (Resend)
-  RESEND_API_KEY: z.string().optional(),
-  RESEND_FROM_EMAIL: z.string().optional().default('onboarding@resend.dev'),
-  RESEND_FROM_NAME: z.string().optional().default('Linglify'),
+  // Email (SMTP)
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional().default('587'),
+  SMTP_SECURE: z.string().optional().default('false'),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  SMTP_FROM_EMAIL: z.string().optional().default('noreply@linglify.com'),
+  SMTP_FROM_NAME: z.string().optional().default('Linglify'),
 
   // SMS (Twilio)
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_PHONE_NUMBER: z.string().optional(),
+
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
 
   // Stripe (optional)
   STRIPE_SECRET_KEY: z.string().optional(),
@@ -105,10 +114,14 @@ export const config = {
   },
 
   email: {
-    resend: {
-      apiKey: parsed.data.RESEND_API_KEY,
-      fromEmail: parsed.data.RESEND_FROM_EMAIL,
-      fromName: parsed.data.RESEND_FROM_NAME,
+    smtp: {
+      host: parsed.data.SMTP_HOST,
+      port: parseInt(parsed.data.SMTP_PORT, 10),
+      secure: parsed.data.SMTP_SECURE === 'true',
+      user: parsed.data.SMTP_USER,
+      password: parsed.data.SMTP_PASSWORD,
+      fromEmail: parsed.data.SMTP_FROM_EMAIL,
+      fromName: parsed.data.SMTP_FROM_NAME,
     },
   },
 
@@ -118,6 +131,12 @@ export const config = {
       authToken: parsed.data.TWILIO_AUTH_TOKEN,
       phoneNumber: parsed.data.TWILIO_PHONE_NUMBER,
     },
+  },
+
+  cloudinary: {
+    cloudName: parsed.data.CLOUDINARY_CLOUD_NAME,
+    apiKey: parsed.data.CLOUDINARY_API_KEY,
+    apiSecret: parsed.data.CLOUDINARY_API_SECRET,
   },
 
   stripe: {

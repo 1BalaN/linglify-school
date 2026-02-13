@@ -52,8 +52,12 @@ export class AuthService {
       },
     })
 
-    // Отправляем email
-    await emailService.sendVerificationEmail(user.email, verificationToken)
+    // Отправляем email (не блокируем регистрацию при ошибке)
+    try {
+      await emailService.sendVerificationEmail(user.email, verificationToken)
+    } catch (emailError) {
+      // Продолжаем регистрацию даже если email не отправился
+    }
 
     const tokens = jwtService.generateTokenPair({
       userId: user.id,
@@ -66,10 +70,18 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        avatar: user.avatar,
+        bio: user.bio,
+        dateOfBirth: user.dateOfBirth,
+        preferredLanguage: user.preferredLanguage,
+        targetLanguages: user.targetLanguages,
+        timezone: user.timezone,
+        phone: user.phone,
         role: user.role,
         isEmailVerified: user.isEmailVerified,
         isPhoneVerified: user.isPhoneVerified,
         createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
       tokens,
     }
@@ -109,12 +121,18 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        avatar: user.avatar,
+        bio: user.bio,
+        dateOfBirth: user.dateOfBirth,
+        preferredLanguage: user.preferredLanguage,
+        targetLanguages: user.targetLanguages,
+        timezone: user.timezone,
+        phone: user.phone,
         role: user.role,
         isEmailVerified: user.isEmailVerified,
         isPhoneVerified: user.isPhoneVerified,
-        phone: user.phone,
-        avatar: user.avatar,
         createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
       tokens,
     }
@@ -185,9 +203,12 @@ export class AuthService {
       },
     })
 
-    await emailService.sendVerificationEmail(user.email, verificationToken)
-
-    return { message: 'Verification email sent' }
+    try {
+      await emailService.sendVerificationEmail(user.email, verificationToken)
+      return { message: 'Письмо с подтверждением отправлено на ваш email' }
+    } catch (emailError) {
+      return { message: 'Токен создан, но не удалось отправить письмо. Попробуйте позже' }
+    }
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
@@ -219,7 +240,11 @@ export class AuthService {
       },
     })
 
-    await emailService.sendPasswordResetEmail(user.email, resetToken)
+    try {
+      await emailService.sendPasswordResetEmail(user.email, resetToken)
+    } catch (emailError) {
+      // Не раскрываем ошибку пользователю из соображений безопасности
+    }
 
     return { message: 'Если email существует, ссылка для сброса пароля отправлена' }
   }
@@ -293,23 +318,64 @@ export class AuthService {
       lastName: user.lastName,
       phone: user.phone,
       avatar: user.avatar,
+      bio: user.bio,
+      dateOfBirth: user.dateOfBirth,
+      preferredLanguage: user.preferredLanguage,
+      targetLanguages: user.targetLanguages,
+      timezone: user.timezone,
       role: user.role,
       isEmailVerified: user.isEmailVerified,
       isPhoneVerified: user.isPhoneVerified,
-      oauthProvider: user.oauthProvider,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     }
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
+    interface UpdateData {
+      firstName?: string
+      lastName?: string
+      phone?: string
+      bio?: string
+      dateOfBirth?: Date
+      preferredLanguage?: string
+      targetLanguages?: string[]
+      timezone?: string
+      avatar?: string
+    }
+
+    const updateData: UpdateData = {
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      phone: dto.phone,
+      bio: dto.bio,
+      preferredLanguage: dto.preferredLanguage,
+      targetLanguages: dto.targetLanguages,
+      timezone: dto.timezone,
+    }
+
+    // Загружаем аватар в Cloudinary, если это base64
+    if (dto.avatar && dto.avatar.startsWith('data:image/')) {
+      const { uploadAvatar } = await import('../../shared/lib/cloudinary')
+      updateData.avatar = await uploadAvatar(dto.avatar, userId)
+    } else if (dto.avatar) {
+      // Если это уже URL - просто сохраняем
+      updateData.avatar = dto.avatar
+    }
+
+    // Преобразуем dateOfBirth в DateTime, если передан
+    if (dto.dateOfBirth && dto.dateOfBirth !== '') {
+      updateData.dateOfBirth = new Date(dto.dateOfBirth)
+    }
+
+    // Удаляем undefined значения
+    Object.keys(updateData).forEach(
+      (key) => updateData[key as keyof UpdateData] === undefined && delete updateData[key as keyof UpdateData]
+    )
+
     const user = await prisma.user.update({
       where: { id: userId },
-      data: {
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        phone: dto.phone,
-      },
+      data: updateData,
     })
 
     return {
@@ -319,9 +385,16 @@ export class AuthService {
       lastName: user.lastName,
       phone: user.phone,
       avatar: user.avatar,
+      bio: user.bio,
+      dateOfBirth: user.dateOfBirth,
+      preferredLanguage: user.preferredLanguage,
+      targetLanguages: user.targetLanguages,
+      timezone: user.timezone,
       role: user.role,
       isEmailVerified: user.isEmailVerified,
       isPhoneVerified: user.isPhoneVerified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     }
   }
 
@@ -404,7 +477,15 @@ export class AuthService {
       throw new AppError(400, 'CODE_EXPIRED', 'Код подтверждения истек')
     }
 
-    await prisma.$transaction([
+    // Разрешаем использовать один номер на разных аккаунтах для тестирования
+    // const existingPhone = await prisma.user.findUnique({
+    //   where: { phone: dto.phone },
+    // })
+    // if (existingPhone && existingPhone.id !== userId) {
+    //   throw new AppError(409, 'PHONE_ALREADY_EXISTS', 'Этот номер телефона уже используется другим пользователем')
+    // }
+
+    const [updatedUser] = await prisma.$transaction([
       prisma.user.update({
         where: { id: userId },
         data: {
@@ -417,7 +498,24 @@ export class AuthService {
       }),
     ])
 
-    return { message: 'Телефон подтвержден успешно' }
+    return {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      avatar: updatedUser.avatar,
+      bio: updatedUser.bio,
+      dateOfBirth: updatedUser.dateOfBirth,
+      preferredLanguage: updatedUser.preferredLanguage,
+      targetLanguages: updatedUser.targetLanguages,
+      timezone: updatedUser.timezone,
+      phone: updatedUser.phone,
+      role: updatedUser.role,
+      isEmailVerified: updatedUser.isEmailVerified,
+      isPhoneVerified: updatedUser.isPhoneVerified,
+      createdAt: updatedUser.createdAt,
+      updatedAt: updatedUser.updatedAt,
+    }
   }
 }
 

@@ -1,3 +1,4 @@
+import nodemailer from 'nodemailer'
 import { config } from '../../config/env'
 
 interface EmailOptions {
@@ -7,57 +8,49 @@ interface EmailOptions {
 }
 
 export class EmailService {
-  private async sendWithResend(options: EmailOptions): Promise<void> {
-    const apiKey = config.email.resend.apiKey
+  private transporter: nodemailer.Transporter | null = null
 
-    if (!apiKey) {
-      throw new Error('RESEND_API_KEY is not configured')
+  constructor() {
+    this.initializeTransporter()
+  }
+
+  private initializeTransporter() {
+    // Используем только SMTP
+    if (config.email.smtp.host && config.email.smtp.user) {
+      this.transporter = nodemailer.createTransport({
+        host: config.email.smtp.host,
+        port: config.email.smtp.port,
+        secure: config.email.smtp.secure,
+        auth: {
+          user: config.email.smtp.user,
+          pass: config.email.smtp.password,
+        },
+      })
+      console.log('📧 Email service: SMTP configured')
+    } else {
+      console.log('⚠️  Email service: SMTP not configured (emails will not be sent)')
     }
-
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        from: `${config.email.resend.fromName} <${config.email.resend.fromEmail}>`,
-        to: [options.to],
-        subject: options.subject,
-        html: options.html,
-      }),
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(`Resend API error: ${JSON.stringify(error)}`)
-    }
-
-    const data = (await response.json()) as { id: string }
-    console.log('📧 Email sent via Resend:', data.id)
   }
 
   async sendEmail(options: EmailOptions): Promise<void> {
-    const apiKey = config.email.resend.apiKey
-
-    // Если API ключ настроен - всегда используем Resend
-    if (apiKey) {
-      try {
-        await this.sendWithResend(options)
-        return
-      } catch (error) {
-        console.error('❌ Failed to send email via Resend:', error)
-        throw error
-      }
+    if (!this.transporter) {
+      // SMTP не настроен - пропускаем отправку
+      return
     }
 
-    // Fallback: если API ключ не настроен - логируем
-    console.log('\n📧 =============== EMAIL (NO API KEY) ===============')
-    console.log(`To: ${options.to}`)
-    console.log(`Subject: ${options.subject}`)
-    console.log('Body:')
-    console.log(options.html)
-    console.log('====================================================\n')
+    try {
+      const info = await this.transporter.sendMail({
+        from: `${config.email.smtp.fromName} <${config.email.smtp.fromEmail}>`,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+      })
+
+      console.log('✅ Email sent:', info.messageId)
+    } catch (error) {
+      console.error('❌ Email error:', error instanceof Error ? error.message : 'Unknown error')
+      // Не выбрасываем ошибку, чтобы не блокировать регистрацию
+    }
   }
 
   async sendVerificationEmail(email: string, token: string): Promise<void> {

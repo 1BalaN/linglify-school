@@ -73,15 +73,6 @@ export class OAuthService {
 
     const userInfo = (await userResponse.json()) as GoogleUserInfo
 
-    // Логируем для отладки (включая весь ответ от Google)
-    console.log('🔍 Google OAuth - Full response:', userInfo)
-    console.log('🔍 Google OAuth:', {
-      mode,
-      email: userInfo.email,
-      sub: userInfo.sub,
-      name: `${userInfo.given_name} ${userInfo.family_name}`,
-    })
-
     // Проверка наличия sub
     if (!userInfo.sub) {
       throw new AppError(400, 'OAUTH_MISSING_SUB', 'Google не вернул уникальный ID пользователя')
@@ -101,8 +92,6 @@ export class OAuthService {
         where: { email: userInfo.email },
       })
     }
-
-    console.log('👤 Found user:', user ? `${user.email} (id: ${user.id}, oauth: ${user.oauthProvider})` : 'none')
 
     if (mode === 'register') {
       // Регистрация: пользователь не должен существовать

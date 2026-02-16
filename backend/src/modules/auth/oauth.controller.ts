@@ -15,24 +15,7 @@ export class OAuthController {
   async googleCallback(req: Request, res: Response): Promise<void> {
     const { code, state } = req.query
 
-    // Диагностическое логирование для production
-    console.log('🔍 [OAuth Callback] Environment:', {
-      nodeEnv: config.nodeEnv,
-      isProduction: config.isProduction,
-      frontendUrl: config.frontendUrl,
-      redirectUri: config.oauth.google.redirectUri,
-      hasClientId: !!config.oauth.google.clientId,
-      hasClientSecret: !!config.oauth.google.clientSecret,
-    })
-    console.log('🔍 [OAuth Callback] Request:', {
-      hasCode: !!code,
-      state,
-      origin: req.headers.origin,
-      referer: req.headers.referer,
-    })
-
     if (!code || typeof code !== 'string') {
-      console.error('❌ [OAuth Callback] Missing authorization code')
       res.status(400).json({
         error: {
           code: 'MISSING_CODE',
@@ -50,11 +33,10 @@ export class OAuthController {
     const cookieOptions = {
       httpOnly: true,
       secure: config.isProduction,
-      sameSite: config.isProduction ? ('none' as const) : ('lax' as const), // 'none' для production с кросс-доменными запросами
+      sameSite: config.isProduction ? ('none' as const) : ('lax' as const),
       maxAge: SEVEN_DAYS_MS,
     }
 
-    console.log('🔍 [OAuth Callback] Setting cookie with options:', cookieOptions)
     res.cookie('refreshToken', result.tokens.refreshToken, cookieOptions)
 
     // Редирект на frontend с токеном
@@ -62,7 +44,6 @@ export class OAuthController {
     redirectUrl.searchParams.set('accessToken', result.tokens.accessToken)
     redirectUrl.pathname = '/auth/callback'
 
-    console.log('✅ [OAuth Callback] Redirecting to:', redirectUrl.toString())
     res.redirect(redirectUrl.toString())
   }
 }

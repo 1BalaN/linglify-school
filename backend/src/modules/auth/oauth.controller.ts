@@ -30,12 +30,14 @@ export class OAuthController {
     const result = await oauthService.handleGoogleCallback(data.code, mode)
 
     // sameSite: 'lax' используется для OAuth, чтобы cookies отправлялись при редиректе
-    res.cookie('refreshToken', result.tokens.refreshToken, {
+    const cookieOptions = {
       httpOnly: true,
       secure: config.isProduction,
-      sameSite: 'lax',
+      sameSite: config.isProduction ? ('none' as const) : ('lax' as const),
       maxAge: SEVEN_DAYS_MS,
-    })
+    }
+
+    res.cookie('refreshToken', result.tokens.refreshToken, cookieOptions)
 
     // Редирект на frontend с токеном
     const redirectUrl = new URL(config.frontendUrl)

@@ -209,7 +209,10 @@ yarn prisma:studio    # Prisma Studio GUI
 - **[READY_FOR_GIT.md](./READY_FOR_GIT.md)** - ✅ Финальная проверка и Git push
 
 ### 🔧 Настройка сервисов
-- **[docs/THIRD_PARTY_SERVICES.md](./docs/THIRD_PARTY_SERVICES.md)** - Настройка всех сервисов (Resend, Twilio, Google OAuth, Stripe)
+- **[docs/THIRD_PARTY_SERVICES.md](./docs/THIRD_PARTY_SERVICES.md)** - Настройка всех сервисов (SMTP, Twilio, Google OAuth, Cloudinary)
+- **[docs/RAILWAY_SMTP_SETUP.md](./docs/RAILWAY_SMTP_SETUP.md)** - 📧 Настройка SMTP на Railway для отправки email
+- **[docs/OAUTH_QUICK_FIX.md](./docs/OAUTH_QUICK_FIX.md)** - ⚡ Быстрое решение проблем с Google OAuth на production
+- **[docs/VERCEL_SPA_SETUP.md](./docs/VERCEL_SPA_SETUP.md)** - ⚙️ Настройка SPA роутинга на Vercel (исправление 404)
 
 ### 📚 Для разработчиков
 - **[backend/API_REFERENCE.md](./backend/API_REFERENCE.md)** - Справка по API

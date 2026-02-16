@@ -13,6 +13,10 @@ import contactRouter from './modules/contact/contact.router'
 
 const app = express()
 
+if(config.nodeEnv === 'production') {
+  app.set('trust proxy', 1)
+}
+
 // Middleware
 app.use(helmet())
 app.use(

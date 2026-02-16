@@ -2,7 +2,25 @@ import { Routes, Route } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { Header, Footer } from '@/widgets'
-import { HomePage, LoginPage, RegisterPage, ProfilePage, AuthCallbackPage, VerifyEmailPage, NotFoundPage } from '@/pages'
+import {
+  HomePage,
+  LoginPage,
+  RegisterPage,
+  ProfilePage,
+  AuthCallbackPage,
+  VerifyEmailPage,
+  NotFoundPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
+  HelpPage,
+  FAQPage,
+  ContactPage,
+  PrivacyPage,
+  TermsPage,
+  AdminDashboardPage,
+  AdminFAQPage,
+  AdminMessagesPage,
+} from '@/pages'
 import { useGetCurrentUserQuery } from '@/entities/user'
 import { setUser, logout } from '@/entities/user'
 import { EmailVerificationBanner } from '@/features/auth'
@@ -41,8 +59,25 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          
+          {/* Support pages */}
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          
+          {/* Admin pages */}
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/faq" element={<AdminFAQPage />} />
+          <Route path="/admin/messages" element={<AdminMessagesPage />} />
+          
+          {/* Legal pages */}
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           
           {/* Placeholder routes */}
           <Route
@@ -75,7 +110,7 @@ function App() {
               </div>
             }
           />
-          <Route path="/profile" element={<ProfilePage />} />
+          
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

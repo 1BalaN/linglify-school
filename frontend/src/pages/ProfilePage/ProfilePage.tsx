@@ -26,7 +26,7 @@ export const ProfilePage = () => {
   ]
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-violet-50/50 via-background to-indigo-50/50 dark:from-violet-950/20 dark:via-background dark:to-indigo-950/20 py-12">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-cyan-50/50 via-background to-blue-50/50 dark:from-cyan-950/20 dark:via-background dark:to-blue-950/20 py-12">
       <div className="container mx-auto max-w-5xl px-4">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -48,7 +48,7 @@ export const ProfilePage = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-300 ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30 scale-105'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 scale-105'
                     : 'text-muted-foreground hover:bg-primary/5 hover:text-primary hover:scale-105'
                 }`}
               >

@@ -25,7 +25,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 hover:scale-105 dark:from-violet-500 dark:to-indigo-500',
+        'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-105 dark:from-cyan-400 dark:to-blue-500',
       secondary:
         'bg-secondary text-secondary-foreground shadow-md hover:bg-secondary/80 hover:scale-105',
       outline:

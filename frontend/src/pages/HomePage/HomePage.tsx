@@ -176,7 +176,7 @@ export const HomePage = () => {
                 level: 'Beginner',
                 students: '2,500+',
                 lessons: '120',
-                color: 'from-blue-500 to-indigo-600',
+                color: 'from-blue-500 to-cyan-600',
               },
               {
                 title: 'Испанский разговорный',
@@ -190,7 +190,7 @@ export const HomePage = () => {
                 level: 'Advanced',
                 students: '1,200+',
                 lessons: '75',
-                color: 'from-purple-500 to-pink-600',
+                color: 'from-indigo-500 to-blue-600',
               },
             ].map((course, index) => (
               <div

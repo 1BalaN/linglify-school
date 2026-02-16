@@ -4,10 +4,9 @@ import { Button } from '@/shared/ui'
 
 export const NotFoundPage = () => {
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-violet-50/50 via-background to-indigo-50/50 dark:from-violet-950/20 dark:via-background dark:to-indigo-950/20">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-cyan-50/50 via-background to-blue-50/50 dark:from-cyan-950/20 dark:via-background dark:to-blue-950/20">
       <div className="container mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
         <div className="max-w-2xl text-center">
-          {/* 404 Animation */}
           <div className="relative mb-8">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="h-64 w-64 animate-pulse rounded-full bg-primary/5" />
@@ -21,8 +20,6 @@ export const NotFoundPage = () => {
               </div>
             </div>
           </div>
-
-          {/* Content */}
           <div className="mb-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
             <h2 className="text-3xl font-bold text-foreground">
               Страница не найдена
@@ -31,15 +28,11 @@ export const NotFoundPage = () => {
               К сожалению, страница, которую вы ищете, не существует или была перемещена.
             </p>
           </div>
-
-          {/* Search Illustration */}
           <div className="mb-12 flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
             <div className="glass-card rounded-full p-6 backdrop-blur-xl">
               <Search className="h-16 w-16 text-primary animate-float" />
             </div>
           </div>
-
-          {/* Action Buttons */}
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
             <Link to="/">
               <Button variant="primary" className="group w-full sm:w-auto">
@@ -56,8 +49,6 @@ export const NotFoundPage = () => {
               Назад
             </Button>
           </div>
-
-          {/* Popular Links */}
           <div className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-700">
             <p className="mb-4 text-sm text-muted-foreground">
               Возможно, вас заинтересует:

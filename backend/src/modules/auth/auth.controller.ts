@@ -21,6 +21,7 @@ export class AuthController {
     const data = registerSchema.parse(req.body)
     const result = await authService.register(data)
 
+    // sameSite: 'strict' для дополнительной безопасности при обычной авторизации
     res.cookie('refreshToken', result.tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -40,6 +41,7 @@ export class AuthController {
     const data = loginSchema.parse(req.body)
     const result = await authService.login(data)
 
+    // sameSite: 'strict' для дополнительной безопасности при обычной авторизации
     res.cookie('refreshToken', result.tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

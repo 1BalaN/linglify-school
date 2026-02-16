@@ -32,7 +32,7 @@ export const ProfileInfo = ({ user }: ProfileInfoProps) => {
             className="h-28 w-28 rounded-full object-cover ring-4 ring-primary/30 shadow-xl shadow-primary/20 transition-transform hover:scale-105"
           />
         ) : (
-          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 ring-4 ring-primary/30 shadow-xl shadow-violet-500/30 transition-transform hover:scale-105">
+          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 ring-4 ring-primary/30 shadow-xl shadow-cyan-500/30 transition-transform hover:scale-105">
             <UserIcon className="h-14 w-14 text-white" />
           </div>
         )}
@@ -125,7 +125,7 @@ export const ProfileInfo = ({ user }: ProfileInfoProps) => {
                 {user.targetLanguages.map(lang => (
                   <span
                     key={lang}
-                    className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-1.5 text-sm font-medium text-white shadow-md shadow-violet-500/30"
+                    className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-1.5 text-sm font-medium text-white shadow-md shadow-cyan-500/30"
                   >
                     {lang}
                   </span>

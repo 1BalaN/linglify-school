@@ -209,7 +209,7 @@ yarn prisma:studio    # Prisma Studio GUI
 - **[READY_FOR_GIT.md](./READY_FOR_GIT.md)** - ✅ Финальная проверка и Git push
 
 ### 🔧 Настройка сервисов
-- **[docs/THIRD_PARTY_SERVICES.md](./docs/THIRD_PARTY_SERVICES.md)** - Настройка всех сервисов (Resend, Twilio, Google OAuth, Stripe)
+- **[docs/THIRD_PARTY_SERVICES.md](./docs/THIRD_PARTY_SERVICES.md)** - Настройка всех сервисов (SMTP, Twilio, Google OAuth, Cloudinary)
 
 ### 📚 Для разработчиков
 - **[backend/API_REFERENCE.md](./backend/API_REFERENCE.md)** - Справка по API

@@ -124,6 +124,28 @@ export const authApi = api.injectEndpoints({
       }),
       invalidatesTags: ['User'],
     }),
+
+    forgotPassword: build.mutation<
+      ApiResponse<{ message: string }>,
+      { email: string }
+    >({
+      query: data => ({
+        url: '/auth/forgot-password',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+
+    resetPassword: build.mutation<
+      ApiResponse<{ message: string }>,
+      { token: string; password: string }
+    >({
+      query: data => ({
+        url: '/auth/reset-password',
+        method: 'POST',
+        body: data,
+      }),
+    }),
   }),
 })
 
@@ -139,4 +161,6 @@ export const {
   useVerifyPhoneMutation,
   useResendVerificationMutation,
   useVerifyEmailMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
 } = authApi

@@ -8,6 +8,8 @@ import { errorHandler } from './shared/middleware/errorHandler'
 import { notFoundHandler } from './shared/middleware/notFoundHandler'
 import { generalLimiter } from './shared/middleware/rateLimit'
 import authRouter from './modules/auth/auth.router'
+import faqRouter from './modules/faq/faq.router'
+import contactRouter from './modules/contact/contact.router'
 
 const app = express()
 
@@ -31,6 +33,8 @@ app.get('/health', (_req, res) => {
 
 // API Routes
 app.use('/api/auth', authRouter)
+app.use('/api/faq', faqRouter)
+app.use('/api/contact', contactRouter)
 
 // Error handlers
 app.use(notFoundHandler)

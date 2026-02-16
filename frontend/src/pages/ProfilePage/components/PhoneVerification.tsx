@@ -101,7 +101,7 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
   return (
     <div className="space-y-6">
       <div className="flex items-start space-x-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/30">
+        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30">
           <PhoneIcon className="h-7 w-7 text-white" />
         </div>
         <div>

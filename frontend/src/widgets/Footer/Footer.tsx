@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { BookOpen, Mail, Github, Twitter } from 'lucide-react'
+import { BookOpen, Mail, Github, Send } from 'lucide-react'
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear()
@@ -8,7 +8,6 @@ export const Footer = () => {
     <footer className="border-t border-border bg-card transition-colors duration-300">
       <div className="container mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center space-x-2 transition-transform hover:scale-105">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary shadow-md">
@@ -20,9 +19,7 @@ export const Footer = () => {
               Современная платформа для изучения языков с интерактивными курсами
               и персональным подходом.
             </p>
-          </div>
-
-          {/* Product */}
+          </div>  
           <div>
             <h3 className="mb-4 text-sm font-semibold text-foreground">
               Платформа
@@ -55,7 +52,6 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Support */}
           <div>
             <h3 className="mb-4 text-sm font-semibold text-foreground">
               Поддержка
@@ -88,7 +84,6 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Legal */}
           <div>
             <h3 className="mb-4 text-sm font-semibold text-foreground">
               Правовая информация
@@ -121,13 +116,13 @@ export const Footer = () => {
             </p>
             <div className="flex space-x-6">
               <a
-                href="mailto:support@linglify.com"
+                href="mailto:gormachdv@gmail.com"
                 className="text-muted-foreground transition-all hover:text-primary hover:scale-110"
               >
                 <Mail className="h-5 w-5" />
               </a>
               <a
-                href="https://github.com"
+                href="https://github.com/1BalaN"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground transition-all hover:text-primary hover:scale-110"
@@ -135,12 +130,12 @@ export const Footer = () => {
                 <Github className="h-5 w-5" />
               </a>
               <a
-                href="https://twitter.com"
+                href="https://t.me/iBa1aNCe"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground transition-all hover:text-primary hover:scale-110"
               >
-                <Twitter className="h-5 w-5" />
+                <Send className="h-5 w-5" />
               </a>
             </div>
           </div>

@@ -29,6 +29,7 @@ export class OAuthController {
     const data = googleOAuthSchema.parse({ code })
     const result = await oauthService.handleGoogleCallback(data.code, mode)
 
+    // sameSite: 'lax' используется для OAuth, чтобы cookies отправлялись при редиректе
     res.cookie('refreshToken', result.tokens.refreshToken, {
       httpOnly: true,
       secure: config.isProduction,

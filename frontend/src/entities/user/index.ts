@@ -12,4 +12,6 @@ export {
   useVerifyPhoneMutation,
   useResendVerificationMutation,
   useVerifyEmailMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
 } from './api/authApi'

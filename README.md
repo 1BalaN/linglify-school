@@ -210,8 +210,8 @@ yarn prisma:studio    # Prisma Studio GUI
 
 ### 🔧 Настройка сервисов
 - **[docs/THIRD_PARTY_SERVICES.md](./docs/THIRD_PARTY_SERVICES.md)** - Настройка всех сервисов (SMTP, Twilio, Google OAuth, Cloudinary)
+- **[docs/RAILWAY_SMTP_SETUP.md](./docs/RAILWAY_SMTP_SETUP.md)** - 📧 Настройка SMTP на Railway для отправки email
 - **[docs/OAUTH_QUICK_FIX.md](./docs/OAUTH_QUICK_FIX.md)** - ⚡ Быстрое решение проблем с Google OAuth на production
-- **[docs/OAUTH_PRODUCTION_DEBUG.md](./docs/OAUTH_PRODUCTION_DEBUG.md)** - 🐛 Полная диагностика OAuth на production
 - **[docs/VERCEL_SPA_SETUP.md](./docs/VERCEL_SPA_SETUP.md)** - ⚙️ Настройка SPA роутинга на Vercel (исправление 404)
 
 ### 📚 Для разработчиков

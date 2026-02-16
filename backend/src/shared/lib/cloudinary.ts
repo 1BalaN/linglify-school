@@ -15,8 +15,8 @@ if (isConfigured) {
     api_secret: config.cloudinary.apiSecret,
   })
   console.log('☁️  Cloudinary: configured')
-} else {
-  console.log('⚠️  Cloudinary: not configured (images will be stored as base64 in DB)')
+} else if (config.isDevelopment) {
+  console.log('⚠️  Cloudinary: not configured (using base64 fallback)')
 }
 
 /**

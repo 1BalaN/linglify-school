@@ -93,7 +93,7 @@ export class AuthService {
     })
 
     if (!user?.password) {
-      throw new AppError(401, 'INVALID_CREDENTIALS', 'Неверные данные')
+      throw new AppError(401, 'INVALID_CREDENTIALS', 'Нет пароля')
     }
 
     const isPasswordValid = await hashService.compare(
@@ -102,7 +102,7 @@ export class AuthService {
     )
 
     if (!isPasswordValid) {
-      throw new AppError(401, 'INVALID_CREDENTIALS', 'Неверные данные')
+      throw new AppError(401, 'INVALID_CREDENTIALS', 'Неверный пароль')
     }
 
     const tokens = jwtService.generateTokenPair({
@@ -260,7 +260,7 @@ export class AuthService {
     }
 
     if (passwordReset.expiresAt < new Date()) {
-      throw new AppError(400, 'TOKEN_EXPIRED', 'Reset token умер')
+      throw new AppError(400, 'TOKEN_EXPIRED', 'Срок действия токена истёк. Запросите новую ссылку для восстановления пароля')
     }
 
     const hashedPassword = await hashService.hash(dto.password)

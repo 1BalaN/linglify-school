@@ -10,7 +10,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 262 83% 58%;
+    --primary: 199 89% 48%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -22,7 +22,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 83% 58%;
+    --ring: 199 89% 48%;
     --radius: 0.75rem;
   }
 
@@ -33,7 +33,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 224 71% 8%;
     --popover-foreground: 210 40% 98%;
-    --primary: 263 70% 65%;
+    --primary: 188 94% 57%;
     --primary-foreground: 210 40% 98%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -45,7 +45,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 263 70% 65%;
+    --ring: 188 94% 57%;
   }
 }
 
@@ -68,15 +68,15 @@
   }
   
   .gradient-primary {
-    @apply bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600;
+    @apply bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600;
   }
   
   .gradient-accent {
-    @apply bg-gradient-to-r from-pink-500 via-red-500 to-orange-500;
+    @apply bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500;
   }
   
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-400 dark:to-indigo-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400;
   }
   
   .shadow-glow {

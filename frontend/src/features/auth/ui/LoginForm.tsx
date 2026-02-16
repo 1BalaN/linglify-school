@@ -45,7 +45,7 @@ export const LoginForm = () => {
   return (
     <div className="mx-auto w-full max-w-md space-y-6 rounded-2xl glass-card p-8 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/30 animate-float">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 animate-float">
           <LogIn className="h-8 w-8 text-white" />
         </div>
         <h2 className="text-3xl font-bold text-gradient">Войти в аккаунт</h2>
@@ -64,14 +64,24 @@ export const LoginForm = () => {
           autoComplete="email"
         />
 
-        <Input
-          {...register('password')}
-          type="password"
-          label="Пароль"
-          placeholder="••••••••"
-          error={errors.password?.message}
-          autoComplete="current-password"
-        />
+        <div>
+          <Input
+            {...register('password')}
+            type="password"
+            label="Пароль"
+            placeholder="••••••••"
+            error={errors.password?.message}
+            autoComplete="current-password"
+          />
+          <div className="mt-2 text-right">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-primary hover:text-primary/80 transition-colors"
+            >
+              Забыли пароль?
+            </Link>
+          </div>
+        </div>
 
         {error && (
           <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">

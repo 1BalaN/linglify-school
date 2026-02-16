@@ -5,7 +5,7 @@ import { RootState } from '@/app/store'
 import { logout, useLogoutMutation } from '@/entities/user'
 import { Button } from '@/shared/ui'
 import { useTheme } from '@/shared/lib/theme'
-import { BookOpen, User, LogOut, Menu, Moon, Sun } from 'lucide-react'
+import { BookOpen, User, LogOut, Menu, Moon, Sun, Shield } from 'lucide-react'
 import { useState } from 'react'
 
 export const Header = () => {
@@ -28,15 +28,12 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 glass backdrop-blur-2xl transition-all duration-300">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
         <Link to="/" className="group flex items-center space-x-3 transition-transform hover:scale-105">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/30 transition-all group-hover:shadow-xl group-hover:shadow-violet-500/40">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 transition-all group-hover:shadow-xl group-hover:shadow-cyan-500/40">
             <BookOpen className="h-6 w-6 text-white" />
           </div>
           <span className="text-xl font-bold text-gradient">Linglify</span>
         </Link>
-
-        {/* Desktop Navigation */}
         <nav className="hidden items-center space-x-8 md:flex">
           <Link
             to="/courses"
@@ -57,10 +54,7 @@ export const Header = () => {
             Тарифы
           </Link>
         </nav>
-
-        {/* Auth Section */}
         <div className="hidden items-center space-x-4 md:flex">
-          {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
             className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-border/50 bg-background/50 backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-primary/5 hover:scale-110 active:scale-95"
@@ -75,6 +69,18 @@ export const Header = () => {
 
           {isAuthenticated && user ? (
             <div className="flex items-center space-x-3">
+              {user.role === 'ADMIN' && (
+                <Link to="/admin/dashboard">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span className="hidden lg:inline">Админ-панель</span>
+                  </Button>
+                </Link>
+              )}
               <Link
                 to="/profile"
                 className="flex items-center space-x-2 rounded-xl px-3 py-2 transition-all hover:bg-primary/5 hover:scale-105"
@@ -86,7 +92,7 @@ export const Header = () => {
                     className="h-9 w-9 rounded-full object-cover ring-2 ring-primary/20 shadow-md"
                   />
                 ) : (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 shadow-md shadow-violet-500/30">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/30">
                     <User className="h-4 w-4 text-white" />
                   </div>
                 )}
@@ -168,6 +174,18 @@ export const Header = () => {
             <div className="border-t border-border pt-4">
               {isAuthenticated && user ? (
                 <>
+                  {user.role === 'ADMIN' && (
+                    <Link
+                      to="/admin/dashboard"
+                      className="flex items-center space-x-2 rounded-lg px-3 py-2 hover:bg-accent mb-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Shield className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">
+                        Админ-панель
+                      </span>
+                    </Link>
+                  )}
                   <Link
                     to="/profile"
                     className="flex items-center space-x-2 rounded-lg px-3 py-2 hover:bg-accent"

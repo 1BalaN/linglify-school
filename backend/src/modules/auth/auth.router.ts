@@ -15,7 +15,7 @@ router.post('/login', authLimiter, (req, res) =>
   authController.login(req, res)
 )
 
-router.post('/verify-email', (req, res) =>
+router.post('/verify-email', authLimiter, (req, res) =>
   authController.verifyEmail(req, res)
 )
 

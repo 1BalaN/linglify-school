@@ -54,7 +54,7 @@ export const RegisterForm = () => {
   return (
     <div className="mx-auto w-full max-w-md space-y-6 rounded-2xl glass-card p-8 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/30 animate-float">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 animate-float">
           <UserPlus className="h-8 w-8 text-white" />
         </div>
         <h2 className="text-3xl font-bold text-gradient">Создать аккаунт</h2>

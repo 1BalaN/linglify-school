@@ -16,25 +16,34 @@ export class EmailService {
 
   private initializeTransporter() {
     // Используем только SMTP
-    if (config.email.smtp.host && config.email.smtp.user) {
-      this.transporter = nodemailer.createTransport({
-        host: config.email.smtp.host,
-        port: config.email.smtp.port,
-        secure: config.email.smtp.secure,
-        auth: {
-          user: config.email.smtp.user,
-          pass: config.email.smtp.password,
-        },
-      })
-      console.log('📧 Email service: SMTP configured')
+    if (config.email.smtp.host && config.email.smtp.user && config.email.smtp.password) {
+      try {
+        this.transporter = nodemailer.createTransport({
+          host: config.email.smtp.host,
+          port: config.email.smtp.port,
+          secure: config.email.smtp.secure,
+          auth: {
+            user: config.email.smtp.user,
+            pass: config.email.smtp.password,
+          },
+        })
+        console.log('📧 Email service: SMTP configured')
+      } catch (error) {
+        console.error('❌ Email service: Failed to configure SMTP:', error instanceof Error ? error.message : 'Unknown error')
+      }
     } else {
-      console.log('⚠️  Email service: SMTP not configured (emails will not be sent)')
+      console.warn('⚠️  Email service: SMTP credentials missing (host, user, or password)')
+      console.warn('   Set SMTP_HOST, SMTP_USER, SMTP_PASSWORD in environment variables')
     }
   }
 
   async sendEmail(options: EmailOptions): Promise<void> {
     if (!this.transporter) {
       // SMTP не настроен - пропускаем отправку
+      if (config.isDevelopment) {
+        console.log(`📧 [DEV] Email would be sent to: ${options.to}`)
+        console.log(`   Subject: ${options.subject}`)
+      }
       return
     }
 
@@ -46,9 +55,12 @@ export class EmailService {
         html: options.html,
       })
 
-      console.log('✅ Email sent:', info.messageId)
+      if (config.isDevelopment) {
+        console.log('✅ Email sent:', info.messageId, 'to:', options.to)
+      }
     } catch (error) {
       console.error('❌ Email error:', error instanceof Error ? error.message : 'Unknown error')
+      console.error('   To:', options.to, 'Subject:', options.subject)
       // Не выбрасываем ошибку, чтобы не блокировать регистрацию
     }
   }

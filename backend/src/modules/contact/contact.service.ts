@@ -46,8 +46,6 @@ class ContactService {
           </div>
         `,
       })
-
-      console.log('✅ Contact message email sent to admin')
     } catch (error) {
       console.error('❌ Failed to send contact email to admin:', error)
       // Не бросаем ошибку, чтобы не блокировать сохранение в БД
@@ -84,8 +82,6 @@ class ContactService {
           </div>
         `,
       })
-
-      console.log('✅ Confirmation email sent to user')
     } catch (error) {
       console.error('❌ Failed to send confirmation email to user:', error)
     }

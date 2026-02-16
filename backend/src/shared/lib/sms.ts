@@ -50,10 +50,10 @@ export class SmsService {
     }
 
     // Fallback: если Twilio не настроен - логируем
-    console.log('\n📱 =============== SMS (NO API KEYS) ===============')
-    console.log(`To: ${phone}`)
-    console.log(`Message: ${message}`)
-    console.log('===================================================\n')
+    if (config.isDevelopment) {
+      console.log('\n📱 [DEV] SMS would be sent to:', phone)
+      console.log('   Message:', message)
+    }
   }
 
   async sendVerificationCode(phone: string, code: string): Promise<void> {

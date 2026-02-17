@@ -1,4 +1,5 @@
 export type UserRole = 'GUEST' | 'STUDENT' | 'TEACHER' | 'ADMIN'
+export type OAuthProvider = 'GOOGLE' | 'GITHUB' | null
 
 export interface User {
   id: string
@@ -15,6 +16,8 @@ export interface User {
   isEmailVerified: boolean
   isPhoneVerified: boolean
   phone: string | null
+  oauthProvider?: OAuthProvider
+  hasPassword?: boolean // Есть ли пароль у пользователя
   createdAt: string
   updatedAt: string
 }

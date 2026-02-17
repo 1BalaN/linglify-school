@@ -4,11 +4,13 @@ import { z } from 'zod'
 import { useChangePasswordMutation } from '@/entities/user'
 import { Button, Input } from '@/shared/ui'
 import { useState } from 'react'
-import { CheckCircle, Lock } from 'lucide-react'
+import { CheckCircle, Lock, Info } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/app/store'
 
 const passwordSchema = z
   .object({
-    currentPassword: z.string().min(6, 'Минимум 6 символов'),
+    currentPassword: z.string().min(6, 'Минимум 6 символов').optional(),
     newPassword: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
     confirmPassword: z.string(),
   })
@@ -20,8 +22,12 @@ const passwordSchema = z
 type PasswordFormData = z.infer<typeof passwordSchema>
 
 export const PasswordChange = () => {
+  const { user } = useSelector((state: RootState) => state.auth)
   const [changePassword, { isLoading, error }] = useChangePasswordMutation()
   const [success, setSuccess] = useState(false)
+  
+  // Определяем, есть ли у пользователя пароль
+  const hasPassword = user?.hasPassword ?? true // По умолчанию считаем, что пароль есть
 
   const {
     register,
@@ -36,7 +42,7 @@ export const PasswordChange = () => {
     try {
       setSuccess(false)
       await changePassword({
-        currentPassword: data.currentPassword,
+        currentPassword: data.currentPassword || '',
         newPassword: data.newPassword,
       }).unwrap()
       setSuccess(true)
@@ -55,23 +61,41 @@ export const PasswordChange = () => {
         </div>
         <div>
           <h3 className="text-2xl font-bold text-gradient">
-            Изменить пароль
+            {!hasPassword ? 'Установить пароль' : 'Изменить пароль'}
           </h3>
           <p className="text-muted-foreground mt-1">
-            Обновите свой пароль для повышения безопасности
+            {!hasPassword
+              ? 'Установите пароль для входа через email'
+              : 'Обновите свой пароль для повышения безопасности'}
           </p>
         </div>
       </div>
 
+      {!hasPassword && user?.oauthProvider && (
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+          <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-blue-800 dark:text-blue-200">
+            <p className="font-medium mb-1">
+              Аккаунт зарегистрирован через {user.oauthProvider === 'GOOGLE' ? 'Google' : user.oauthProvider}
+            </p>
+            <p>
+              Вы можете установить пароль для входа через email, но продолжите использовать {user.oauthProvider === 'GOOGLE' ? 'Google' : 'OAuth'} для быстрого входа.
+            </p>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input
-          {...register('currentPassword')}
-          type="password"
-          label="Текущий пароль"
-          placeholder="••••••••"
-          error={errors.currentPassword?.message}
-          autoComplete="current-password"
-        />
+        {hasPassword && (
+          <Input
+            {...register('currentPassword')}
+            type="password"
+            label="Текущий пароль"
+            placeholder="••••••••"
+            error={errors.currentPassword?.message}
+            autoComplete="current-password"
+          />
+        )}
 
         <Input
           {...register('newPassword')}

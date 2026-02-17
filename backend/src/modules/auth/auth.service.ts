@@ -80,6 +80,8 @@ export class AuthService {
         role: user.role,
         isEmailVerified: user.isEmailVerified,
         isPhoneVerified: user.isPhoneVerified,
+        oauthProvider: user.oauthProvider,
+        hasPassword: !!user.password,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
@@ -92,8 +94,20 @@ export class AuthService {
       where: { email: dto.email },
     })
 
-    if (!user?.password) {
-      throw new AppError(401, 'INVALID_CREDENTIALS', 'Нет пароля')
+    if (!user) {
+      throw new AppError(401, 'INVALID_CREDENTIALS', 'Неверный email или пароль')
+    }
+
+    // Проверка для OAuth пользователей без пароля
+    if (!user.password) {
+      if (user.oauthProvider === 'GOOGLE') {
+        throw new AppError(
+          401,
+          'OAUTH_ACCOUNT',
+          'Этот аккаунт зарегистрирован через Google. Войдите с помощью кнопки "Войти через Google".'
+        )
+      }
+      throw new AppError(401, 'INVALID_CREDENTIALS', 'Неверный email или пароль')
     }
 
     const isPasswordValid = await hashService.compare(
@@ -131,6 +145,8 @@ export class AuthService {
         role: user.role,
         isEmailVerified: user.isEmailVerified,
         isPhoneVerified: user.isPhoneVerified,
+        oauthProvider: user.oauthProvider,
+        hasPassword: !!user.password,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
@@ -326,6 +342,8 @@ export class AuthService {
       role: user.role,
       isEmailVerified: user.isEmailVerified,
       isPhoneVerified: user.isPhoneVerified,
+      oauthProvider: user.oauthProvider,
+      hasPassword: !!user.password,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     }
@@ -393,6 +411,8 @@ export class AuthService {
       role: user.role,
       isEmailVerified: user.isEmailVerified,
       isPhoneVerified: user.isPhoneVerified,
+      oauthProvider: user.oauthProvider,
+      hasPassword: !!user.password,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     }
@@ -403,8 +423,28 @@ export class AuthService {
       where: { id: userId },
     })
 
-    if (!user?.password) {
-      throw new AppError(400, 'NO_PASSWORD', 'У пользователя нет пароля')
+    if (!user) {
+      throw new AppError(404, 'USER_NOT_FOUND', 'Пользователь не найден')
+    }
+
+    // Если у пользователя нет пароля (OAuth аккаунт), позволяем установить новый пароль
+    if (!user.password) {
+      // Для OAuth пользователей: установка первого пароля (без проверки старого)
+      const hashedPassword = await hashService.hash(dto.newPassword)
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
+      })
+
+      return {
+        message: 'Пароль установлен успешно. Теперь вы можете входить через email и пароль.',
+      }
+    }
+
+    // Для обычных пользователей: требуем текущий пароль
+    if (!dto.currentPassword) {
+      throw new AppError(400, 'CURRENT_PASSWORD_REQUIRED', 'Введите текущий пароль')
     }
 
     const isPasswordValid = await hashService.compare(

@@ -162,6 +162,8 @@ export class OAuthService {
         role: user.role,
         isEmailVerified: user.isEmailVerified,
         isPhoneVerified: user.isPhoneVerified,
+        oauthProvider: user.oauthProvider,
+        hasPassword: !!user.password,
       },
       tokens,
     }

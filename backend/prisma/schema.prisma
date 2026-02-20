@@ -49,8 +49,17 @@ model User {
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
+  // Связи для авторизации
   verificationTokens VerificationToken[]
   passwordResets     PasswordReset[]
+  
+  // Связи для курсов
+  teacherCourses    Course[]       @relation("TeacherCourses")
+  enrollments       Enrollment[]
+  progress          Progress[]     @relation("UserProgress")
+  answers           Answer[]       @relation("UserAnswers")
+  reviews           Review[]       @relation("UserReviews")
+  certificates      Certificate[]  @relation("UserCertificates")
 
   @@unique([oauthProvider, oauthId])
   @@map("users")
@@ -117,4 +126,279 @@ model ContactMessage {
   @@index([isReplied])
   @@index([createdAt])
   @@map("contact_messages")
+}
+
+// Курсы и обучение
+enum CourseStatus {
+  DRAFT           // Черновик (создание курса)
+  PENDING_REVIEW  // Отправлен на модерацию (устанавливает преподаватель)
+  IN_REVIEW       // На модерации (устанавливает админ)
+  REJECTED        // Отклонен
+  PUBLISHED       // Опубликован
+  ARCHIVED        // Архивирован
+}
+
+enum LessonType {
+  VIDEO       // Видео урок
+  TEXT        // Текстовый материал
+  INTERACTIVE // Интерактивный урок
+  TEST        // Тест
+}
+
+enum QuestionType {
+  SINGLE_CHOICE   // Один правильный ответ
+  MULTIPLE_CHOICE // Несколько правильных ответов
+  TRUE_FALSE      // Верно/Неверно
+  FILL_IN_BLANK   // Заполнить пропуски
+  MATCHING        // Сопоставление
+}
+
+model Course {
+  id              String        @id @default(uuid())
+  title           String
+  description     String        @db.Text
+  shortDescription String?      @db.Text
+  level           CourseLevel
+  language        String        @default("Английский")
+  category        String?
+  
+  // Преподаватель
+  teacherId       String
+  teacher         User          @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  // Контент и медиа
+  coverImage      String?
+  previewVideo    String?       // URL видео-превью
+  duration        Int?          // Продолжительность в минутах
+  lessonsCount    Int           @default(0)
+  
+  // Статус и публикация
+  status          CourseStatus  @default(DRAFT)
+  isPublished     Boolean       @default(false)
+  publishedAt     DateTime?
+  
+  // Цена (в копейках для точности)
+  price           Int           @default(0) // 0 = бесплатный курс
+  currency        String        @default("BYN")
+  
+  // Статистика
+  enrolledCount   Int           @default(0)
+  averageRating   Float?
+  reviewsCount    Int           @default(0)
+  
+  // Метаданные
+  tags            String[]      @default([])
+  prerequisites   String[]      @default([]) // ID предварительных курсов
+  learningOutcomes String[]     @default([]) // Что изучит студент
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Отношения
+  lessons         Lesson[]
+  enrollments     Enrollment[]
+  reviews         Review[]
+  certificates    Certificate[]
+  progress        Progress[]
+
+  @@index([teacherId])
+  @@index([level])
+  @@index([status])
+  @@index([isPublished])
+  @@index([category])
+  @@map("courses")
+}
+
+model Lesson {
+  id          String     @id @default(uuid())
+  courseId    String
+  course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  // Основная информация
+  title       String
+  description String?    @db.Text
+  order       Int        // Порядок урока в курсе
+  type        LessonType @default(VIDEO)
+  
+  // Контент
+  content     String?    @db.Text // Markdown или HTML контент
+  videoUrl    String?    // URL видео (YouTube, Vimeo, или собственный)
+  duration    Int?       // Продолжительность в секундах
+  
+  // Файлы и ресурсы
+  attachments Json?      // [{name: string, url: string, size: number}]
+  
+  // Доступность
+  isPublished Boolean    @default(true)
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Отношения
+  questions   Question[]
+  progress    Progress[]
+
+  @@index([courseId])
+  @@index([order])
+  @@map("lessons")
+}
+
+model Question {
+  id          String       @id @default(uuid())
+  lessonId    String
+  lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  type        QuestionType
+  order       Int          // Порядок вопроса в тесте
+  
+  // Контент вопроса
+  question    String       @db.Text
+  explanation String?      @db.Text // Объяснение правильного ответа
+  
+  // Ответы (JSON для гибкости разных типов вопросов)
+  options     Json         // [{id: string, text: string, isCorrect: boolean}]
+  
+  // Настройки
+  points      Int          @default(1)
+  timeLimit   Int?         // Время на ответ в секундах (опционально)
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Отношения
+  answers     Answer[]
+
+  @@index([lessonId])
+  @@index([order])
+  @@map("questions")
+}
+
+model Enrollment {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  // Статус зачисления
+  enrolledAt  DateTime  @default(now())
+  startedAt   DateTime? // Когда начал проходить
+  completedAt DateTime? // Когда завершил
+  
+  // Прогресс
+  progress    Float     @default(0) // 0-100%
+  
+  // Доступ
+  expiresAt   DateTime? // Дата окончания доступа (для платных курсов с ограничением)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([completedAt])
+  @@map("enrollments")
+}
+
+model Progress {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation("UserProgress", fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  // Прогресс урока
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  
+  // Статистика
+  timeSpent   Int       @default(0) // Время в секундах
+  attempts    Int       @default(0) // Количество попыток
+  score       Float?    // Оценка за тест (0-100)
+  
+  // Ответы на вопросы
+  lastPosition Int      @default(0) // Последняя позиция в видео/контенте
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([lessonId])
+  @@index([isCompleted])
+  @@map("progress")
+}
+
+model Answer {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation("UserAnswers", fields: [userId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  // Ответ пользователя
+  answer      Json      // Зависит от типа вопроса: string, string[], {from: string, to: string}[]
+  isCorrect   Boolean
+  
+  // Статистика
+  timeSpent   Int?      // Время на ответ в секундах
+  attempts    Int       @default(1)
+  
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([questionId])
+  @@map("answers")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserReviews", fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  rating    Int      // 1-5 звезд
+  comment   String?  @db.Text
+  
+  // Модерация
+  isVisible Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, courseId]) // Один отзыв на курс
+  @@index([courseId])
+  @@index([rating])
+  @@index([isVisible])
+  @@map("reviews")
+}
+
+model Certificate {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation("UserCertificates", fields: [userId], references: [id], onDelete: Cascade)
+  courseId         String
+  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  // Данные сертификата
+  certificateCode  String   @unique // Уникальный код для верификации
+  issuedAt         DateTime @default(now())
+  
+  // PDF
+  pdfUrl           String?  // URL сгенерированного PDF
+  
+  // Статистика курса
+  finalScore       Float?   // Финальная оценка
+  completionTime   Int?     // Время прохождения в днях
+  
+  @@unique([userId, courseId]) // Один сертификат на курс
+  @@index([userId])
+  @@index([courseId])
+  @@index([certificateCode])
+  @@map("certificates")
 }

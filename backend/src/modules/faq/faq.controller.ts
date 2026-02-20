@@ -46,7 +46,7 @@ class FAQController {
     })
 
     const data = reorderSchema.parse(req.body)
-    const result = await faqService.reorderFAQs(data.items)
+    const result = await faqService.reorderFAQs(data.items as { id: string; order: number }[])
     res.json({ data: result })
   }
 }

@@ -1,3 +1,4 @@
+import type { Request } from 'express'
 import type { JwtPayload } from '../lib/jwt'
 
 declare global {
@@ -9,4 +10,6 @@ declare global {
   }
 }
 
-export {}
+export interface AuthRequest extends Request {
+  user?: JwtPayload
+}

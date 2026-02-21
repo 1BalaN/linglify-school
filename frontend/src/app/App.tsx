@@ -20,6 +20,14 @@ import {
   AdminDashboardPage,
   AdminFAQPage,
   AdminMessagesPage,
+  AdminCoursesPage,
+  AdminModerationPage,
+  CoursesPage,
+  CourseDetailPage,
+  CourseLessonsPage,
+  StudentCoursePage,
+  LessonPage,
+  MyCoursesPage,
 } from '@/pages'
 import { useGetCurrentUserQuery } from '@/entities/user'
 import { setUser, logout } from '@/entities/user'
@@ -74,22 +82,20 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/admin/faq" element={<AdminFAQPage />} />
           <Route path="/admin/messages" element={<AdminMessagesPage />} />
+          <Route path="/admin/courses" element={<AdminCoursesPage />} />
+          <Route path="/admin/moderation" element={<AdminModerationPage />} />
           
           {/* Legal pages */}
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           
-          {/* Placeholder routes */}
-          <Route
-            path="/courses"
-            element={
-              <div className="container mx-auto px-4 py-12 text-center">
-                <h1 className="text-3xl font-bold text-gray-900">
-                  Курсы (в разработке)
-                </h1>
-              </div>
-            }
-          />
+          {/* Course routes */}
+          <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/courses/:id" element={<CourseDetailPage />} />
+          <Route path="/courses/:id/lessons" element={<CourseLessonsPage />} />
+          <Route path="/courses/:id/learn" element={<StudentCoursePage />} />
+          <Route path="/my-courses" element={<MyCoursesPage />} />
+          <Route path="/lessons/:lessonId" element={<LessonPage />} />
           <Route
             path="/about"
             element={

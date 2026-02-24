@@ -2,25 +2,9 @@ import { useRef, useState } from 'react'
 import { Upload, Link as LinkIcon, X, Video, Loader2 } from 'lucide-react'
 import { Button } from './Button'
 import { Input } from './Input'
+import { isDirectVideo, toEmbedUrl } from '@/shared/lib/video'
 
 const API_URL = import.meta.env.VITE_API_URL as string
-
-/** Конвертирует любую YouTube/Vimeo ссылку в embed-формат */
-export function toEmbedUrl(url: string): string {
-  if (!url) return url
-  // YouTube: watch?v=ID или youtu.be/ID
-  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/)
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}`
-  // Vimeo: vimeo.com/ID
-  const vm = url.match(/(?:vimeo\.com\/)(\d+)/)
-  if (vm) return `https://player.vimeo.com/video/${vm[1]}`
-  return url
-}
-
-/** Определяет, является ли URL прямым видеофайлом (не iframe) */
-export function isDirectVideo(url: string): boolean {
-  return /\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i.test(url) || url.includes('cloudinary.com')
-}
 
 interface VideoUploadProps {
   value: string
@@ -113,9 +97,6 @@ export const VideoUpload = ({ value, onChange, label = 'Видео', required = 
               </Button>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">
-            YouTube, Vimeo — ссылку вставляй как есть, система автоматически преобразует в embed
-          </p>
         </div>
       ) : (
         <div className="space-y-1">
@@ -148,11 +129,6 @@ export const VideoUpload = ({ value, onChange, label = 'Видео', required = 
             className="hidden" onChange={handleFileChange} />
           {uploadError && (
             <p className="text-xs text-red-600">{uploadError}</p>
-          )}
-          {!value && (
-            <p className="text-xs text-muted-foreground">
-              Требуется настройка Cloudinary (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)
-            </p>
           )}
         </div>
       )}

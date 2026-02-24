@@ -246,7 +246,7 @@ export const HomePage = () => {
           <Link to="/register">
             <Button
               size="lg"
-              className="bg-background text-primary hover:bg-background/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              className="bg-background hover:bg-background/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
             >
               Начать бесплатно
             </Button>

@@ -56,7 +56,18 @@ class CourseService {
    * Получить список курсов с фильтрацией и пагинацией
    */
   async getCourses(query: GetCoursesQuery, userId?: string, userRole?: UserRole) {
-    const { page, limit, sortBy, order, search, tags, isPublished, ...filters } = query
+    const {
+      page,
+      limit,
+      sortBy,
+      order,
+      search,
+      tags,
+      isPublished,
+      minPrice,
+      maxPrice,
+      ...filters
+    } = query
     const skip = (page - 1) * limit
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,10 +108,10 @@ class CourseService {
     }
 
     // Фильтрация по цене
-    if (query.minPrice !== undefined || query.maxPrice !== undefined) {
+    if (minPrice !== undefined || maxPrice !== undefined) {
       where.price = {}
-      if (query.minPrice !== undefined) where.price.gte = query.minPrice
-      if (query.maxPrice !== undefined) where.price.lte = query.maxPrice
+      if (minPrice !== undefined) where.price.gte = minPrice
+      if (maxPrice !== undefined) where.price.lte = maxPrice
     }
 
     const [courses, total] = await Promise.all([

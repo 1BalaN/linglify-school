@@ -10,6 +10,10 @@ import { generalLimiter } from './shared/middleware/rateLimit'
 import authRouter from './modules/auth/auth.router'
 import faqRouter from './modules/faq/faq.router'
 import contactRouter from './modules/contact/contact.router'
+import courseRouter from './modules/course/course.router'
+import lessonRouter from './modules/lesson/lesson.router'
+import questionRouter from './modules/question/question.router'
+import uploadRouter from './modules/upload/upload.router'
 
 const app = express()
 
@@ -39,6 +43,10 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRouter)
 app.use('/api/faq', faqRouter)
 app.use('/api/contact', contactRouter)
+app.use('/api/courses', courseRouter)
+app.use('/api/lessons', lessonRouter)
+app.use('/api/questions', questionRouter)
+app.use('/api/upload', uploadRouter)
 
 // Error handlers
 app.use(notFoundHandler)

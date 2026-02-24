@@ -3,23 +3,6 @@ import { ChevronDown, Search } from 'lucide-react'
 import { Input } from '@/shared/ui'
 import { useGetAllFAQsQuery } from '@/entities/faq'
 
-const faqDataFallback = [
-  {
-    category: 'Общие вопросы',
-    question: 'Что такое Linglify?',
-    answer: 'Linglify — это современная образовательная платформа для изучения иностранных языков. Мы предлагаем интерактивные курсы, видеоуроки, упражнения и персонализированный подход к обучению.',
-  },
-  {
-    category: 'Общие вопросы',
-    question: 'Какие языки можно изучать на платформе?',
-    answer: 'В настоящее время доступны курсы английского, испанского, французского, немецкого, итальянского, китайского и японского языков. Мы постоянно работаем над добавлением новых языков.',
-  },
-  {
-    category: 'Общие вопросы',
-    question: 'Нужно ли скачивать приложение?',
-    answer: 'Нет, Linglify работает полностью в браузере. Однако мы планируем выпустить мобильные приложения для iOS и Android в ближайшем будущем.',
-  },
-]
 
 export const FAQPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -38,7 +21,7 @@ export const FAQPage = () => {
           order: item.order,
         }))
     }
-    return faqDataFallback
+    return []
   }, [data])
 
   const toggleItem = (id: string) => {

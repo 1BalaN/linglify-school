@@ -1,6 +1,9 @@
 import type { Request, Response, NextFunction } from 'express'
 import { jwtService } from '../lib/jwt'
 import { AppError } from './errorHandler'
+import type { AuthRequest } from '../types/express'
+
+export type { AuthRequest }
 
 export const requireAuth = (
   req: Request,
@@ -42,6 +45,30 @@ export const requireRole = (...roles: string[]) => {
       )
     }
 
+    next()
+  }
+}
+
+/**
+ * Опциональная аутентификация (не выбрасывает ошибку, если токена нет)
+ */
+export const optionalAuth = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const authHeader = req.headers.authorization
+
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.slice(7)
+      const payload = jwtService.verifyAccessToken(token)
+      req.user = payload
+    }
+    
+    next()
+  } catch (error) {
+    // Игнорируем ошибки, пользователь просто будет неавторизован
     next()
   }
 }

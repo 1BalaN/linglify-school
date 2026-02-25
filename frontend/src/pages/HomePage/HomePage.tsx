@@ -8,6 +8,7 @@ import {
   Award,
   TrendingUp,
   CheckCircle,
+  User,
 } from 'lucide-react'
 import MainBanner from '@/assets/images/MainBanner.webp'
 
@@ -53,8 +54,10 @@ export const HomePage = () => {
                   {[1, 2, 3, 4].map(i => (
                     <div
                       key={i}
-                      className="h-10 w-10 rounded-full border-2 border-background bg-primary/30"
-                    />
+                      className="flex items-center justify-center h-10 w-10 rounded-full border-2 border-background bg-primary/30"
+                    >
+                      <User className="h-5 w-5 text-primary-foreground/80" />
+                    </div>
                   ))}
                 </div>
                 <div>

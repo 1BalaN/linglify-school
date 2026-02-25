@@ -26,6 +26,7 @@ import {
   StudentCoursePage,
   LessonPage,
   MyCoursesPage,
+  AboutPage,
 } from '@/pages'
 
 
@@ -48,10 +49,11 @@ export const AppRouter = () => {
         )}
       />
           
-      {/* Support pages */}
+      {/* Support / static pages */}
       <Route path="/help" element={<HelpPage />} />
       <Route path="/faq" element={<FAQPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/about" element={<AboutPage />} />
           
       {/* Admin / teacher pages */}
       <Route
@@ -133,16 +135,6 @@ export const AppRouter = () => {
             <LessonPage />
           </ProtectedRoute>
         )}
-      />
-      <Route
-        path="/about"
-        element={
-          <div className="container mx-auto px-4 py-12 text-center">
-            <h1 className="text-3xl font-bold text-gray-900">
-              О платформе (в разработке)
-            </h1>
-          </div>
-        }
       />
       <Route
         path="/pricing"

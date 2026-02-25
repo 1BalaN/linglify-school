@@ -3,13 +3,23 @@ import { Save, X } from 'lucide-react'
 import { Button, Input } from '@/shared/ui'
 import { useUpdateCourseMutation } from '@/entities/course'
 import type { Course, CourseLevel } from '@/shared/types/course'
+import { COURSE_CATEGORIES } from '@/shared/constants/courseCategories'
 
 const LEVELS: CourseLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
 interface CourseMetaEditFormProps {
   course: Pick<
     Course,
-    'id' | 'title' | 'description' | 'shortDescription' | 'level' | 'language' | 'coverImage'
+    | 'id'
+    | 'title'
+    | 'description'
+    | 'shortDescription'
+    | 'level'
+    | 'language'
+    | 'coverImage'
+    | 'category'
+    | 'price'
+    | 'currency'
   >
   onClose: () => void
   onUpdated: (message: string) => void
@@ -30,10 +40,23 @@ export const CourseMetaEditForm = ({
   const [editLevel, setEditLevel] = useState<CourseLevel>(course.level)
   const [editLanguage, setEditLanguage] = useState(course.language)
   const [editCoverImage, setEditCoverImage] = useState(course.coverImage || '')
+  const [editCategory, setEditCategory] = useState(course.category || '')
+  const [editPriceInput, setEditPriceInput] = useState(
+    course.price ? (course.price / 100).toString() : '0',
+  )
 
   const handleSave = async () => {
     if (!editTitle.trim()) {
       onError('Введите название курса')
+      return
+    }
+
+    const normalizedPrice = editPriceInput.trim()
+      ? Math.round(Number(editPriceInput.replace(',', '.')) * 100)
+      : 0
+
+    if (Number.isNaN(normalizedPrice) || normalizedPrice < 0) {
+      onError('Введите корректную цену')
       return
     }
 
@@ -47,6 +70,8 @@ export const CourseMetaEditForm = ({
           level: editLevel,
           language: editLanguage.trim(),
           coverImage: editCoverImage.trim() || undefined,
+          category: editCategory.trim() || undefined,
+          price: normalizedPrice,
         },
       }).unwrap()
 
@@ -113,6 +138,34 @@ export const CourseMetaEditForm = ({
             onChange={e => setEditLanguage(e.target.value)}
             placeholder="Английский"
           />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Категория</label>
+          <select
+            value={editCategory}
+            onChange={e => setEditCategory(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          >
+            <option value="">Не выбрана</option>
+            {COURSE_CATEGORIES.map(category => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">
+            Цена ({course.currency})
+          </label>
+          <Input
+            value={editPriceInput}
+            onChange={e => setEditPriceInput(e.target.value)}
+            placeholder="0"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Указывайте цену за курс в {course.currency}, например 49.90
+          </p>
         </div>
         <div className="md:col-span-2">
           <label className="mb-1 block text-sm font-medium">URL обложки</label>

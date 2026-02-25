@@ -55,7 +55,7 @@ export const StudentCoursePage = () => {
   if (!course.isEnrolled) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="glass-card max-w-md p-8 text-center">
+        <div className="glass-card max-w-md rounded-2xl p-8 text-center">
           <Lock className="mx-auto mb-4 h-12 w-12 text-amber-500" />
           <h2 className="mb-2 text-xl font-bold">Доступ закрыт</h2>
           <p className="mb-6 text-muted-foreground">

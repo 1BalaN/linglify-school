@@ -29,12 +29,21 @@ class LessonService {
       throw new AppError(403, 'ACCESS_DENIED', 'Нет доступа к созданию уроков в этом курсе')
     }
 
+    // Определяем корректный порядок на основе существующих уроков
+    const lastLesson = await prisma.lesson.findFirst({
+      where: { courseId: dto.courseId },
+      orderBy: { order: 'desc' },
+      select: { order: true },
+    })
+
+    const nextOrder = (lastLesson?.order ?? 0) + 1
+
     const lesson = await prisma.lesson.create({
       data: {
         courseId: dto.courseId,
         title: dto.title,
         description: dto.description,
-        order: dto.order,
+        order: nextOrder,
         type: dto.type,
         content: dto.content,
         videoUrl: dto.videoUrl,
@@ -246,6 +255,22 @@ class LessonService {
         },
       },
     })
+
+    // Перенумеровать оставшиеся уроки, чтобы порядок был последовательным
+    const remainingLessons = await prisma.lesson.findMany({
+      where: { courseId: lesson.courseId },
+      orderBy: { order: 'asc' },
+      select: { id: true },
+    })
+
+    await Promise.all(
+      remainingLessons.map((l, index) =>
+        prisma.lesson.update({
+          where: { id: l.id },
+          data: { order: index + 1 },
+        }),
+      ),
+    )
 
     return { message: 'Урок успешно удален' }
   }

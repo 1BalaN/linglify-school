@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { BookOpen, Clock, BarChart2, CheckCircle2, ArrowRight } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Enrollment } from '@/shared/types/course'
+import { useGetCourseProgressQuery } from '@/entities/lesson'
 
 const levelLabel: Record<string, string> = {
   A1: 'A1 — Начинающий',
@@ -18,9 +19,17 @@ interface MyCourseCardProps {
 
 export const MyCourseCard = ({ enrollment }: MyCourseCardProps) => {
   const course = enrollment.course
+  
+  const { data: courseProgress } = useGetCourseProgressQuery(enrollment.courseId, {
+    refetchOnMountOrArgChange: true,
+  })
+
   if (!course) return null
 
-  const progress = Math.round(enrollment.progress ?? 0)
+  const computedProgress =
+    courseProgress?.data.statistics.progress ?? enrollment.progress ?? 0
+
+  const progress = Math.round(computedProgress)
   const isCompleted = !!enrollment.completedAt || progress >= 100
 
   const lessonsCount =

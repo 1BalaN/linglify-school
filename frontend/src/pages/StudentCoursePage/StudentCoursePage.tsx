@@ -17,8 +17,20 @@ export const StudentCoursePage = () => {
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
 
-  const { data: courseData, isLoading: isCourseLoading } = useGetCourseByIdQuery(id!)
-  const { data: lessonsData, isLoading: isLessonsLoading } = useGetCourseLessonsQuery(id!)
+  const {
+    data: courseData,
+    isLoading: isCourseLoading,
+    isFetching: isCourseFetching,
+  } = useGetCourseByIdQuery(id!, {
+    refetchOnMountOrArgChange: true,
+  })
+  const {
+    data: lessonsData,
+    isLoading: isLessonsLoading,
+    isFetching: isLessonsFetching,
+  } = useGetCourseLessonsQuery(id!, {
+    refetchOnMountOrArgChange: true,
+  })
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
@@ -30,7 +42,7 @@ export const StudentCoursePage = () => {
     return null
   }
 
-  if (isCourseLoading || isLessonsLoading) {
+  if (isCourseLoading || isLessonsLoading || isCourseFetching || isLessonsFetching) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">

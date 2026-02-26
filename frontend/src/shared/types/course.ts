@@ -220,6 +220,10 @@ export interface Certificate {
   
   // Дополнительные поля
   course?: Course
+  user?: {
+    firstName: string | null
+    lastName: string | null
+  }
 }
 
 // DTO types

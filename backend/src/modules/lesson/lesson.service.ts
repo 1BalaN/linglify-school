@@ -38,6 +38,14 @@ class LessonService {
 
     const nextOrder = (lastLesson?.order ?? 0) + 1
 
+    // Если урок помечен как финальный тест — сбросим флаг у остальных уроков курса
+    if (dto.isFinalTest) {
+      await prisma.lesson.updateMany({
+        where: { courseId: dto.courseId, isFinalTest: true },
+        data: { isFinalTest: false },
+      })
+    }
+
     const lesson = await prisma.lesson.create({
       data: {
         courseId: dto.courseId,
@@ -50,6 +58,7 @@ class LessonService {
         duration: dto.duration,
         attachments: dto.attachments,
         isPublished: dto.isPublished,
+        isFinalTest: dto.type === 'TEST' && !!dto.isFinalTest,
       },
     })
 
@@ -159,6 +168,7 @@ class LessonService {
         type: true,
         duration: true,
         isPublished: true,
+        isFinalTest: true,
       },
     })
 
@@ -213,9 +223,30 @@ class LessonService {
       throw new AppError(403, 'ACCESS_DENIED', 'Нет доступа к редактированию этого урока')
     }
 
+    // Если отмечаем этот урок как финальный тест, снимаем флаг с остальных уроков курса
+    if (dto.isFinalTest) {
+      await prisma.lesson.updateMany({
+        where: {
+          courseId: lesson.courseId,
+          id: { not: lessonId },
+          isFinalTest: true,
+        },
+        data: { isFinalTest: false },
+      })
+    }
+
+    // Нельзя оставлять урок финальным тестом, если тип не TEST
+    const shouldBeFinal = dto.type === 'TEST' && dto.isFinalTest
+
     const updatedLesson = await prisma.lesson.update({
       where: { id: lessonId },
-      data: dto,
+      data: {
+        ...dto,
+        ...(dto.type && dto.type !== 'TEST' ? { isFinalTest: false } : {}),
+        ...(dto.isFinalTest !== undefined && dto.type === 'TEST'
+          ? { isFinalTest: shouldBeFinal }
+          : {}),
+      },
     })
 
     return updatedLesson

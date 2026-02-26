@@ -104,6 +104,7 @@ export const LessonEditPanel = ({
   // ── INTERACTIVE specific ──
   const [exercises, setExercises] = useState<EditExerciseForm[]>([])
   const [originalExQIds, setOriginalExQIds] = useState<string[]>([])
+  const [isFinalTest, setIsFinalTest] = useState<boolean>(false)
 
   // ── Init from fetched lesson ──
   useEffect(() => {
@@ -136,6 +137,7 @@ export const LessonEditPanel = ({
           .filter(q => q.type !== 'FILL_IN_BLANK')
           .map(q => q.id),
       )
+      setIsFinalTest(lesson.isFinalTest ?? false)
     }
 
     if (lesson.type === 'INTERACTIVE') {
@@ -268,6 +270,7 @@ export const LessonEditPanel = ({
           duration: duration ? Number(duration) * 60 : undefined,
           videoUrl: videoUrl.trim() || undefined,
           content,
+          ...(lesson.type === 'TEST' ? { isFinalTest } : { isFinalTest: false }),
         },
       }).unwrap()
 
@@ -416,9 +419,20 @@ export const LessonEditPanel = ({
 
         {lesson.type === 'TEST' && (
           <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
-            <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-400">
-              <ClipboardCheck className="h-4 w-4" />
-              <span>Настройки теста</span>
+            <div className="flex items-center justify-between gap-2 text-sm font-medium text-amber-700 dark:text-amber-400">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck className="h-4 w-4" />
+                <span>Настройки теста</span>
+              </div>
+              <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-amber-800 dark:text-amber-300">
+                <input
+                  type="checkbox"
+                  checked={isFinalTest}
+                  onChange={e => setIsFinalTest(e.target.checked)}
+                  className="h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                />
+                <span>Финальный тест курса</span>
+              </label>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>

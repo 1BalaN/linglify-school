@@ -6,13 +6,15 @@ export const createLessonSchema = z.object({
   courseId: z.string().uuid(),
   title: z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
-  order: z.number().int().positive(),
+  // Порядок теперь вычисляется на бэкенде, поле не обязательно в запросе
+  order: z.number().int().positive().optional(),
   type: z.nativeEnum(LessonType),
   content: z.string().optional(),
   videoUrl: z.string().url().optional(),
   duration: z.number().int().positive().optional(),
   attachments: z.any().optional(),
   isPublished: z.boolean().optional(),
+  isFinalTest: z.boolean().optional(),
 })
 
 export const updateLessonSchema = createLessonSchema.omit({ courseId: true }).partial()

@@ -62,6 +62,11 @@ export const StudentLessonItem = ({ lesson, isAccessible, onOpen }: StudentLesso
                   {typeLabel}
                 </span>
               )}
+              {lesson.isFinalTest && (
+                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">
+                  Финальный тест
+                </span>
+              )}
             </div>
             <h3 className="mb-2 font-semibold text-foreground">{lesson.title}</h3>
             {lesson.description && (

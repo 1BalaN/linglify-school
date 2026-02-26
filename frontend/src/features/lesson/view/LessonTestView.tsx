@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle, RefreshCw, ClipboardCheck } from 'lucide-react'
+import { CheckCircle, RefreshCw, ClipboardCheck, CheckCircle2, CheckSquare } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Question, QuestionOption } from '@/shared/types/course'
 import { getPassThresholdFromContent } from '@/shared/lib/lessonContent'
@@ -149,9 +149,6 @@ export const LessonTestView = ({ questions, content, onComplete }: LessonTestVie
                 Вопрос {i + 1}
               </span>
               <p className="text-base font-medium text-foreground">{q.question}</p>
-              {isMultiple && (
-                <p className="mt-1 text-xs text-muted-foreground">Выберите все правильные ответы</p>
-              )}
             </div>
             <div className="space-y-2">
               {options.map(opt => {
@@ -169,12 +166,18 @@ export const LessonTestView = ({ questions, content, onComplete }: LessonTestVie
                         : 'border-border bg-background text-foreground hover:border-primary/40 hover:bg-primary/5'
                     }`}
                   >
-                    <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-${
-                        isMultiple ? 'md' : 'full'
-                      } border-2 ${selected ? 'border-primary bg-primary text-white' : 'border-border'}`}
-                    >
-                      {selected && <CheckCircle className="h-3 w-3" />}
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                      {isMultiple ? (
+                        selected ? (
+                          <CheckSquare className="h-5 w-5 text-primary" />
+                        ) : (
+                          <div className="h-5 w-5 rounded-md border-2 border-muted-foreground/40" />
+                        )
+                      ) : selected ? (
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                      ) : (
+                        <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/40" />
+                      )}
                     </span>
                     {opt.text}
                   </button>

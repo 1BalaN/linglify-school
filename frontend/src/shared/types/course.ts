@@ -78,6 +78,7 @@ export interface Lesson {
   attachments: Attachment[] | null
   
   isPublished: boolean
+  isFinalTest: boolean
   
   createdAt: string
   updatedAt: string
@@ -245,13 +246,13 @@ export interface CreateLessonDto {
   courseId: string
   title: string
   description?: string
-  order: number
   type: LessonType
   content?: string
   videoUrl?: string
   duration?: number
   attachments?: Attachment[]
   isPublished?: boolean
+  isFinalTest?: boolean
 }
 
 export interface UpdateLessonDto extends Partial<Omit<CreateLessonDto, 'courseId'>> {}

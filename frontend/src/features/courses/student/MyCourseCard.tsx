@@ -30,7 +30,7 @@ export const MyCourseCard = ({ enrollment }: MyCourseCardProps) => {
     courseProgress?.data.statistics.progress ?? enrollment.progress ?? 0
 
   const progress = Math.round(computedProgress)
-  const isCompleted = !!enrollment.completedAt || progress >= 100
+  const isCompleted = progress >= 100
 
   const lessonsCount =
     course.lessonsCount ?? (course as { _count?: { lessons?: number } })._count?.lessons ?? 0

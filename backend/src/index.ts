@@ -14,6 +14,7 @@ import courseRouter from './modules/course/course.router'
 import lessonRouter from './modules/lesson/lesson.router'
 import questionRouter from './modules/question/question.router'
 import uploadRouter from './modules/upload/upload.router'
+import certificateRouter from './modules/certificate/certificate.router'
 
 const app = express()
 
@@ -47,6 +48,7 @@ app.use('/api/courses', courseRouter)
 app.use('/api/lessons', lessonRouter)
 app.use('/api/questions', questionRouter)
 app.use('/api/upload', uploadRouter)
+app.use('/api/certificates', certificateRouter)
 
 // Error handlers
 app.use(notFoundHandler)

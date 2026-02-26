@@ -9,6 +9,7 @@ import type {
   UpdateProgressDto,
 } from './lesson.schema'
 import { UserRole } from '@prisma/client'
+import { certificateService } from '../certificate/certificate.service'
 
 class LessonService {
   /**
@@ -69,6 +70,20 @@ class LessonService {
         lessonsCount: {
           increment: 1,
         },
+      },
+    })
+
+    // Сбросить флаг завершения курса у всех студентов,
+    // если в курс добавлен новый урок (прогресс пересчитается автоматически)
+    await prisma.enrollment.updateMany({
+      where: {
+        courseId: dto.courseId,
+        completedAt: {
+          not: null,
+        },
+      },
+      data: {
+        completedAt: null,
       },
     })
 
@@ -660,7 +675,7 @@ class LessonService {
 
     const progress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0
 
-    await prisma.enrollment.update({
+    const enrollment = await prisma.enrollment.update({
       where: {
         userId_courseId: {
           userId,
@@ -673,6 +688,10 @@ class LessonService {
         ...(completedLessons === 1 && !progress && { startedAt: new Date() }),
       },
     })
+
+    if (enrollment.progress === 100 && enrollment.completedAt) {
+      await certificateService.maybeIssueCertificate(userId, courseId)
+    }
   }
 }
 

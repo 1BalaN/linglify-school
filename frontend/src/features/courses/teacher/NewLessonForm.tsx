@@ -59,7 +59,6 @@ interface NewLessonFormProps {
 
 export const NewLessonForm = ({
   courseId,
-  lessonsCount,
   onClose,
   onSuccess,
   onError,
@@ -78,6 +77,7 @@ export const NewLessonForm = ({
   // TEST specific
   const [passThreshold, setPassThreshold] = useState('70')
   const [testQuestions, setTestQuestions] = useState<TestQuestionForm[]>([makeEmptyQuestion()])
+  const [isFinalTest, setIsFinalTest] = useState(false)
   // INTERACTIVE specific
   const [exercises, setExercises] = useState<FillBlankForm[]>([makeEmptyExercise()])
 
@@ -205,10 +205,10 @@ export const NewLessonForm = ({
       title: title.trim(),
       description: description.trim() || undefined,
       type: lessonType as LessonType,
-      order: lessonsCount + 1,
       videoUrl: videoUrl.trim() || undefined,
       content,
       duration: duration ? Number(duration) * 60 : undefined,
+      isFinalTest: lessonType === 'TEST' ? isFinalTest : false,
     }
 
     try {
@@ -349,9 +349,20 @@ export const NewLessonForm = ({
         {/* TEST fields */}
         {lessonType === 'TEST' && (
           <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
-            <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-400">
-              <ClipboardCheck className="h-4 w-4" />
-              <span>Настройки теста</span>
+            <div className="flex items-center justify-between gap-2 text-sm font-medium text-amber-700 dark:text-amber-400">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck className="h-4 w-4" />
+                <span>Настройки теста</span>
+              </div>
+              <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-amber-800 dark:text-amber-300">
+                <input
+                  type="checkbox"
+                  checked={isFinalTest}
+                  onChange={e => setIsFinalTest(e.target.checked)}
+                  className="h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                />
+                <span>Сделать финальным тестом курса</span>
+              </label>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <VideoUpload

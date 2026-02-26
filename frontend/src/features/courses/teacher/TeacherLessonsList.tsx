@@ -91,6 +91,11 @@ export const TeacherLessonsList = ({
                   <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
                     {meta?.label || lesson.type}
                   </span>
+                  {lesson.isFinalTest && (
+                    <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">
+                      Финальный тест
+                    </span>
+                  )}
                 </div>
                 {lesson.description && (
                   <p className="line-clamp-1 text-sm text-muted-foreground">

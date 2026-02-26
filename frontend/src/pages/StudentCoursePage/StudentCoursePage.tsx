@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
 import { useGetCourseByIdQuery } from '@/entities/course'
 import { useGetCourseLessonsQuery } from '@/entities/lesson'
+import { useGetMyCertificateByCourseQuery } from '@/entities/certificate'
+import { openCertificatePdf } from '@/shared/lib/certificate'
 import { Button } from '@/shared/ui'
 import { BookOpen, Lock, Loader2 } from 'lucide-react'
 import {
@@ -32,10 +34,15 @@ export const StudentCoursePage = () => {
     refetchOnMountOrArgChange: true,
   })
 
+  const { data: certificateData } = useGetMyCertificateByCourseQuery(id!, {
+    skip: !id,
+  })
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const course = courseData?.data
   const lessons = lessonsData?.data || []
+  const certificate = certificateData?.data
 
   if (!user) {
     navigate('/login')
@@ -45,10 +52,7 @@ export const StudentCoursePage = () => {
   if (isCourseLoading || isLessonsLoading || isCourseFetching || isLessonsFetching) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent" />
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     )
   }
@@ -81,6 +85,11 @@ export const StudentCoursePage = () => {
 
   const completedLessons = lessons.filter((l) => l.progress?.isCompleted).length
   const progress = lessons.length > 0 ? (completedLessons / lessons.length) * 100 : 0
+
+  const handleViewCertificate = () => {
+    if (!certificate) return
+    void openCertificatePdf(certificate.id)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
@@ -131,6 +140,8 @@ export const StudentCoursePage = () => {
               completedLessons={completedLessons}
               totalLessons={lessons.length}
               progress={progress}
+              hasCertificate={!!certificate}
+              onViewCertificate={certificate ? handleViewCertificate : undefined}
             />
           </aside>
         </div>

@@ -219,6 +219,7 @@ model Lesson {
   description String?    @db.Text
   order       Int        // Порядок урока в курсе
   type        LessonType @default(VIDEO)
+  isFinalTest Boolean    @default(false)
   
   // Контент
   content     String?    @db.Text // Markdown или HTML контент

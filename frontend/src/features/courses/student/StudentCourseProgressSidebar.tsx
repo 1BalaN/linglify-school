@@ -1,15 +1,20 @@
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, Award, Download } from 'lucide-react'
+import { Button } from '@/shared/ui'
 
 interface StudentCourseProgressSidebarProps {
   completedLessons: number
   totalLessons: number
   progress: number
+  hasCertificate?: boolean
+  onViewCertificate?: () => void
 }
 
 export const StudentCourseProgressSidebar = ({
   completedLessons,
   totalLessons,
   progress,
+  hasCertificate,
+  onViewCertificate,
 }: StudentCourseProgressSidebarProps) => {
   const remaining = totalLessons - completedLessons
 
@@ -58,6 +63,28 @@ export const StudentCourseProgressSidebar = ({
           <p className="text-sm text-emerald-600 dark:text-emerald-400">
             Поздравляем! Вы прошли все уроки этого курса.
           </p>
+        </div>
+      )}
+
+      {hasCertificate && onViewCertificate && (
+        <div className="mt-4 space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+          <div className="mb-1 flex items-center gap-2 text-primary">
+            <Award className="h-4 w-4" />
+            <span className="font-semibold">Сертификат доступен</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Вы можете открыть и скачать сертификат об окончании этого курса.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            className="mt-1 w-full"
+            variant="primary"
+            onClick={onViewCertificate}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Посмотреть сертификат
+          </Button>
         </div>
       )}
     </div>

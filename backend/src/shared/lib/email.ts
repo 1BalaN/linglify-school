@@ -129,6 +129,32 @@ export class EmailService {
       `,
     })
   }
+
+  async sendCertificateEmail(
+    email: string,
+    options: { courseTitle: string; certificateUrl: string; verificationCode: string; firstName?: string }
+  ): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: `Ваш сертификат по курсу "${options.courseTitle}"`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Поздравляем${options.firstName ? `, ${options.firstName}` : ''}! 🎓</h2>
+          <p>Вы успешно завершили курс <strong>"${options.courseTitle}"</strong> на платформе Linglify.</p>
+          <p>Ваш сертификат доступен по ссылке:</p>
+          <a href="${options.certificateUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+            Открыть сертификат
+          </a>
+          <p style="color: #666; font-size: 14px;">
+            Код верификации сертификата: <strong>${options.verificationCode}</strong>
+          </p>
+          <p style="color: #666; font-size: 14px; margin-top: 16px;">
+            Этот код можно использовать для проверки подлинности сертификата.
+          </p>
+        </div>
+      `,
+    })
+  }
 }
 
 export const emailService = new EmailService()

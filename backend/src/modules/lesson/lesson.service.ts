@@ -30,21 +30,52 @@ class LessonService {
       throw new AppError(403, 'ACCESS_DENIED', 'Нет доступа к созданию уроков в этом курсе')
     }
 
-    // Определяем корректный порядок на основе существующих уроков
-    const lastLesson = await prisma.lesson.findFirst({
-      where: { courseId: dto.courseId },
-      orderBy: { order: 'desc' },
-      select: { order: true },
+    // Проверяем, есть ли уже финальный тест в курсе
+    const existingFinal = await prisma.lesson.findFirst({
+      where: { courseId: dto.courseId, isFinalTest: true },
+      orderBy: { order: 'asc' },
+      select: { id: true, order: true },
     })
 
-    const nextOrder = (lastLesson?.order ?? 0) + 1
+    if (dto.isFinalTest && existingFinal) {
+      throw new AppError(
+        400,
+        'FINAL_TEST_ALREADY_EXISTS',
+        'Финальный тест для этого курса уже создан. Отредактируйте существующий финальный тест или снимите с него этот статус.'
+      )
+    }
 
-    // Если урок помечен как финальный тест — сбросим флаг у остальных уроков курса
-    if (dto.isFinalTest) {
-      await prisma.lesson.updateMany({
-        where: { courseId: dto.courseId, isFinalTest: true },
-        data: { isFinalTest: false },
+    // Определяем порядок (order) нового урока
+    let nextOrder: number
+
+    if (dto.isFinalTest || !existingFinal) {
+      // Нет финального теста или создаём первый финальный — ставим в конец
+      const lastLesson = await prisma.lesson.findFirst({
+        where: { courseId: dto.courseId },
+        orderBy: { order: 'desc' },
+        select: { order: true },
       })
+      nextOrder = (lastLesson?.order ?? 0) + 1
+    } else {
+      // Финальный тест уже есть, новый урок должен быть перед ним
+      const insertOrder = existingFinal.order
+
+      // Сдвигаем финальный тест (и все уроки после него) на +1
+      await prisma.lesson.updateMany({
+        where: {
+          courseId: dto.courseId,
+          order: {
+            gte: insertOrder,
+          },
+        },
+        data: {
+          order: {
+            increment: 1,
+          },
+        },
+      })
+
+      nextOrder = insertOrder
     }
 
     const lesson = await prisma.lesson.create({
@@ -263,6 +294,10 @@ class LessonService {
           : {}),
       },
     })
+
+    if (updatedLesson.isFinalTest) {
+      await this.ensureFinalTestLast(lesson.courseId)
+    }
 
     return updatedLesson
   }
@@ -692,6 +727,46 @@ class LessonService {
     if (enrollment.progress === 100 && enrollment.completedAt) {
       await certificateService.maybeIssueCertificate(userId, courseId)
     }
+  }
+
+  /**
+   * Гарантировать, что финальный тест (если есть) стоит последним в порядке уроков
+   */
+  private async ensureFinalTestLast(courseId: string) {
+    const lessons = await prisma.lesson.findMany({
+      where: { courseId },
+      orderBy: { order: 'asc' },
+      select: {
+        id: true,
+        isFinalTest: true,
+      },
+    })
+
+    if (lessons.length === 0) return
+
+    const finalIndex = lessons.findIndex(l => l.isFinalTest)
+    if (finalIndex === -1) return
+    if (finalIndex === lessons.length - 1) return // уже последний
+
+    // Перестраиваем порядок: все обычные уроки сначала, финальный — в конце
+    let currentOrder = 1
+    const finalLesson = lessons[finalIndex]
+
+    for (const lesson of lessons) {
+      if (lesson.id === finalLesson.id) continue
+
+      // eslint-disable-next-line no-await-in-loop
+      await prisma.lesson.update({
+        where: { id: lesson.id },
+        data: { order: currentOrder },
+      })
+      currentOrder++
+    }
+
+    await prisma.lesson.update({
+      where: { id: finalLesson.id },
+      data: { order: currentOrder },
+    })
   }
 }
 

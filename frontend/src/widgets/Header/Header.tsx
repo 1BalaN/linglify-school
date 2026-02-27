@@ -5,7 +5,7 @@ import { RootState } from '@/app/store'
 import { logout, useLogoutMutation } from '@/entities/user'
 import { Button } from '@/shared/ui'
 import { useTheme } from '@/shared/lib/theme'
-import { BookOpen, User, LogOut, Menu, Moon, Sun, Shield } from 'lucide-react'
+import { BookOpen, User, LogOut, Menu, Moon, Sun, Shield, GraduationCap } from 'lucide-react'
 import { useState } from 'react'
 
 export const Header = () => {
@@ -69,6 +69,30 @@ export const Header = () => {
 
           {isAuthenticated && user ? (
             <div className="flex items-center space-x-3">
+              {user.role === 'STUDENT' && (
+                <Link to="/my-courses">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <GraduationCap className="h-4 w-4" />
+                    <span className="hidden lg:inline">Моё обучение</span>
+                  </Button>
+                </Link>
+              )}
+              {(user.role === 'TEACHER' || user.role === 'ADMIN') && (
+                <Link to="/admin/courses">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span className="hidden lg:inline">Мои курсы</span>
+                  </Button>
+                </Link>
+              )}
               {user.role === 'ADMIN' && (
                 <Link to="/admin/dashboard">
                   <Button
@@ -174,6 +198,26 @@ export const Header = () => {
             <div className="border-t border-border pt-4">
               {isAuthenticated && user ? (
                 <>
+                  {user.role === 'STUDENT' && (
+                    <Link
+                      to="/my-courses"
+                      className="flex items-center space-x-2 rounded-lg px-3 py-2 hover:bg-accent mb-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <GraduationCap className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Моё обучение</span>
+                    </Link>
+                  )}
+                  {(user.role === 'TEACHER' || user.role === 'ADMIN') && (
+                    <Link
+                      to="/admin/courses"
+                      className="flex items-center space-x-2 rounded-lg px-3 py-2 hover:bg-accent mb-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <BookOpen className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Мои курсы</span>
+                    </Link>
+                  )}
                   {user.role === 'ADMIN' && (
                     <Link
                       to="/admin/dashboard"

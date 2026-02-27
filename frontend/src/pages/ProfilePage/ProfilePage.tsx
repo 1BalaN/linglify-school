@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { Navigate } from 'react-router-dom'
 import { RootState } from '@/app/store'
-import { User, Settings, Shield, Phone } from 'lucide-react'
+import { User, Settings, Shield, Phone, Award } from 'lucide-react'
 import { ProfileInfo } from './components/ProfileInfo'
 import { ProfileEdit } from './components/ProfileEdit'
 import { PasswordChange } from './components/PasswordChange'
 import { PhoneVerification } from './components/PhoneVerification'
+import { ProfileCertificates } from './components/ProfileCertificates'
 
-type Tab = 'info' | 'edit' | 'password' | 'phone'
+type Tab = 'info' | 'edit' | 'password' | 'phone' | 'certificates'
 
 export const ProfilePage = () => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
@@ -23,6 +24,9 @@ export const ProfilePage = () => {
     { id: 'edit' as Tab, label: 'Редактировать', icon: Settings },
     { id: 'password' as Tab, label: 'Безопасность', icon: Shield },
     { id: 'phone' as Tab, label: 'Телефон', icon: Phone },
+    ...(user?.role === 'STUDENT'
+      ? [{ id: 'certificates' as Tab, label: 'Сертификаты', icon: Award }]
+      : []),
   ]
 
   return (
@@ -39,7 +43,7 @@ export const ProfilePage = () => {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 flex flex-wrap gap-2 rounded-2xl glass-card p-2 backdrop-blur-xl">
+        <div className="mb-6 flex flex-wrap gap-4 rounded-2xl glass-card p-2 backdrop-blur-xl">
           {tabs.map(tab => {
             const Icon = tab.icon
             return (
@@ -65,6 +69,7 @@ export const ProfilePage = () => {
           {activeTab === 'edit' && <ProfileEdit user={user!} />}
           {activeTab === 'password' && <PasswordChange />}
           {activeTab === 'phone' && <PhoneVerification user={user!} />}
+          {activeTab === 'certificates' && <ProfileCertificates />}
         </div>
       </div>
     </div>

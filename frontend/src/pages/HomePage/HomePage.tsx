@@ -8,7 +8,9 @@ import {
   Award,
   TrendingUp,
   CheckCircle,
+  User,
 } from 'lucide-react'
+import MainBanner from '@/assets/images/MainBanner.webp'
 
 export const HomePage = () => {
   return (
@@ -52,8 +54,10 @@ export const HomePage = () => {
                   {[1, 2, 3, 4].map(i => (
                     <div
                       key={i}
-                      className="h-10 w-10 rounded-full border-2 border-background bg-primary/30"
-                    />
+                      className="flex items-center justify-center h-10 w-10 rounded-full border-2 border-background bg-primary/30"
+                    >
+                      <User className="h-5 w-5 text-primary-foreground/80" />
+                    </div>
                   ))}
                 </div>
                 <div>
@@ -64,13 +68,17 @@ export const HomePage = () => {
                 </div>
               </div>
             </div>
-            <div className="relative animate-in fade-in slide-in-from-right duration-700">
-              <div className="aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/60 shadow-2xl transition-transform hover:scale-105">
-                <div className="flex h-full items-center justify-center">
-                  <BookOpen className="h-48 w-48 text-primary-foreground opacity-20" />
-                </div>
+            <div className="relative rounded-2xl animate-float border border-border bg-card shadow-2xl shadow-primary/20">
+              <div className="relative aspect-square overflow-hidden rounded-2xl shadow-2xl">
+                <img
+                  src={MainBanner}
+                  alt="Онлайн-обучение иностранным языкам на платформе Linglify"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-black/25 via-transparent to-transparent" />
               </div>
-              <div className="absolute -bottom-6 -right-6 rounded-xl border border-border bg-card p-6 shadow-xl">
+              <div className="absolute -bottom-6 -right-6 rounded-xl border border-border/80 bg-card/95 p-6 shadow-2xl shadow-primary/20 backdrop-blur-md">
                 <div className="flex items-center space-x-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10">
                     <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -246,7 +254,7 @@ export const HomePage = () => {
           <Link to="/register">
             <Button
               size="lg"
-              className="bg-background text-primary hover:bg-background/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              className="bg-background hover:bg-background/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
             >
               Начать бесплатно
             </Button>

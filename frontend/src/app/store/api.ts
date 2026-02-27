@@ -8,6 +8,7 @@ import {
 import type { ApiResponse } from '@/shared/types/api'
 
 const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+export const apiBaseUrl = baseUrl
 
 const baseQuery = fetchBaseQuery({
   baseUrl,
@@ -54,6 +55,6 @@ const baseQueryWithReauth: BaseQueryFn<
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Course', 'Lesson', 'FAQ', 'Contact'],
+  tagTypes: ['User', 'Course', 'Lesson', 'Question', 'Progress', 'Enrollment', 'Review', 'Certificate', 'FAQ', 'Contact'],
   endpoints: () => ({}),
 })

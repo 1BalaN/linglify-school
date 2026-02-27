@@ -348,7 +348,14 @@ export const LessonEditPanel = ({
 
       onSuccess('Урок обновлён!')
     } catch (e) {
-      onError('Не удалось сохранить урок')
+      const err = e as { data?: { message?: string; code?: string } }
+      if (err?.data?.code === 'FINAL_TEST_ALREADY_EXISTS') {
+        onError(
+          'Финальный тест для этого курса уже создан. Отредактируйте существующий финальный тест или снимите с него этот статус.'
+        )
+        return
+      }
+      onError(err?.data?.message || 'Не удалось сохранить урок')
     }
   }
 

@@ -3,7 +3,7 @@ import { BookOpen, ArrowRight } from 'lucide-react'
 import { Button } from '@/shared/ui'
 
 export const MyCoursesEmptyState = () => (
-  <div className="glass-card flex flex-col items-center gap-4 py-20 text-center">
+  <div className="glass-card flex flex-col items-center gap-4 py-20 text-center rounded-2xl">
     <BookOpen className="h-16 w-16 text-primary/30" />
     <h2 className="text-xl font-semibold">Начните обучение</h2>
     <p className="max-w-md text-muted-foreground">

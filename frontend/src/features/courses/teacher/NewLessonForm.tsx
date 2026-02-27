@@ -251,7 +251,13 @@ export const NewLessonForm = ({
       resetLessonForm()
       onClose()
     } catch (error) {
-      const err = error as { data?: { message?: string } }
+      const err = error as { data?: { message?: string; code?: string } }
+      if (err?.data?.code === 'FINAL_TEST_ALREADY_EXISTS') {
+        onError(
+          'Финальный тест для этого курса уже создан. Отредактируйте существующий финальный тест или снимите с него этот статус.'
+        )
+        return
+      }
       onError(err?.data?.message || 'Не удалось создать урок')
     }
   }

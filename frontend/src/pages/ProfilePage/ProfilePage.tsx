@@ -43,7 +43,7 @@ export const ProfilePage = () => {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 flex flex-wrap gap-2 rounded-2xl glass-card p-2 backdrop-blur-xl">
+        <div className="mb-6 flex flex-wrap gap-4 rounded-2xl glass-card p-2 backdrop-blur-xl">
           {tabs.map(tab => {
             const Icon = tab.icon
             return (

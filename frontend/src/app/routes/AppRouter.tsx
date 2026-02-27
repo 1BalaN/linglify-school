@@ -27,6 +27,7 @@ import {
   LessonPage,
   MyCoursesPage,
   AboutPage,
+  CertificateViewPage,
 } from '@/pages'
 
 
@@ -136,6 +137,7 @@ export const AppRouter = () => {
           </ProtectedRoute>
         )}
       />
+      <Route path="/certificates/:code" element={<CertificateViewPage />} />
       <Route
         path="/pricing"
         element={

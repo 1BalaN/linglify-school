@@ -57,11 +57,15 @@ export async function generateCertificatePdfBuffer(
 
   /* ================== FONT ================== */
 
-  const fontPath = path.resolve(
-    __dirname,
-    '../../assets/fonts/LinglifySans-Regular.ttf'
-  )
-  const baseFont = fs.existsSync(fontPath) ? fontPath : 'Helvetica'
+  const fontCandidates = [
+    // Для production (dist / рабочая директория)
+    path.resolve(process.cwd(), 'assets/fonts/LinglifySans-Regular.ttf'),
+    // Для разработки (src-путь)
+    path.resolve(__dirname, '../../assets/fonts/LinglifySans-Regular.ttf'),
+  ]
+
+  const fontPath = fontCandidates.find(p => fs.existsSync(p))
+  const baseFont = fontPath || 'Helvetica'
 
   /* ================== QR ================== */
 

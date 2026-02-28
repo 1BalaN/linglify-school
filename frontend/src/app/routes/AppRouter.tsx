@@ -28,6 +28,8 @@ import {
   MyCoursesPage,
   AboutPage,
   CertificateViewPage,
+  PaymentSuccessPage,
+  PaymentCancelPage,
 } from '@/pages'
 
 
@@ -148,6 +150,8 @@ export const AppRouter = () => {
           </div>
         }
       />
+      <Route path="/payment/success" element={<PaymentSuccessPage />} />
+      <Route path="/payment/cancel" element={<PaymentCancelPage />} />
           
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

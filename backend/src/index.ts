@@ -15,6 +15,7 @@ import lessonRouter from './modules/lesson/lesson.router'
 import questionRouter from './modules/question/question.router'
 import uploadRouter from './modules/upload/upload.router'
 import certificateRouter from './modules/certificate/certificate.router'
+import paymentRouter, { paymentWebhookRouter } from './modules/payment/payment.router'
 
 const app = express()
 
@@ -30,6 +31,10 @@ app.use(
     credentials: true,
   })
 )
+
+// Stripe webhook должен получать "raw" body до json-парсера
+app.use('/api/payments', paymentWebhookRouter)
+
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 app.use(cookieParser())
@@ -49,6 +54,7 @@ app.use('/api/lessons', lessonRouter)
 app.use('/api/questions', questionRouter)
 app.use('/api/upload', uploadRouter)
 app.use('/api/certificates', certificateRouter)
+app.use('/api/payments', paymentRouter)
 
 // Error handlers
 app.use(notFoundHandler)

@@ -434,8 +434,15 @@ class CourseService {
 
   /**
    * Зачислить пользователя на курс
+   *
+   * В обычном случае (через контроллер) платные курсы запрещены,
+   * а для Stripe webhook можно явно разрешить зачисление платного курса через options.allowPaid.
    */
-  async enrollCourse(userId: string, dto: EnrollCourseDto) {
+  async enrollCourse(
+    userId: string,
+    dto: EnrollCourseDto,
+    options?: { allowPaid?: boolean }
+  ) {
     const course = await prisma.course.findUnique({
       where: { id: dto.courseId },
       select: { id: true, isPublished: true, price: true },
@@ -463,8 +470,15 @@ class CourseService {
       throw new AppError(400, 'ALREADY_ENROLLED', 'Вы уже зачислены на этот курс')
     }
 
-    // TODO: Здесь должна быть логика оплаты для платных курсов
-    // Пока зачисляем бесплатно
+    // Для платных курсов зачисление через обычный API запрещено,
+    // его должен выполнять только Stripe webhook с allowPaid = true.
+    if (course.price > 0 && !options?.allowPaid) {
+      throw new AppError(
+        403,
+        'COURSE_IS_PAID',
+        'Этот курс является платным. Для доступа необходимо оформить оплату.'
+      )
+    }
 
     const enrollment = await prisma.enrollment.create({
       data: {

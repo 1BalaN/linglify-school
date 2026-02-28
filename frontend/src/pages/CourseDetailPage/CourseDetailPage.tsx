@@ -7,6 +7,7 @@ import {
   useUpdateReviewMutation,
   useDeleteReviewMutation,
 } from '@/entities/course'
+import { useCreateCheckoutSessionMutation } from '@/entities/payment'
 import type { RootState } from '@/app/store'
 import type { Review } from '@/shared/types/course'
 import { Loader2 } from 'lucide-react'
@@ -18,8 +19,12 @@ export const CourseDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useSelector((state: RootState) => state.auth)
-  const { data, isLoading, error } = useGetCourseByIdQuery(id!)
-  const [enrollCourse, { isLoading: isEnrolling }] = useEnrollCourseMutation()
+  const { data, isLoading, error } = useGetCourseByIdQuery(id!, {
+    refetchOnMountOrArgChange: true,
+  })
+  const [enrollCourse, { isLoading: isEnrollingFree }] = useEnrollCourseMutation()
+  const [createCheckoutSession, { isLoading: isCreatingCheckout }] =
+    useCreateCheckoutSessionMutation()
   const [createReview, { isLoading: isCreatingReview }] = useCreateReviewMutation()
   const [updateReview, { isLoading: isUpdatingReview }] = useUpdateReviewMutation()
   const [deleteReview] = useDeleteReviewMutation()
@@ -39,10 +44,39 @@ export const CourseDetailPage = () => {
       return
     }
 
+    if (!course) return
+
+    // Уже зачислен — сразу ведём к обучению
+    if (course.isEnrolled) {
+      navigate(`/courses/${course.id}/learn`)
+      return
+    }
+
+    // Бесплатные курсы
+    if (course.price === 0) {
+      try {
+        await enrollCourse(id!).unwrap()
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Ошибка записи на курс:', error)
+      }
+      return
+    }
+
+    // Платные курсы — создаём Stripe Checkout Session
     try {
-      await enrollCourse(id!).unwrap()
+      const response = await createCheckoutSession({ courseId: course.id }).unwrap()
+      const { url } = response.data
+
+      if (url) {
+        window.location.href = url
+      } else {
+        // eslint-disable-next-line no-console
+        console.error('Stripe не вернул URL сессии оплаты')
+      }
     } catch (error) {
-      console.error('Ошибка записи на курс:', error)
+      // eslint-disable-next-line no-console
+      console.error('Ошибка при создании платежной сессии:', error)
     }
   }
 
@@ -79,7 +113,7 @@ export const CourseDetailPage = () => {
       <CourseHero
         course={course}
         canEdit={canEdit}
-        isEnrolling={isEnrolling}
+        isEnrolling={isEnrollingFree || isCreatingCheckout}
         onBackToCatalog={() => navigate('/courses')}
         onManageLessons={() => navigate(`/courses/${id}/lessons`)}
         onContinueLearning={() => navigate(`/courses/${course.id}/learn`)}

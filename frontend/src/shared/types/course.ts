@@ -2,7 +2,7 @@ export type CourseLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
 
 export type CourseStatus = 'DRAFT' | 'PENDING_REVIEW' | 'IN_REVIEW' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED'
 
-export type LessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE'
+export type LessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE' | 'LEXICAL'
 
 export type QuestionType = 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_IN_BLANK' | 'MATCHING'
 

@@ -1,4 +1,4 @@
-import { ChevronLeft, Clock, Video, ClipboardCheck, MessageSquare, CheckCircle } from 'lucide-react'
+import { ChevronLeft, Clock, Video, ClipboardCheck, MessageSquare, CheckCircle, Book } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { LessonType } from '@/shared/types/course'
 
@@ -15,6 +15,7 @@ const typeMeta: Record<LessonType, { label: string; Icon: typeof Video }> = {
   VIDEO: { label: 'Видео-урок', Icon: Video },
   TEST: { label: 'Тест', Icon: ClipboardCheck },
   INTERACTIVE: { label: 'Интерактив', Icon: MessageSquare },
+  LEXICAL: { label: 'Лексический тренажёр', Icon: Book },
 }
 
 function formatDuration(seconds?: number | null): string | null {

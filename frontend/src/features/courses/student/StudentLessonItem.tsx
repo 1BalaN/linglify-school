@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, Lock, MessageSquare, Play, Video, ClipboardCheck } from 'lucide-react'
+import { CheckCircle, Clock, Lock, MessageSquare, Play, Video, ClipboardCheck, BookOpen } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Lesson } from '@/shared/types/course'
 
@@ -16,10 +16,22 @@ export const StudentLessonItem = ({ lesson, isAccessible, onOpen }: StudentLesso
     : null
 
   const TypeIcon =
-    lesson.type === 'VIDEO' ? Video : lesson.type === 'TEST' ? ClipboardCheck : MessageSquare
+    lesson.type === 'VIDEO'
+      ? Video
+      : lesson.type === 'TEST'
+        ? ClipboardCheck
+        : lesson.type === 'INTERACTIVE'
+          ? MessageSquare
+          : BookOpen
 
   const typeLabel =
-    lesson.type === 'VIDEO' ? 'Видео' : lesson.type === 'TEST' ? 'Тест' : 'Интерактив'
+    lesson.type === 'VIDEO'
+      ? 'Видео'
+      : lesson.type === 'TEST'
+        ? 'Тест'
+        : lesson.type === 'INTERACTIVE'
+          ? 'Интерактив'
+          : 'Лексический тренажёр'
 
   return (
     <div

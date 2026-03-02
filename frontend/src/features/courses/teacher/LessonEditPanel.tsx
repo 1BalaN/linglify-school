@@ -36,6 +36,12 @@ interface EditExerciseForm {
   hint: string
 }
 
+interface EditLexicalItemForm {
+  id: string
+  term: string
+  translations: string
+}
+
 
 function uid() { return 'new_' + Math.random().toString(36).slice(2) }
 function isNew(id: string) { return id.startsWith('new_') }
@@ -76,6 +82,21 @@ function exercisesToForm(questions: Question[]): EditExerciseForm[] {
         hint: q.explanation || '',
       }
     })
+}
+
+function lexicalToForm(questions: Question[]): EditLexicalItemForm[] {
+  return questions.map(q => {
+    const options = (q.options || []) as { text: string; isCorrect: boolean }[]
+    const translations = options
+      .filter(o => o.isCorrect && o.text?.trim())
+      .map(o => o.text.trim())
+      .join(', ')
+    return {
+      id: q.id,
+      term: q.question,
+      translations,
+    }
+  })
 }
 
 function parseContent(content: string | null): Record<string, unknown> {
@@ -126,6 +147,9 @@ export const LessonEditPanel = ({
   const [exercises, setExercises] = useState<EditExerciseForm[]>([])
   const [originalExQIds, setOriginalExQIds] = useState<string[]>([])
   const [isFinalTest, setIsFinalTest] = useState<boolean>(false)
+  // ── LEXICAL specific ──
+  const [lexicalItems, setLexicalItems] = useState<EditLexicalItemForm[]>([])
+  const [originalLexicalQIds, setOriginalLexicalQIds] = useState<string[]>([])
 
   // ── Init from fetched lesson ──
   useEffect(() => {
@@ -181,6 +205,12 @@ export const LessonEditPanel = ({
           .filter(q => q.type === 'FILL_IN_BLANK')
           .map(q => q.id),
       )
+    }
+
+    if (lesson.type === 'LEXICAL') {
+      const items = lesson.questions ? lexicalToForm(lesson.questions) : []
+      setLexicalItems(items.length > 0 ? items : [makeEmptyLexicalItem()])
+      setOriginalLexicalQIds((lesson.questions || []).map(q => q.id))
     }
   }, [lesson])
 
@@ -245,6 +275,10 @@ export const LessonEditPanel = ({
   const patchEx = (id: string, patch: Partial<EditExerciseForm>) =>
     setExercises(e => e.map(x => (x.id === id ? { ...x, ...patch } : x)))
 
+  // ── Lexical helpers ──
+  function makeEmptyLexicalItem(): EditLexicalItemForm {
+    return { id: uid(), term: '', translations: '' }
+  }
   // ── Save ──
   const handleSave = async () => {
     if (!lesson) return
@@ -303,6 +337,20 @@ export const LessonEditPanel = ({
             onError(`Укажите ответ для пропуска ${i + 1} в упражнении "${ex.sentence.slice(0, 20)}..."`)
             return
           }
+        }
+      }
+    } else if (lesson.type === 'LEXICAL') {
+      for (const item of lexicalItems) {
+        if (!item.term.trim()) {
+          onError('Заполните слово/фразу для всех элементов')
+          return
+        }
+        const hasTranslation = item.translations
+          .split(',')
+          .some(t => t.trim().length > 0)
+        if (!hasTranslation) {
+          onError(`Укажите хотя бы один перевод для "${item.term}"`)
+          return
         }
       }
     }
@@ -406,6 +454,53 @@ export const LessonEditPanel = ({
               points: payload.points,
             }
             await updateQuestion({ id: ex.id, data: updatePayload }).unwrap()
+          }
+        }
+      }
+
+      // ── Sync lexical items (LEXICAL) ──
+      if (lesson.type === 'LEXICAL') {
+        const currentIds = lexicalItems.filter(item => !isNew(item.id)).map(item => item.id)
+        const toDelete = originalLexicalQIds.filter(id => !currentIds.includes(id))
+        for (const id of toDelete) {
+          await deleteQuestion(id).unwrap()
+        }
+
+        for (let i = 0; i < lexicalItems.length; i++) {
+          const item = lexicalItems[i]
+          const translations = item.translations
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+          const options =
+            translations.length > 0
+              ? translations.map((text, ti) => ({
+                  id: `${i}-${ti}`,
+                  text,
+                  isCorrect: true,
+                }))
+              : [{ id: '1', text: '', isCorrect: true }]
+
+          const payload: CreateQuestionDto = {
+            lessonId: lesson.id,
+            type: 'FILL_IN_BLANK',
+            order: i + 1,
+            question: item.term.trim(),
+            options,
+            points: 1,
+          }
+
+          if (isNew(item.id)) {
+            await createQuestion(payload).unwrap()
+          } else {
+            const updatePayload: UpdateQuestionDto = {
+              type: payload.type as QuestionType,
+              order: payload.order,
+              question: payload.question,
+              options: payload.options,
+              points: payload.points,
+            }
+            await updateQuestion({ id: item.id, data: updatePayload }).unwrap()
           }
         }
       }
@@ -772,6 +867,88 @@ export const LessonEditPanel = ({
               <Plus className="mr-1 h-3 w-3" />
               Добавить упражнение
             </Button>
+          </div>
+        )}
+
+        {lesson.type === 'LEXICAL' && (
+          <div className="space-y-4 rounded-xl border border-sky-200 bg-sky-50/50 p-4 dark:border-sky-900/30 dark:bg-sky-950/20">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium text-sky-700 dark:text-sky-400">
+                <MessageSquare className="h-4 w-4" />
+                <span>Лексический тренажёр ({lexicalItems.length})</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={() => setLexicalItems(items => [...items, makeEmptyLexicalItem()])}
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Добавить слово
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {lexicalItems.map((item, idx) => (
+                <div key={item.id} className="rounded-lg border border-border bg-card p-4">
+                  <div className="mb-3 flex items-start gap-2">
+                    <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-xs font-bold text-sky-600 dark:text-sky-300">
+                      {idx + 1}
+                    </span>
+                    <div className="flex-1 space-y-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          Слово / фраза *
+                        </label>
+                        <Input
+                          value={item.term}
+                          onChange={e =>
+                            setLexicalItems(items =>
+                              items.map(x =>
+                                x.id === item.id ? { ...x, term: e.target.value } : x,
+                              ),
+                            )
+                          }
+                          placeholder="to book, make up, etc."
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          Переводы * (через запятую)
+                        </label>
+                        <Input
+                          value={item.translations}
+                          onChange={e =>
+                            setLexicalItems(items =>
+                              items.map(x =>
+                                x.id === item.id
+                                  ? { ...x, translations: e.target.value }
+                                  : x,
+                              ),
+                            )
+                          }
+                          placeholder="бронь, заказывать, резервировать"
+                        />
+                      </div>
+                      <div>
+                        {/* Подсказка убрана по требованиям UX для лексических тренажёров */}
+                      </div>
+                    </div>
+                    {lexicalItems.length > 1 && (
+                      <button
+                        onClick={() =>
+                          setLexicalItems(items => items.filter(x => x.id !== item.id))
+                        }
+                        type="button"
+                        className="mt-2 text-muted-foreground hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

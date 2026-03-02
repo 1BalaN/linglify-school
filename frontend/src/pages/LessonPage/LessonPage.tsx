@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { Button, VideoPlayer } from '@/shared/ui'
 import { getAdditionalTextFromContent } from '@/shared/lib/lessonContent'
-import { LessonHeader, LessonInteractiveView, LessonTestView } from '@/features/lesson/view'
+import { LessonHeader, LessonInteractiveView, LessonTestView, LessonLexicalView } from '@/features/lesson/view'
 
 function buildAttachmentUrl(url: string, name?: string | null): string {
   if (!url) return '#'
@@ -212,6 +212,29 @@ export const LessonPage = () => {
               <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                 <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
                 <p>Упражнения ещё не добавлены</p>
+              </div>
+            )}
+          </>
+        )}
+        {/* LEXICAL */}
+        {lesson.type === 'LEXICAL' && (
+          <>
+            {lesson.videoUrl && (
+              <div className="mb-6">
+                <VideoPlayer videoUrl={lesson.videoUrl} title={lesson.title} />
+              </div>
+            )}
+            {lesson.questions && lesson.questions.length > 0 ? (
+              <LessonLexicalView
+                questions={lesson.questions}
+                onComplete={handleComplete}
+                initialCompleted={!!lesson.userProgress?.isCompleted}
+                initialScore={lesson.userProgress?.score ?? null}
+              />
+            ) : (
+              <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
+                <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
+                <p>Слова для тренажёра ещё не добавлены</p>
               </div>
             )}
           </>

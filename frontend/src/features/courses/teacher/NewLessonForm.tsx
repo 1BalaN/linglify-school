@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Clock, Video, ClipboardCheck, MessageSquare, Plus, Save, X } from 'lucide-react'
+import { Clock, Video, ClipboardCheck, MessageSquare, Plus, Save, X, BookOpen } from 'lucide-react'
 import { AttachmentRow } from '@/features/courses/teacher/components/AttachmentRow'
 import {
   useCreateLessonMutation,
@@ -8,7 +8,7 @@ import {
 import type { CreateLessonDto, LessonType, Attachment } from '@/shared/types/course'
 import { Button, Input, VideoUpload } from '@/shared/ui'
 
-type FormLessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE'
+type FormLessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE' | 'LEXICAL'
 
 interface TestQuestionForm {
   id: string
@@ -25,10 +25,17 @@ interface FillBlankForm {
   hint: string
 }
 
+interface LexicalItemForm {
+  id: string
+  term: string
+  translations: string
+}
+
 const lessonTypes: { value: FormLessonType; label: string; icon: typeof Video; description: string }[] = [
   { value: 'VIDEO', label: 'Видео-урок', icon: Video, description: 'Видео + дополнительные материалы' },
   { value: 'TEST', label: 'Тест', icon: ClipboardCheck, description: 'Вопросы с вариантами ответов' },
   { value: 'INTERACTIVE', label: 'Интерактив', icon: MessageSquare, description: 'Заполни пропуск / допиши предложение' },
+  { value: 'LEXICAL', label: 'Лексический тренажёр', icon: BookOpen, description: 'Тренировка лексики и перевода' },
 ]
 
 function uid() {
@@ -50,6 +57,10 @@ function makeEmptyQuestion(): TestQuestionForm {
 
 function makeEmptyExercise(): FillBlankForm {
   return { id: uid(), sentence: '', blanks: [''], hint: '' }
+}
+
+function makeEmptyLexicalItem(): LexicalItemForm {
+  return { id: uid(), term: '', translations: '' }
 }
 
 interface NewLessonFormProps {
@@ -87,6 +98,8 @@ export const NewLessonForm = ({
   const [isFinalTest, setIsFinalTest] = useState(false)
   // INTERACTIVE specific
   const [exercises, setExercises] = useState<FillBlankForm[]>([makeEmptyExercise()])
+  // LEXICAL specific
+  const [lexicalItems, setLexicalItems] = useState<LexicalItemForm[]>([makeEmptyLexicalItem()])
 
   const resetLessonForm = () => {
     setTitle('')
@@ -101,6 +114,7 @@ export const NewLessonForm = ({
     setTestShuffleOptions(false)
     setTestQuestions([makeEmptyQuestion()])
     setExercises([makeEmptyExercise()])
+    setLexicalItems([makeEmptyLexicalItem()])
     setLessonType('VIDEO')
   }
 
@@ -181,11 +195,11 @@ export const NewLessonForm = ({
         }
       }
     }
-      if (lessonType === 'INTERACTIVE') {
-        if (exercises.length === 0) {
-          onError('Добавьте хотя бы одно упражнение')
-          return
-        }
+    if (lessonType === 'INTERACTIVE') {
+      if (exercises.length === 0) {
+        onError('Добавьте хотя бы одно упражнение')
+        return
+      }
       for (const ex of exercises) {
         if (!ex.sentence.trim()) {
           onError('Заполните предложение для всех упражнений')
@@ -205,6 +219,25 @@ export const NewLessonForm = ({
         }
       }
     }
+    if (lessonType === 'LEXICAL') {
+      if (lexicalItems.length === 0) {
+        onError('Добавьте хотя бы один лексический элемент')
+        return
+      }
+      for (const item of lexicalItems) {
+        if (!item.term.trim()) {
+          onError('Заполните слово/фразу для всех элементов')
+          return
+        }
+        const hasTranslation = item.translations
+          .split(',')
+          .some(t => t.trim().length > 0)
+        if (!hasTranslation) {
+          onError(`Укажите хотя бы один перевод для "${item.term}"`)
+          return
+        }
+      }
+    }
 
     let content: string | undefined
     if (lessonType === 'VIDEO' && additionalInfo.trim()) {
@@ -220,6 +253,9 @@ export const NewLessonForm = ({
       })
     } else if (lessonType === 'INTERACTIVE') {
       content = JSON.stringify({ exercises })
+    } else if (lessonType === 'LEXICAL') {
+      // Пока без сложных настроек: контент можно использовать позже для метаданных
+      content = undefined
     }
 
     const dto: CreateLessonDto = {
@@ -278,6 +314,34 @@ export const NewLessonForm = ({
             question: ex.sentence.trim(),
             options,
             explanation: ex.hint?.trim() || undefined,
+            points: 1,
+          }).unwrap()
+        }
+      }
+
+      // Create questions for LEXICAL (слово/фраза + переводы через запятую)
+      if (lessonType === 'LEXICAL') {
+        for (let i = 0; i < lexicalItems.length; i++) {
+          const item = lexicalItems[i]
+          const translations = item.translations
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+          const options =
+            translations.length > 0
+              ? translations.map((text, ti) => ({
+                  id: `${i}-${ti}`,
+                  text,
+                  isCorrect: true,
+                }))
+              : [{ id: '1', text: '', isCorrect: true }]
+
+          await createQuestion({
+            lessonId,
+            type: 'FILL_IN_BLANK',
+            order: i + 1,
+            question: item.term.trim(),
+            options,
             points: 1,
           }).unwrap()
         }
@@ -694,6 +758,92 @@ export const NewLessonForm = ({
               <Button variant="outline" size="sm" onClick={addExercise} type="button" className="mt-3 w-full">
                 <Plus className="mr-1 h-3 w-3" />
                 Добавить упражнение
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* LEXICAL fields */}
+        {lessonType === 'LEXICAL' && (
+          <div className="space-y-4 rounded-xl border border-sky-200 bg-sky-50/50 p-4 dark:border-sky-900/30 dark:bg-sky-950/20">
+            <div className="flex items-center gap-2 text-sm font-medium text-sky-700 dark:text-sky-400">
+              <BookOpen className="h-4 w-4" />
+              <span>Лексический тренажёр</span>
+            </div>
+            <VideoUpload
+              value={videoUrl}
+              onChange={setVideoUrl}
+              label="Видео к тренажёру (по желанию)"
+            />
+
+            <div className="rounded-lg border border-sky-200/60 bg-sky-100/30 px-3 py-2 text-xs text-sky-700 dark:border-sky-800/30 dark:bg-sky-900/20 dark:text-sky-300">
+              Добавьте слова или фразы и их переводы. Переводы можно указывать через запятую (синонимы).
+            </div>
+
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <h4 className="text-sm font-semibold">Слова ({lexicalItems.length})</h4>
+              </div>
+
+              <div className="space-y-4">
+                {lexicalItems.map((item, idx) => (
+                  <div key={item.id} className="rounded-lg border border-border bg-card p-4">
+                    <div className="mb-3 flex items-start gap-2">
+                      <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-xs font-bold text-sky-600 dark:text-sky-300">
+                        {idx + 1}
+                      </span>
+                      <div className="flex-1 space-y-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                            Слово / фраза *
+                          </label>
+                          <Input
+                            value={item.term}
+                            onChange={e =>
+                              setLexicalItems(items =>
+                                items.map(x =>
+                                  x.id === item.id ? { ...x, term: e.target.value } : x,
+                                ),
+                              )
+                            }
+                            placeholder="to book, make up, etc."
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                            Переводы * (через запятую)
+                          </label>
+                          <Input
+                            value={item.translations}
+                            onChange={e =>
+                              setLexicalItems(items =>
+                                items.map(x =>
+                                  x.id === item.id ? { ...x, translations: e.target.value } : x,
+                                ),
+                              )
+                            }
+                            placeholder="бронь, заказывать, резервировать"
+                          />
+                        </div>
+                      </div>
+                      {lexicalItems.length > 1 && (
+                        <button
+                          onClick={() =>
+                            setLexicalItems(items => items.filter(x => x.id !== item.id))
+                          }
+                          type="button"
+                          className="mt-2 text-muted-foreground hover:text-red-500"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Button variant="outline" size="sm" type="button" onClick={() => setLexicalItems(items => [...items, makeEmptyLexicalItem()])} className="mt-3 w-full">
+                <Plus className="mr-1 h-3 w-3" />
+                Добавить слово
               </Button>
             </div>
           </div>

@@ -142,6 +142,7 @@ enum LessonType {
   VIDEO       // Видео урок
   TEXT        // Текстовый материал
   INTERACTIVE // Интерактивный урок
+  LEXICAL     // Лексический тренажёр
   TEST        // Тест
 }
 

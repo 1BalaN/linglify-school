@@ -11,17 +11,19 @@ import type {
   CreateQuestionDto,
   UpdateQuestionDto,
   QuestionType,
+  Attachment,
 } from '@/shared/types/course'
 import { VideoUpload, Button, Input } from '@/shared/ui'
+import { AttachmentRow } from '@/features/courses/teacher/components/AttachmentRow'
 import {
   Save, X, Plus, Trash2, Video, ClipboardCheck, MessageSquare, Loader2,
   AlertCircle,
 } from 'lucide-react'
 
 interface EditQuestionForm {
-  /** If starts with "new_" → not yet saved */
   id: string
   text: string
+  explanation: string
   isMultiple: boolean
   options: { id: string; text: string; isCorrect: boolean }[]
 }
@@ -29,7 +31,9 @@ interface EditQuestionForm {
 interface EditExerciseForm {
   id: string
   sentence: string
-  answer: string
+  /** Ответы по пропускам: blanks[0] — для первого ___, blanks[1] — для второго и т.д. (в каждом — синонимы через запятую) */
+  blanks: string[]
+  hint: string
 }
 
 
@@ -42,6 +46,7 @@ function questionsToForm(questions: Question[]): EditQuestionForm[] {
     .map(q => ({
       id: q.id,
       text: q.question,
+      explanation: q.explanation || '',
       isMultiple: q.type === 'MULTIPLE_CHOICE',
       options: (q.options as { id: string; text: string; isCorrect: boolean }[]).map(o => ({
         id: o.id,
@@ -54,11 +59,23 @@ function questionsToForm(questions: Question[]): EditQuestionForm[] {
 function exercisesToForm(questions: Question[]): EditExerciseForm[] {
   return questions
     .filter(q => q.type === 'FILL_IN_BLANK')
-    .map(q => ({
-      id: q.id,
-      sentence: q.question,
-      answer: (q.options as { text: string }[])[0]?.text || '',
-    }))
+    .map(q => {
+      const options = q.options as { text: string; isCorrect: boolean; blankIndex?: number }[]
+      const correct = options.filter(o => o.isCorrect).map(o => ({ text: o.text.trim(), blankIndex: o.blankIndex ?? 0 })).filter(o => o.text)
+      const blankCount = Math.max(1, ...correct.map(o => o.blankIndex + 1))
+      const blanks: string[] = []
+      for (let i = 0; i < blankCount; i++) {
+        const texts = correct.filter(o => o.blankIndex === i).map(o => o.text)
+        blanks.push(texts.length > 0 ? texts.join(', ') : '')
+      }
+      if (blanks.length === 0) blanks.push(correct.map(o => o.text).join(', ') || '')
+      return {
+        id: q.id,
+        sentence: q.question,
+        blanks,
+        hint: q.explanation || '',
+      }
+    })
 }
 
 function parseContent(content: string | null): Record<string, unknown> {
@@ -95,9 +112,13 @@ export const LessonEditPanel = ({
 
   // ── VIDEO specific ──
   const [additionalInfo, setAdditionalInfo] = useState('')
+  const [attachments, setAttachments] = useState<Attachment[]>([])
 
   // ── TEST specific ──
   const [passThreshold, setPassThreshold] = useState('70')
+  const [testTimeLimit, setTestTimeLimit] = useState('')
+  const [testShuffleQuestions, setTestShuffleQuestions] = useState(false)
+  const [testShuffleOptions, setTestShuffleOptions] = useState(false)
   const [testQuestions, setTestQuestions] = useState<EditQuestionForm[]>([])
   const [originalTestQIds, setOriginalTestQIds] = useState<string[]>([])
 
@@ -124,12 +145,24 @@ export const LessonEditPanel = ({
             ? lesson.content
             : '',
       )
+      setAttachments(
+        Array.isArray(lesson.attachments) && lesson.attachments.length > 0
+          ? lesson.attachments.map(a => ({ name: a.name || '', url: a.url || '', size: a.size ?? 0 }))
+          : [],
+      )
     }
 
     if (lesson.type === 'TEST') {
       setPassThreshold(
         typeof parsed.passThreshold === 'number' ? String(parsed.passThreshold) : '70',
       )
+      setTestTimeLimit(
+        typeof parsed.timeLimitMinutes === 'number' && parsed.timeLimitMinutes > 0
+          ? String(parsed.timeLimitMinutes)
+          : '',
+      )
+      setTestShuffleQuestions(!!parsed.shuffleQuestions)
+      setTestShuffleOptions(!!parsed.shuffleOptions)
       const qs = lesson.questions ? questionsToForm(lesson.questions) : []
       setTestQuestions(qs.length > 0 ? qs : [makeEmptyQuestion()])
       setOriginalTestQIds(
@@ -156,6 +189,7 @@ export const LessonEditPanel = ({
     return {
       id: uid(),
       text: '',
+      explanation: '',
       isMultiple: false,
       options: [
         { id: uid(), text: '', isCorrect: false },
@@ -204,7 +238,7 @@ export const LessonEditPanel = ({
 
   // ── Exercise helpers ──
   function makeEmptyExercise(): EditExerciseForm {
-    return { id: uid(), sentence: '', answer: '' }
+    return { id: uid(), sentence: '', blanks: [''], hint: '' }
   }
   const addEx = () => setExercises(e => [...e, makeEmptyExercise()])
   const removeEx = (id: string) => setExercises(e => e.filter(x => x.id !== id))
@@ -243,20 +277,32 @@ export const LessonEditPanel = ({
           return
         }
       }
-      content = JSON.stringify({ passThreshold: Number(passThreshold) })
+      content = JSON.stringify({
+        passThreshold: Number(passThreshold),
+        ...(testTimeLimit && !Number.isNaN(Number(testTimeLimit)) && Number(testTimeLimit) > 0
+          ? { timeLimitMinutes: Number(testTimeLimit) }
+          : {}),
+        shuffleQuestions: testShuffleQuestions,
+        shuffleOptions: testShuffleOptions,
+      })
     } else if (lesson.type === 'INTERACTIVE') {
       for (const ex of exercises) {
         if (!ex.sentence.trim()) {
           onError('Заполните текст всех упражнений')
           return
         }
-        if (!ex.answer.trim()) {
-          onError('Укажите правильный ответ для каждого упражнения')
-          return
-        }
         if (!ex.sentence.includes('___')) {
           onError(`Упражнение "${ex.sentence.slice(0, 20)}..." не содержит пропуск ___`)
           return
+        }
+        const requiredBlanks = (ex.sentence.match(/___/g) || []).length
+        const blanks = ex.blanks.slice(0, requiredBlanks)
+        for (let i = 0; i < requiredBlanks; i++) {
+          const hasAnswer = (blanks[i] || '').split(',').some(s => s.trim())
+          if (!hasAnswer) {
+            onError(`Укажите ответ для пропуска ${i + 1} в упражнении "${ex.sentence.slice(0, 20)}..."`)
+            return
+          }
         }
       }
     }
@@ -270,6 +316,7 @@ export const LessonEditPanel = ({
           duration: duration ? Number(duration) * 60 : undefined,
           videoUrl: videoUrl.trim() || undefined,
           content,
+          ...(lesson.type === 'VIDEO' ? { attachments: attachments.filter(a => a.name.trim() && a.url.trim()) } : {}),
           ...(lesson.type === 'TEST' ? { isFinalTest } : { isFinalTest: false }),
         },
       }).unwrap()
@@ -290,6 +337,7 @@ export const LessonEditPanel = ({
             type: (q.isMultiple ? 'MULTIPLE_CHOICE' : 'SINGLE_CHOICE') as QuestionType,
             order: i + 1,
             question: q.text.trim(),
+            explanation: q.explanation?.trim() || undefined,
             options: q.options.map(o => ({
               id: o.id || '',
               text: o.text.trim(),
@@ -304,6 +352,7 @@ export const LessonEditPanel = ({
               type: payload.type,
               order: payload.order,
               question: payload.question,
+              explanation: payload.explanation,
               options: payload.options,
               points: payload.points,
             }
@@ -321,13 +370,28 @@ export const LessonEditPanel = ({
         }
         for (let i = 0; i < exercises.length; i++) {
           const ex = exercises[i]
+          const requiredBlanks = (ex.sentence.match(/___/g) || []).length || 1
+          const blanks = ex.blanks.slice(0, requiredBlanks)
+          if (blanks.length < requiredBlanks) {
+            while (blanks.length < requiredBlanks) blanks.push('')
+          }
+          const options: { id: string; text: string; isCorrect: boolean; blankIndex?: number }[] = []
+          blanks.forEach((b, bi) => {
+            const texts = b.split(',').map(s => s.trim()).filter(Boolean)
+            texts.forEach((text, ti) => {
+              options.push({ id: `${bi}-${ti}`, text, isCorrect: true, blankIndex: bi })
+            })
+          })
+          if (options.length === 0) {
+            options.push({ id: '1', text: '', isCorrect: true, blankIndex: 0 })
+          }
           const payload: CreateQuestionDto = {
             lessonId: lesson.id,
             type: 'FILL_IN_BLANK',
             order: i + 1,
             question: ex.sentence.trim(),
-            options: [{ id: '1', text: ex.answer.trim(), isCorrect: true }],
-            explanation: undefined,
+            options: options.map(o => ({ id: o.id, text: o.text, isCorrect: o.isCorrect, blankIndex: o.blankIndex })),
+            explanation: ex.hint?.trim() || undefined,
             points: 1,
           }
           if (isNew(ex.id)) {
@@ -410,18 +474,48 @@ export const LessonEditPanel = ({
         </div>
 
         {lesson.type === 'VIDEO' && (
-          <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-primary">
-              <Video className="h-4 w-4" />
-              <span>Дополнительные материалы</span>
+          <>
+            <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                <Video className="h-4 w-4" />
+                <span>Дополнительные материалы</span>
+              </div>
+              <textarea
+                value={additionalInfo}
+                onChange={e => setAdditionalInfo(e.target.value)}
+                placeholder="Полезные ссылки, заметки, описание урока..."
+                className="min-h-[100px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+              />
             </div>
-            <textarea
-              value={additionalInfo}
-              onChange={e => setAdditionalInfo(e.target.value)}
-              placeholder="Полезные ссылки, заметки, описание урока..."
-              className="min-h-[100px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-            />
-          </div>
+            <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-primary">Методички и файлы</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAttachments(a => [...a, { name: '', url: '', size: 0 }])}
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  Добавить файл
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Загрузите файл с устройства или укажите ссылку. PDF, DOC, DOCX, TXT, ODT — до 25 МБ.
+              </p>
+              {attachments.map((att, idx) => (
+                <AttachmentRow
+                  key={idx}
+                  attachment={att}
+                  onUpdate={upd =>
+                    setAttachments(a => a.map((x, i) => (i === idx ? { ...x, ...upd } : x)))
+                  }
+                  onRemove={() => setAttachments(a => a.filter((_, i) => i !== idx))}
+                  onUploadError={onError}
+                />
+              ))}
+            </div>
+          </>
         )}
 
         {lesson.type === 'TEST' && (
@@ -452,6 +546,36 @@ export const LessonEditPanel = ({
                   max={100}
                 />
               </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Таймер (минут)</label>
+                <Input
+                  type="number"
+                  value={testTimeLimit}
+                  onChange={e => setTestTimeLimit(e.target.value)}
+                  min={1}
+                  placeholder="Без таймера"
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={testShuffleQuestions}
+                  onChange={e => setTestShuffleQuestions(e.target.checked)}
+                  className="h-4 w-4 rounded text-amber-600"
+                />
+                Перемешивать вопросы
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={testShuffleOptions}
+                  onChange={e => setTestShuffleOptions(e.target.checked)}
+                  className="h-4 w-4 rounded text-amber-600"
+                />
+                Перемешивать варианты ответов
+              </label>
             </div>
 
             <div>
@@ -486,6 +610,17 @@ export const LessonEditPanel = ({
                       </button>
                     </div>
 
+                    <div className="mb-2">
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                        Объяснение (показывается после ответа)
+                      </label>
+                      <textarea
+                        value={q.explanation}
+                        onChange={e => patchQ(q.id, { explanation: e.target.value })}
+                        placeholder="Почему этот ответ правильный..."
+                        className="min-h-[60px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                      />
+                    </div>
                     <div className="mb-2 flex items-center gap-2">
                       <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
                         <input
@@ -547,6 +682,10 @@ export const LessonEditPanel = ({
                   </div>
                 ))}
               </div>
+              <Button variant="outline" size="sm" type="button" onClick={addQ} className="mt-3 w-full">
+                <Plus className="mr-1 h-3 w-3" />
+                Добавить вопрос
+              </Button>
             </div>
           </div>
         )}
@@ -574,22 +713,45 @@ export const LessonEditPanel = ({
                     <div className="flex-1 space-y-2">
                       <div>
                         <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                          Предложение с пропуском *
+                          Предложение с пропусками ___ *
                         </label>
                         <Input
                           value={ex.sentence}
-                          onChange={e => patchEx(ex.id, { sentence: e.target.value })}
-                          placeholder="I ___ to school every day."
+                          onChange={e => {
+                            const newSentence = e.target.value
+                            const count = (newSentence.match(/___/g) || []).length || 1
+                            const newBlanks = [...ex.blanks]
+                            while (newBlanks.length < count) newBlanks.push('')
+                            patchEx(ex.id, { sentence: newSentence, blanks: newBlanks.slice(0, count) })
+                          }}
+                          placeholder="I ___ to school ___ ."
                         />
                       </div>
+                      {Array.from({ length: Math.max(1, (ex.sentence.match(/___/g) || []).length) }, (_, bi) => (
+                        <div key={bi}>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                            Пропуск {bi + 1} * (синонимы через запятую)
+                          </label>
+                          <Input
+                            value={ex.blanks[bi] ?? ''}
+                            onChange={e => {
+                              const newBlanks = [...(ex.blanks || [])]
+                              while (newBlanks.length <= bi) newBlanks.push('')
+                              newBlanks[bi] = e.target.value
+                              patchEx(ex.id, { blanks: newBlanks })
+                            }}
+                            placeholder="go, goes"
+                          />
+                        </div>
+                      ))}
                       <div>
                         <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                          Правильный ответ *
+                          Подсказка (опционально)
                         </label>
                         <Input
-                          value={ex.answer}
-                          onChange={e => patchEx(ex.id, { answer: e.target.value })}
-                          placeholder="go"
+                          value={ex.hint}
+                          onChange={e => patchEx(ex.id, { hint: e.target.value })}
+                          placeholder="Глагол в форме 1-го лица..."
                         />
                       </div>
                     </div>
@@ -606,6 +768,10 @@ export const LessonEditPanel = ({
                 </div>
               ))}
             </div>
+            <Button variant="outline" size="sm" type="button" onClick={addEx} className="mt-3 w-full">
+              <Plus className="mr-1 h-3 w-3" />
+              Добавить упражнение
+            </Button>
           </div>
         )}
 

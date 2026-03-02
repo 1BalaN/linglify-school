@@ -1,8 +1,17 @@
-import { useState } from 'react'
-import { CheckCircle, RefreshCw, ClipboardCheck, CheckCircle2, CheckSquare } from 'lucide-react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { CheckCircle, RefreshCw, ClipboardCheck, CheckCircle2, CheckSquare, Timer } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Question, QuestionOption } from '@/shared/types/course'
-import { getPassThresholdFromContent } from '@/shared/lib/lessonContent'
+import { getPassThresholdFromContent, getTestOptionsFromContent } from '@/shared/lib/lessonContent'
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const out = [...arr]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
+}
 
 interface TestState {
   answers: Record<string, string | string[]>
@@ -19,12 +28,79 @@ interface LessonTestViewProps {
 
 export const LessonTestView = ({ questions, content, onComplete }: LessonTestViewProps) => {
   const passThreshold = getPassThresholdFromContent(content)
+  const { timeLimitMinutes, shuffleQuestions, shuffleOptions } = getTestOptionsFromContent(content)
+
+  const displayQuestions = useMemo(() => {
+    let list = [...questions]
+    if (shuffleQuestions) list = shuffleArray(list)
+    return list.map(q => ({
+      ...q,
+      options: shuffleOptions ? shuffleArray([...(q.options as QuestionOption[])]) : (q.options as QuestionOption[]),
+    }))
+  }, [questions, shuffleQuestions, shuffleOptions])
+
   const [state, setState] = useState<TestState>({
     answers: {},
     submitted: false,
     score: 0,
     passed: false,
   })
+
+  const totalSeconds = timeLimitMinutes ? timeLimitMinutes * 60 : null
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(totalSeconds)
+  const submittedByTimerRef = useRef(false)
+
+  const computeScore = useCallback((answers: Record<string, string | string[]>) => {
+    let correct = 0
+    for (const q of displayQuestions) {
+      const options = q.options as QuestionOption[]
+      const userAnswer = answers[q.id]
+      if (q.type === 'MULTIPLE_CHOICE') {
+        const correctIds = options.filter(o => o.isCorrect).map(o => o.id).sort()
+        const userIds = [...((userAnswer as string[]) || [])].sort()
+        if (JSON.stringify(correctIds) === JSON.stringify(userIds)) correct++
+      } else {
+        const correctOpt = options.find(o => o.isCorrect)
+        if (correctOpt && userAnswer === correctOpt.id) correct++
+      }
+    }
+    return displayQuestions.length > 0 ? Math.round((correct / displayQuestions.length) * 100) : 0
+  }, [displayQuestions])
+
+
+  useEffect(() => {
+    if (submittedByTimerRef.current && state.submitted && state.passed) {
+      submittedByTimerRef.current = false
+      onComplete(state.score)
+    }
+  }, [state.submitted, state.passed, state.score, onComplete])
+
+  useEffect(() => {
+    if (state.submitted || totalSeconds == null || totalSeconds <= 0) return
+    const t = setInterval(() => {
+      setSecondsLeft(prev => {
+        if (prev == null || prev <= 1) {
+          clearInterval(t)
+          submittedByTimerRef.current = true
+          setState(prevState => {
+            const score = computeScore(prevState.answers)
+            const passed = score >= passThreshold
+            return { ...prevState, submitted: true, score, passed }
+          })
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(t)
+  }, [state.submitted, totalSeconds, passThreshold, computeScore])
+
+  function handleSubmit() {
+    const score = computeScore(state.answers)
+    const passed = score >= passThreshold
+    setState(prev => ({ ...prev, submitted: true, score, passed }))
+    if (passed) onComplete(score)
+  }
 
   const handleAnswer = (questionId: string, value: string, isMultiple: boolean) => {
     if (state.submitted) return
@@ -40,27 +116,9 @@ export const LessonTestView = ({ questions, content, onComplete }: LessonTestVie
     })
   }
 
-  const handleSubmit = () => {
-    let correct = 0
-    for (const q of questions) {
-      const options = q.options as QuestionOption[]
-      const userAnswer = state.answers[q.id]
-      if (q.type === 'MULTIPLE_CHOICE') {
-        const correctIds = options.filter(o => o.isCorrect).map(o => o.id).sort()
-        const userIds = [...((userAnswer as string[]) || [])].sort()
-        if (JSON.stringify(correctIds) === JSON.stringify(userIds)) correct++
-      } else {
-        const correctOpt = options.find(o => o.isCorrect)
-        if (correctOpt && userAnswer === correctOpt.id) correct++
-      }
-    }
-    const score = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0
-    const passed = score >= passThreshold
-    setState(prev => ({ ...prev, submitted: true, score, passed }))
-    if (passed) onComplete(score)
-  }
-
   const handleRetry = () => {
+    submittedByTimerRef.current = false
+    setSecondsLeft(totalSeconds)
     setState({ answers: {}, submitted: false, score: 0, passed: false })
   }
 
@@ -84,9 +142,9 @@ export const LessonTestView = ({ questions, content, onComplete }: LessonTestVie
         <p className="mb-1 text-4xl font-bold text-primary">{state.score}%</p>
         <p className="mb-6 text-sm text-muted-foreground">Порог прохождения: {passThreshold}%</p>
 
-        {/* Answer review — показывает только ✓/✗ без раскрытия правильного ответа */}
+        {/* Answer review: ✓/✗ и объяснение после ответа */}
         <div className="mb-6 space-y-2 text-left">
-          {questions.map((q, i) => {
+          {displayQuestions.map((q, i) => {
             const options = q.options as QuestionOption[]
             const userAnswer = state.answers[q.id]
             let isCorrect = false
@@ -101,16 +159,23 @@ export const LessonTestView = ({ questions, content, onComplete }: LessonTestVie
             return (
               <div
                 key={q.id}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm ${
+                className={`rounded-xl border px-4 py-2.5 text-sm ${
                   isCorrect
                     ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/20 dark:text-emerald-300'
                     : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-300'
                 }`}
               >
-                <span className="shrink-0 text-base">{isCorrect ? '✓' : '✗'}</span>
-                <span className="font-medium">
-                  {i + 1}. {q.question}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="shrink-0 text-base">{isCorrect ? '✓' : '✗'}</span>
+                  <span className="font-medium">
+                    {i + 1}. {q.question}
+                  </span>
+                </div>
+                {state.passed && !isCorrect && q.explanation && (
+                  <p className="mt-2 border-t border-current/20 pt-2 text-xs opacity-90">
+                    {q.explanation}
+                  </p>
+                )}
               </div>
             )
           })}
@@ -128,16 +193,24 @@ export const LessonTestView = ({ questions, content, onComplete }: LessonTestVie
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3 dark:bg-amber-950/20">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-4 py-3 dark:bg-amber-950/20">
         <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
-          {questions.length} вопросов · порог {passThreshold}%
+          {displayQuestions.length} вопросов · порог {passThreshold}%
         </span>
-        <span className="text-sm text-muted-foreground">
-          Отвечено: {Object.keys(state.answers).length} / {questions.length}
-        </span>
+        <div className="flex items-center gap-3">
+          {secondsLeft != null && (
+            <span className="flex items-center gap-1 text-sm font-medium text-amber-700 dark:text-amber-400">
+              <Timer className="h-4 w-4" />
+              {Math.floor(secondsLeft / 60)}:{(secondsLeft % 60).toString().padStart(2, '0')}
+            </span>
+          )}
+          <span className="text-sm text-muted-foreground">
+            Отвечено: {Object.keys(state.answers).length} / {displayQuestions.length}
+          </span>
+        </div>
       </div>
 
-      {questions.map((q, i) => {
+      {displayQuestions.map((q, i) => {
         const options = q.options as QuestionOption[]
         const isMultiple = q.type === 'MULTIPLE_CHOICE'
         const userAnswer = state.answers[q.id]
@@ -192,7 +265,7 @@ export const LessonTestView = ({ questions, content, onComplete }: LessonTestVie
         onClick={handleSubmit}
         size="lg"
         className="w-full"
-        disabled={Object.keys(state.answers).length < questions.length}
+        disabled={Object.keys(state.answers).length < displayQuestions.length}
       >
         <ClipboardCheck className="mr-2 h-5 w-5" />
         Отправить ответы

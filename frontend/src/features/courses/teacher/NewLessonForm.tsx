@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Clock, Video, ClipboardCheck, MessageSquare, Plus, Save, X } from 'lucide-react'
+import { AttachmentRow } from '@/features/courses/teacher/components/AttachmentRow'
 import {
   useCreateLessonMutation,
   useCreateQuestionMutation,
 } from '@/entities/lesson'
-import type { CreateLessonDto, LessonType } from '@/shared/types/course'
+import type { CreateLessonDto, LessonType, Attachment } from '@/shared/types/course'
 import { Button, Input, VideoUpload } from '@/shared/ui'
 
 type FormLessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE'
@@ -12,6 +13,7 @@ type FormLessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE'
 interface TestQuestionForm {
   id: string
   text: string
+  explanation: string
   isMultiple: boolean
   options: { id: string; text: string; isCorrect: boolean }[]
 }
@@ -19,7 +21,7 @@ interface TestQuestionForm {
 interface FillBlankForm {
   id: string
   sentence: string
-  answer: string
+  blanks: string[]
   hint: string
 }
 
@@ -37,6 +39,7 @@ function makeEmptyQuestion(): TestQuestionForm {
   return {
     id: uid(),
     text: '',
+    explanation: '',
     isMultiple: false,
     options: [
       { id: uid(), text: '', isCorrect: false },
@@ -46,7 +49,7 @@ function makeEmptyQuestion(): TestQuestionForm {
 }
 
 function makeEmptyExercise(): FillBlankForm {
-  return { id: uid(), sentence: '', answer: '', hint: '' }
+  return { id: uid(), sentence: '', blanks: [''], hint: '' }
 }
 
 interface NewLessonFormProps {
@@ -74,8 +77,12 @@ export const NewLessonForm = ({
   const [videoUrl, setVideoUrl] = useState('')
   // VIDEO specific
   const [additionalInfo, setAdditionalInfo] = useState('')
+  const [attachments, setAttachments] = useState<Attachment[]>([])
   // TEST specific
   const [passThreshold, setPassThreshold] = useState('70')
+  const [testTimeLimit, setTestTimeLimit] = useState('')
+  const [testShuffleQuestions, setTestShuffleQuestions] = useState(false)
+  const [testShuffleOptions, setTestShuffleOptions] = useState(false)
   const [testQuestions, setTestQuestions] = useState<TestQuestionForm[]>([makeEmptyQuestion()])
   const [isFinalTest, setIsFinalTest] = useState(false)
   // INTERACTIVE specific
@@ -87,7 +94,11 @@ export const NewLessonForm = ({
     setDuration('')
     setVideoUrl('')
     setAdditionalInfo('')
+    setAttachments([])
     setPassThreshold('70')
+    setTestTimeLimit('')
+    setTestShuffleQuestions(false)
+    setTestShuffleOptions(false)
     setTestQuestions([makeEmptyQuestion()])
     setExercises([makeEmptyExercise()])
     setLessonType('VIDEO')
@@ -170,23 +181,27 @@ export const NewLessonForm = ({
         }
       }
     }
-    if (lessonType === 'INTERACTIVE') {
-      if (exercises.length === 0) {
-        onError('Добавьте хотя бы одно упражнение')
-        return
-      }
+      if (lessonType === 'INTERACTIVE') {
+        if (exercises.length === 0) {
+          onError('Добавьте хотя бы одно упражнение')
+          return
+        }
       for (const ex of exercises) {
         if (!ex.sentence.trim()) {
           onError('Заполните предложение для всех упражнений')
           return
         }
-        if (!ex.answer.trim()) {
-          onError('Укажите правильный ответ для всех упражнений')
-          return
-        }
         if (!ex.sentence.includes('___')) {
           onError('Обозначьте пропуск символами ___ в предложении')
           return
+        }
+        const requiredBlanks = (ex.sentence.match(/___/g) || []).length
+        for (let i = 0; i < requiredBlanks; i++) {
+          const b = (ex.blanks || [])[i] ?? ''
+          if (!b.split(',').some(s => s.trim())) {
+            onError(`Укажите ответ для пропуска ${i + 1} в упражнении`)
+            return
+          }
         }
       }
     }
@@ -195,7 +210,14 @@ export const NewLessonForm = ({
     if (lessonType === 'VIDEO' && additionalInfo.trim()) {
       content = additionalInfo.trim()
     } else if (lessonType === 'TEST') {
-      content = JSON.stringify({ passThreshold: Number(passThreshold) })
+      content = JSON.stringify({
+        passThreshold: Number(passThreshold),
+        ...(testTimeLimit && !Number.isNaN(Number(testTimeLimit)) && Number(testTimeLimit) > 0
+          ? { timeLimitMinutes: Number(testTimeLimit) }
+          : {}),
+        shuffleQuestions: testShuffleQuestions,
+        shuffleOptions: testShuffleOptions,
+      })
     } else if (lessonType === 'INTERACTIVE') {
       content = JSON.stringify({ exercises })
     }
@@ -209,6 +231,9 @@ export const NewLessonForm = ({
       content,
       duration: duration ? Number(duration) * 60 : undefined,
       isFinalTest: lessonType === 'TEST' ? isFinalTest : false,
+      ...(lessonType === 'VIDEO' && attachments.filter(a => a.name.trim() && a.url.trim()).length > 0
+        ? { attachments: attachments.filter(a => a.name.trim() && a.url.trim()) }
+        : {}),
     }
 
     try {
@@ -225,23 +250,34 @@ export const NewLessonForm = ({
             type: q.isMultiple ? 'MULTIPLE_CHOICE' : 'SINGLE_CHOICE',
             order: i + 1,
             question: q.text.trim(),
+            explanation: q.explanation?.trim() || undefined,
             options: filledOptions,
             points: 1,
           }).unwrap()
         }
       }
 
-      // Create questions for INTERACTIVE
+      // Create questions for INTERACTIVE (несколько пропусков, синонимы через запятую)
       if (lessonType === 'INTERACTIVE') {
         for (let i = 0; i < exercises.length; i++) {
           const ex = exercises[i]
+          const requiredBlanks = (ex.sentence.match(/___/g) || []).length || 1
+          const blanks = (ex.blanks || []).slice(0, requiredBlanks)
+          while (blanks.length < requiredBlanks) blanks.push('')
+          const options: { id: string; text: string; isCorrect: boolean; blankIndex?: number }[] = []
+          blanks.forEach((b, bi) => {
+            b.split(',').map(s => s.trim()).filter(Boolean).forEach((text, ti) => {
+              options.push({ id: `${bi}-${ti}`, text, isCorrect: true, blankIndex: bi })
+            })
+          })
+          if (options.length === 0) options.push({ id: '1', text: '', isCorrect: true, blankIndex: 0 })
           await createQuestion({
             lessonId,
             type: 'FILL_IN_BLANK',
             order: i + 1,
             question: ex.sentence.trim(),
-            options: [{ id: '1', text: ex.answer.trim(), isCorrect: true }],
-            explanation: ex.hint.trim() || undefined,
+            options,
+            explanation: ex.hint?.trim() || undefined,
             points: 1,
           }).unwrap()
         }
@@ -349,6 +385,35 @@ export const NewLessonForm = ({
                 className="min-h-[100px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
               />
             </div>
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-sm font-medium">Методички и файлы</label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAttachments(a => [...a, { name: '', url: '', size: 0 }])}
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  Добавить файл
+                </Button>
+              </div>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Загрузите файл с устройства или укажите ссылку. PDF, DOC, DOCX, TXT, ODT — до 25 МБ.
+              </p>
+              {attachments.map((att, idx) => (
+                <div key={idx} className="mb-2">
+                  <AttachmentRow
+                    attachment={att}
+                    onUpdate={upd =>
+                      setAttachments(a => a.map((x, i) => (i === idx ? { ...x, ...upd } : x)))
+                    }
+                    onRemove={() => setAttachments(a => a.filter((_, i) => i !== idx))}
+                    onUploadError={onError}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -390,16 +455,42 @@ export const NewLessonForm = ({
                   Минимум {passThreshold || '?'}% для зачёта
                 </p>
               </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Таймер (минут)</label>
+                <Input
+                  type="number"
+                  value={testTimeLimit}
+                  onChange={e => setTestTimeLimit(e.target.value)}
+                  min={1}
+                  placeholder="Без таймера"
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={testShuffleQuestions}
+                  onChange={e => setTestShuffleQuestions(e.target.checked)}
+                  className="h-4 w-4 rounded text-amber-600"
+                />
+                Перемешивать вопросы
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={testShuffleOptions}
+                  onChange={e => setTestShuffleOptions(e.target.checked)}
+                  className="h-4 w-4 rounded text-amber-600"
+                />
+                Перемешивать варианты ответов
+              </label>
             </div>
 
             {/* Questions */}
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <h4 className="text-sm font-semibold">Вопросы ({testQuestions.length})</h4>
-                <Button variant="outline" size="sm" onClick={addQuestion} type="button">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Добавить вопрос
-                </Button>
               </div>
 
               <div className="space-y-4">
@@ -424,6 +515,18 @@ export const NewLessonForm = ({
                       >
                         <X className="h-4 w-4" />
                       </button>
+                    </div>
+
+                    <div className="mb-2">
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                        Объяснение (показывается после ответа)
+                      </label>
+                      <textarea
+                        value={q.explanation}
+                        onChange={e => updateQuestion(q.id, { explanation: e.target.value })}
+                        placeholder="Почему этот ответ правильный..."
+                        className="min-h-[50px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                      />
                     </div>
 
                     <div className="mb-2 flex items-center gap-2">
@@ -491,6 +594,10 @@ export const NewLessonForm = ({
                   </div>
                 ))}
               </div>
+              <Button variant="outline" size="sm" onClick={addQuestion} type="button" className="mt-3 w-full">
+                <Plus className="mr-1 h-3 w-3" />
+                Добавить вопрос
+              </Button>
             </div>
           </div>
         )}
@@ -517,10 +624,6 @@ export const NewLessonForm = ({
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <h4 className="text-sm font-semibold">Упражнения ({exercises.length})</h4>
-                <Button variant="outline" size="sm" onClick={addExercise} type="button">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Добавить упражнение
-                </Button>
               </div>
 
               <div className="space-y-4">
@@ -533,35 +636,46 @@ export const NewLessonForm = ({
                       <div className="flex-1 space-y-2">
                         <div>
                           <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                            Предложение с пропуском *
+                            Предложение с пропусками ___ *
                           </label>
                           <Input
                             value={ex.sentence}
-                            onChange={e => updateExercise(ex.id, { sentence: e.target.value })}
-                            placeholder="I ___ to school every day."
+                            onChange={e => {
+                              const newSentence = e.target.value
+                              const count = (newSentence.match(/___/g) || []).length || 1
+                              const newBlanks = [...(ex.blanks || [''])]
+                              while (newBlanks.length < count) newBlanks.push('')
+                              updateExercise(ex.id, { sentence: newSentence, blanks: newBlanks.slice(0, count) })
+                            }}
+                            placeholder="I ___ to school ___ ."
                           />
                         </div>
-                        <div className="grid gap-2 md:grid-cols-2">
-                          <div>
+                        {Array.from({ length: Math.max(1, (ex.sentence.match(/___/g) || []).length) }, (_, bi) => (
+                          <div key={bi}>
                             <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                              Правильный ответ *
+                              Пропуск {bi + 1} * (синонимы через запятую)
                             </label>
                             <Input
-                              value={ex.answer}
-                              onChange={e => updateExercise(ex.id, { answer: e.target.value })}
-                              placeholder="go"
+                              value={(ex.blanks || [])[bi] ?? ''}
+                              onChange={e => {
+                                const newBlanks = [...(ex.blanks || [''])]
+                                while (newBlanks.length <= bi) newBlanks.push('')
+                                newBlanks[bi] = e.target.value
+                                updateExercise(ex.id, { blanks: newBlanks })
+                              }}
+                              placeholder="go, goes"
                             />
                           </div>
-                          <div>
-                            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                              Подсказка (по желанию)
-                            </label>
-                            <Input
-                              value={ex.hint}
-                              onChange={e => updateExercise(ex.id, { hint: e.target.value })}
-                              placeholder="Глагол в форме Present Simple"
-                            />
-                          </div>
+                        ))}
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                            Подсказка (по желанию)
+                          </label>
+                          <Input
+                            value={ex.hint}
+                            onChange={e => updateExercise(ex.id, { hint: e.target.value })}
+                            placeholder="Глагол в форме Present Simple"
+                          />
                         </div>
                       </div>
                       {exercises.length > 1 && (
@@ -577,6 +691,10 @@ export const NewLessonForm = ({
                   </div>
                 ))}
               </div>
+              <Button variant="outline" size="sm" onClick={addExercise} type="button" className="mt-3 w-full">
+                <Plus className="mr-1 h-3 w-3" />
+                Добавить упражнение
+              </Button>
             </div>
           </div>
         )}

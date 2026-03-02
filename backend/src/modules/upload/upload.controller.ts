@@ -91,6 +91,49 @@ class UploadController {
 
     res.json({ data: { url: result.secure_url } })
   }
+
+  /**
+   * POST /api/upload/document
+   * Загрузить документ (методичка: PDF, DOC, DOCX, TXT, ODT) в Cloudinary
+   */
+  async uploadDocument(req: AuthRequest, res: Response) {
+    if (!req.file) {
+      throw new AppError(400, 'NO_FILE', 'Файл не найден')
+    }
+
+    if (!isCloudinaryConfigured) {
+      throw new AppError(
+        503,
+        'CLOUDINARY_NOT_CONFIGURED',
+        'Хранилище файлов не настроено. Обратитесь к администратору.'
+      )
+    }
+
+    const file = req.file
+
+    const result = await new Promise<{ secure_url: string; bytes?: number }>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'linglify/documents',
+          resource_type: 'raw',
+        },
+        (error, result) => {
+          if (error) reject(error)
+          else if (result) resolve(result)
+          else reject(new Error('Unknown upload error'))
+        }
+      )
+      uploadStream.end(file.buffer)
+    })
+
+    res.json({
+      data: {
+        url: result.secure_url,
+        name: file.originalname || 'Документ',
+        size: file.size,
+      },
+    })
+  }
 }
 
 export const uploadController = new UploadController()

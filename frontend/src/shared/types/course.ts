@@ -119,6 +119,8 @@ export interface QuestionOption {
   id: string
   text: string
   isCorrect: boolean
+  /** Для FILL_IN_BLANK с несколькими пропусками: индекс пропуска (0, 1, …) */
+  blankIndex?: number
 }
 
 export interface Enrollment {

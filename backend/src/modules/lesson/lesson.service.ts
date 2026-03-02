@@ -143,10 +143,10 @@ class LessonService {
             type: true,
             order: true,
             question: true,
+            explanation: true,
             options: true,
             points: true,
             timeLimit: true,
-            // Explanation скрыт до ответа
           },
         },
       },

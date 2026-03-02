@@ -15,7 +15,8 @@ import {
 } from 'lucide-react'
 import { Button, VideoPlayer } from '@/shared/ui'
 import { getAdditionalTextFromContent } from '@/shared/lib/lessonContent'
-import { LessonHeader, LessonInteractiveView, LessonTestView, LessonLexicalView } from '@/features/lesson/view'
+import { LessonHeader, LessonInteractiveView, LessonTestView, LessonLexicalView, LessonDialogueView } from '@/features/lesson/view'
+import type { Answer } from '@/shared/types/course'
 
 function buildAttachmentUrl(url: string, name?: string | null): string {
   if (!url) return '#'
@@ -119,6 +120,7 @@ export const LessonPage = () => {
   }
 
   const isCompleted = lesson.userProgress?.isCompleted
+  const userAnswers = lesson.userAnswers || null
   const additionalText = getAdditionalTextFromContent(lesson.content)
 
   return (
@@ -189,7 +191,14 @@ export const LessonPage = () => {
               </div>
             )}
             {lesson.questions && lesson.questions.length > 0 ? (
-              <LessonTestView questions={lesson.questions} content={lesson.content} onComplete={handleComplete} />
+              <LessonTestView
+                questions={lesson.questions}
+                content={lesson.content}
+                onComplete={handleComplete}
+                initialCompleted={!!lesson.userProgress?.isCompleted}
+                initialScore={lesson.userProgress?.score ?? null}
+                initialAnswers={userAnswers as Record<string, Answer> | null}
+              />
             ) : (
               <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                 <ClipboardCheck className="mx-auto mb-3 h-10 w-10 opacity-40" />
@@ -207,7 +216,13 @@ export const LessonPage = () => {
               </div>
             )}
             {lesson.questions && lesson.questions.length > 0 ? (
-              <LessonInteractiveView questions={lesson.questions} onComplete={handleComplete} />
+              <LessonInteractiveView
+                questions={lesson.questions}
+                onComplete={handleComplete}
+                initialCompleted={!!lesson.userProgress?.isCompleted}
+                initialScore={lesson.userProgress?.score ?? null}
+                initialAnswers={userAnswers as Record<string, Answer> | null}
+              />
             ) : (
               <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                 <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
@@ -235,6 +250,30 @@ export const LessonPage = () => {
               <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                 <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
                 <p>Слова для тренажёра ещё не добавлены</p>
+              </div>
+            )}
+          </>
+        )}
+        {/* DIALOGUE */}
+        {lesson.type === 'DIALOGUE' && (
+          <>
+            {lesson.videoUrl && (
+              <div className="mb-6">
+                <VideoPlayer videoUrl={lesson.videoUrl} title={lesson.title} />
+              </div>
+            )}
+            {lesson.questions && lesson.questions.length > 0 ? (
+              <LessonDialogueView
+                questions={lesson.questions}
+                onComplete={handleComplete}
+                initialCompleted={!!lesson.userProgress?.isCompleted}
+                initialScore={lesson.userProgress?.score ?? null}
+                initialAnswers={userAnswers as Record<string, Answer> | null}
+              />
+            ) : (
+              <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
+                <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
+                <p>Диалоговые шаги ещё не добавлены</p>
               </div>
             )}
           </>

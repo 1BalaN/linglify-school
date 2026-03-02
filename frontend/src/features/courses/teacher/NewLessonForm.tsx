@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Clock, Video, ClipboardCheck, MessageSquare, Plus, Save, X, BookOpen } from 'lucide-react'
+import { Clock, Video, ClipboardCheck, MessageSquare, Plus, Save, X, BookOpen, MessageCircle } from 'lucide-react'
 import { AttachmentRow } from '@/features/courses/teacher/components/AttachmentRow'
 import {
   useCreateLessonMutation,
@@ -8,7 +8,7 @@ import {
 import type { CreateLessonDto, LessonType, Attachment } from '@/shared/types/course'
 import { Button, Input, VideoUpload } from '@/shared/ui'
 
-type FormLessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE' | 'LEXICAL'
+type FormLessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE' | 'LEXICAL' | 'DIALOGUE'
 
 interface TestQuestionForm {
   id: string
@@ -31,11 +31,18 @@ interface LexicalItemForm {
   translations: string
 }
 
+interface DialogueStepForm {
+  id: string
+  prompt: string
+  options: { id: string; text: string; isCorrect: boolean }[]
+}
+
 const lessonTypes: { value: FormLessonType; label: string; icon: typeof Video; description: string }[] = [
   { value: 'VIDEO', label: 'Видео-урок', icon: Video, description: 'Видео + дополнительные материалы' },
   { value: 'TEST', label: 'Тест', icon: ClipboardCheck, description: 'Вопросы с вариантами ответов' },
   { value: 'INTERACTIVE', label: 'Интерактив', icon: MessageSquare, description: 'Заполни пропуск / допиши предложение' },
   { value: 'LEXICAL', label: 'Лексический тренажёр', icon: BookOpen, description: 'Тренировка лексики и перевода' },
+  { value: 'DIALOGUE', label: 'Диалоговый урок', icon: MessageCircle, description: 'Диалог с выбором реплик' },
 ]
 
 function uid() {
@@ -61,6 +68,17 @@ function makeEmptyExercise(): FillBlankForm {
 
 function makeEmptyLexicalItem(): LexicalItemForm {
   return { id: uid(), term: '', translations: '' }
+}
+
+function makeEmptyDialogueStep(): DialogueStepForm {
+  return {
+    id: uid(),
+    prompt: '',
+    options: [
+      { id: uid(), text: '', isCorrect: true },
+      { id: uid(), text: '', isCorrect: false },
+    ],
+  }
 }
 
 interface NewLessonFormProps {
@@ -100,6 +118,8 @@ export const NewLessonForm = ({
   const [exercises, setExercises] = useState<FillBlankForm[]>([makeEmptyExercise()])
   // LEXICAL specific
   const [lexicalItems, setLexicalItems] = useState<LexicalItemForm[]>([makeEmptyLexicalItem()])
+  // DIALOGUE specific
+  const [dialogueSteps, setDialogueSteps] = useState<DialogueStepForm[]>([makeEmptyDialogueStep()])
 
   const resetLessonForm = () => {
     setTitle('')
@@ -115,6 +135,7 @@ export const NewLessonForm = ({
     setTestQuestions([makeEmptyQuestion()])
     setExercises([makeEmptyExercise()])
     setLexicalItems([makeEmptyLexicalItem()])
+    setDialogueSteps([makeEmptyDialogueStep()])
     setLessonType('VIDEO')
   }
 
@@ -157,6 +178,43 @@ export const NewLessonForm = ({
     setExercises(e => e.filter(x => x.id !== eId))
   const updateExercise = (eId: string, patch: Partial<FillBlankForm>) =>
     setExercises(e => e.map(x => (x.id === eId ? { ...x, ...patch } : x)))
+
+  const addDialogueStep = () => setDialogueSteps(s => [...s, makeEmptyDialogueStep()])
+  const removeDialogueStep = (id: string) =>
+    setDialogueSteps(s => s.filter(x => x.id !== id))
+  const patchDialogueStep = (id: string, patch: Partial<DialogueStepForm>) =>
+    setDialogueSteps(s => s.map(x => (x.id === id ? { ...x, ...patch } : x)))
+  const addDialogueOption = (stepId: string) =>
+    setDialogueSteps(s =>
+      s.map(x =>
+        x.id === stepId
+          ? { ...x, options: [...x.options, { id: uid(), text: '', isCorrect: false }] }
+          : x,
+      ),
+    )
+  const removeDialogueOption = (stepId: string, optId: string) =>
+    setDialogueSteps(s =>
+      s.map(x =>
+        x.id === stepId
+          ? { ...x, options: x.options.filter(o => o.id !== optId) }
+          : x,
+      ),
+    )
+  const patchDialogueOption = (
+    stepId: string,
+    optId: string,
+    patch: Partial<{ text: string; isCorrect: boolean }>,
+  ) =>
+    setDialogueSteps(s =>
+      s.map(x =>
+        x.id === stepId
+          ? {
+              ...x,
+              options: x.options.map(o => (o.id === optId ? { ...o, ...patch } : o)),
+            }
+          : x,
+      ),
+    )
 
   const handleSubmit = async () => {
     // Валидация
@@ -238,6 +296,28 @@ export const NewLessonForm = ({
         }
       }
     }
+    if (lessonType === 'DIALOGUE') {
+      if (dialogueSteps.length === 0) {
+        onError('Добавьте хотя бы один шаг диалога')
+        return
+      }
+      for (const step of dialogueSteps) {
+        if (!step.prompt.trim()) {
+          onError('Заполните текст реплики собеседника для всех шагов')
+          return
+        }
+        if (step.options.length < 2) {
+          onError('В каждом шаге диалога должно быть минимум два варианта ответа')
+          return
+        }
+        const hasText = step.options.some(o => o.text.trim())
+        const hasCorrect = step.options.some(o => o.isCorrect && o.text.trim())
+        if (!hasText || !hasCorrect) {
+          onError('В каждом шаге диалога должен быть хотя бы один непустой правильный вариант')
+          return
+        }
+      }
+    }
 
     let content: string | undefined
     if (lessonType === 'VIDEO' && additionalInfo.trim()) {
@@ -255,6 +335,8 @@ export const NewLessonForm = ({
       content = JSON.stringify({ exercises })
     } else if (lessonType === 'LEXICAL') {
       // Пока без сложных настроек: контент можно использовать позже для метаданных
+      content = undefined
+    } else if (lessonType === 'DIALOGUE') {
       content = undefined
     }
 
@@ -342,6 +424,24 @@ export const NewLessonForm = ({
             order: i + 1,
             question: item.term.trim(),
             options,
+            points: 1,
+          }).unwrap()
+        }
+      }
+
+      // Create questions for DIALOGUE (реплика собеседника + выбор ответа)
+      if (lessonType === 'DIALOGUE') {
+        for (let i = 0; i < dialogueSteps.length; i++) {
+          const step = dialogueSteps[i]
+          const filledOptions = step.options
+            .filter(o => o.text.trim())
+            .map(o => ({ ...o, text: o.text.trim() }))
+          await createQuestion({
+            lessonId,
+            type: 'SINGLE_CHOICE',
+            order: i + 1,
+            question: step.prompt.trim(),
+            options: filledOptions,
             points: 1,
           }).unwrap()
         }
@@ -844,6 +944,130 @@ export const NewLessonForm = ({
               <Button variant="outline" size="sm" type="button" onClick={() => setLexicalItems(items => [...items, makeEmptyLexicalItem()])} className="mt-3 w-full">
                 <Plus className="mr-1 h-3 w-3" />
                 Добавить слово
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* DIALOGUE fields */}
+        {lessonType === 'DIALOGUE' && (
+          <div className="space-y-4 rounded-xl border border-sky-200 bg-sky-50/50 p-4 dark:border-sky-900/30 dark:bg-sky-950/20">
+            <div className="flex items-center gap-2 text-sm font-medium text-sky-700 dark:text-sky-400">
+              <MessageCircle className="h-4 w-4" />
+              <span>Диалоговые шаги</span>
+            </div>
+            <VideoUpload
+              value={videoUrl}
+              onChange={setVideoUrl}
+              label="Видео к диалогу (по желанию)"
+            />
+
+            <div className="rounded-lg border border-sky-200/60 bg-sky-100/30 px-3 py-2 text-xs text-sky-700 dark:border-sky-800/30 dark:bg-sky-900/20 dark:text-sky-300">
+              Добавьте реплики собеседника и варианты ответов ученика. В каждом шаге должен быть
+              ровно один правильный вариант.
+            </div>
+
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <h4 className="text-sm font-semibold">Шаги диалога ({dialogueSteps.length})</h4>
+              </div>
+
+              <div className="space-y-4">
+                {dialogueSteps.map((step, index) => (
+                  <div key={step.id} className="rounded-lg border border-border bg-card p-4">
+                    <div className="mb-3 flex items-start gap-2">
+                      <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-xs font-bold text-sky-600 dark:text-sky-300">
+                        {index + 1}
+                      </span>
+                      <div className="flex-1 space-y-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                            Реплика собеседника *
+                          </label>
+                          <textarea
+                            value={step.prompt}
+                            onChange={e =>
+                              patchDialogueStep(step.id, { prompt: e.target.value })
+                            }
+                            placeholder="Например: Waiter: Good evening! Do you have a reservation?"
+                            className="min-h-[60px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-medium text-muted-foreground">
+                              Варианты ответа ученика (один правильный) *
+                            </label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              type="button"
+                              onClick={() => addDialogueOption(step.id)}
+                              className="text-[11px]"
+                            >
+                              <Plus className="mr-1 h-3 w-3" />
+                              Добавить вариант
+                            </Button>
+                          </div>
+
+                          {step.options.map(opt => (
+                            <div key={opt.id} className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                checked={opt.isCorrect}
+                                onChange={e => {
+                                  if (e.target.checked) {
+                                    step.options.forEach(o =>
+                                      patchDialogueOption(step.id, o.id, {
+                                        isCorrect: o.id === opt.id,
+                                      }),
+                                    )
+                                  }
+                                }}
+                                className="h-4 w-4 shrink-0 text-primary"
+                                name={`dialogue-${step.id}`}
+                              />
+                              <Input
+                                value={opt.text}
+                                onChange={e =>
+                                  patchDialogueOption(step.id, opt.id, {
+                                    text: e.target.value,
+                                  })
+                                }
+                                placeholder="Вариант ответа"
+                                className="flex-1 text-sm"
+                              />
+                              {step.options.length > 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeDialogueOption(step.id, opt.id)}
+                                  className="text-muted-foreground hover:text-red-500"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {dialogueSteps.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeDialogueStep(step.id)}
+                          className="mt-2 text-muted-foreground hover:text-red-500"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Button className="mt-3 w-full" variant="outline" size="sm" type="button" onClick={addDialogueStep}>
+                <Plus className="mr-1 h-3 w-3" />
+                Добавить шаг
               </Button>
             </div>
           </div>

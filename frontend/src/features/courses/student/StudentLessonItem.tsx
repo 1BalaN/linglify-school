@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, Lock, MessageSquare, Play, Video, ClipboardCheck, BookOpen } from 'lucide-react'
+import { CheckCircle, Clock, Lock, MessageSquare, Play, Video, ClipboardCheck, BookOpen, MessageCircle } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Lesson } from '@/shared/types/course'
 
@@ -22,7 +22,9 @@ export const StudentLessonItem = ({ lesson, isAccessible, onOpen }: StudentLesso
         ? ClipboardCheck
         : lesson.type === 'INTERACTIVE'
           ? MessageSquare
-          : BookOpen
+          : lesson.type === 'LEXICAL'
+            ? BookOpen
+            : MessageCircle
 
   const typeLabel =
     lesson.type === 'VIDEO'
@@ -31,7 +33,9 @@ export const StudentLessonItem = ({ lesson, isAccessible, onOpen }: StudentLesso
         ? 'Тест'
         : lesson.type === 'INTERACTIVE'
           ? 'Интерактив'
-          : 'Лексический тренажёр'
+          : lesson.type === 'LEXICAL'
+            ? 'Лексический тренажёр'
+            : 'Диалог'
 
   return (
     <div

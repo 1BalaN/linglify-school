@@ -9,6 +9,7 @@ const lessonTypeMeta: { value: LessonType; label: string }[] = [
   { value: 'TEST', label: 'Тест' },
   { value: 'INTERACTIVE', label: 'Интерактив' },
   { value: 'LEXICAL', label: 'Лексический тренажёр' },
+  { value: 'DIALOGUE', label: 'Диалоговый урок' },
 ]
 
 interface TeacherLessonsListProps {
@@ -82,7 +83,9 @@ export const TeacherLessonsList = ({
                       ? 'T'
                       : lesson.type === 'INTERACTIVE'
                         ? 'I'
-                        : 'L'}
+                        : lesson.type === 'LEXICAL'
+                          ? 'L'
+                          : 'D'}
                 </span>
               </div>
               <div>

@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { CheckCircle, RefreshCw, ClipboardCheck, CheckCircle2, CheckSquare, Timer } from 'lucide-react'
 import { Button } from '@/shared/ui'
-import type { Question, QuestionOption } from '@/shared/types/course'
+import type { Question, QuestionOption, Answer } from '@/shared/types/course'
 import { getPassThresholdFromContent, getTestOptionsFromContent } from '@/shared/lib/lessonContent'
+import { useSubmitAnswerMutation } from '@/entities/lesson'
 
 function shuffleArray<T>(arr: T[]): T[] {
   const out = [...arr]
@@ -20,13 +21,46 @@ interface TestState {
   passed: boolean
 }
 
+function buildInitialTestAnswers(
+  questions: Question[],
+  initialCompleted?: boolean,
+  initialAnswers?: Record<string, Answer> | null,
+): Record<string, string | string[]> {
+  if (!initialCompleted || !initialAnswers) return {}
+
+  const byQuestion: Record<string, string | string[]> = {}
+
+  for (const q of questions) {
+    const ans = initialAnswers[q.id]
+    if (!ans) continue
+
+    if (q.type === 'MULTIPLE_CHOICE') {
+      byQuestion[q.id] = Array.isArray(ans.answer) ? (ans.answer as string[]) : []
+    } else {
+      byQuestion[q.id] = typeof ans.answer === 'string' ? ans.answer : ''
+    }
+  }
+
+  return byQuestion
+}
+
 interface LessonTestViewProps {
   questions: Question[]
   content: string | null
   onComplete: (score: number) => void
+  initialCompleted?: boolean
+  initialScore?: number | null
+  initialAnswers?: Record<string, Answer> | null
 }
 
-export const LessonTestView = ({ questions, content, onComplete }: LessonTestViewProps) => {
+export const LessonTestView = ({
+  questions,
+  content,
+  onComplete,
+  initialCompleted,
+  initialScore,
+  initialAnswers,
+}: LessonTestViewProps) => {
   const passThreshold = getPassThresholdFromContent(content)
   const { timeLimitMinutes, shuffleQuestions, shuffleOptions } = getTestOptionsFromContent(content)
 
@@ -39,12 +73,20 @@ export const LessonTestView = ({ questions, content, onComplete }: LessonTestVie
     }))
   }, [questions, shuffleQuestions, shuffleOptions])
 
+  const initialScoreValue =
+    initialCompleted && typeof initialScore === 'number' ? initialScore : 0
+  const initialPassed = initialCompleted ? initialScoreValue >= passThreshold : false
+
+  const initialAnswersState = buildInitialTestAnswers(questions, initialCompleted, initialAnswers)
+
   const [state, setState] = useState<TestState>({
-    answers: {},
-    submitted: false,
-    score: 0,
-    passed: false,
+    answers: initialAnswersState,
+    submitted: !!initialCompleted,
+    score: initialScoreValue,
+    passed: initialPassed,
   })
+
+  const [submitAnswer] = useSubmitAnswerMutation()
 
   const totalSeconds = timeLimitMinutes ? timeLimitMinutes * 60 : null
   const [secondsLeft, setSecondsLeft] = useState<number | null>(totalSeconds)
@@ -96,6 +138,12 @@ export const LessonTestView = ({ questions, content, onComplete }: LessonTestVie
   }, [state.submitted, totalSeconds, passThreshold, computeScore])
 
   function handleSubmit() {
+    // Сохраняем ответы пользователя по вопросам
+    Object.entries(state.answers).forEach(([questionId, answer]) => {
+      // Не ждём ответа от сервера, ошибки игнорируем, чтобы не блокировать UI
+      submitAnswer({ questionId, answer }).catch(() => {})
+    })
+
     const score = computeScore(state.answers)
     const passed = score >= passThreshold
     setState(prev => ({ ...prev, submitted: true, score, passed }))
@@ -142,51 +190,71 @@ export const LessonTestView = ({ questions, content, onComplete }: LessonTestVie
         <p className="mb-1 text-4xl font-bold text-primary">{state.score}%</p>
         <p className="mb-6 text-sm text-muted-foreground">Порог прохождения: {passThreshold}%</p>
 
-        {/* Answer review: ✓/✗ и объяснение после ответа */}
-        <div className="mb-6 space-y-2 text-left">
-          {displayQuestions.map((q, i) => {
-            const options = q.options as QuestionOption[]
-            const userAnswer = state.answers[q.id]
-            let isCorrect = false
-            if (q.type === 'MULTIPLE_CHOICE') {
-              const correctIds = options.filter(o => o.isCorrect).map(o => o.id).sort()
-              const userIds = [...((userAnswer as string[]) || [])].sort()
-              isCorrect = JSON.stringify(correctIds) === JSON.stringify(userIds)
-            } else {
-              const correctOpt = options.find(o => o.isCorrect)
-              isCorrect = !!correctOpt && userAnswer === correctOpt.id
-            }
-            return (
-              <div
-                key={q.id}
-                className={`rounded-xl border px-4 py-2.5 text-sm ${
-                  isCorrect
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/20 dark:text-emerald-300'
-                    : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-300'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="shrink-0 text-base">{isCorrect ? '✓' : '✗'}</span>
-                  <span className="font-medium">
-                    {i + 1}. {q.question}
-                  </span>
-                </div>
-                {state.passed && !isCorrect && q.explanation && (
-                  <p className="mt-2 border-t border-current/20 pt-2 text-xs opacity-90">
-                    {q.explanation}
-                  </p>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        {/* Answer review только когда есть ответы из текущей сессии */}
+        {Object.keys(state.answers).length > 0 && (
+          <div className="mb-6 space-y-2 text-left">
+            {displayQuestions.map((q, i) => {
+              const options = q.options as QuestionOption[]
+              const userAnswer = state.answers[q.id]
+              let isCorrect = false
+              let userText = '—'
+              let correctText = '—'
 
-        {!state.passed && (
-          <Button onClick={handleRetry} variant="outline">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Пройти ещё раз
-          </Button>
+              if (q.type === 'MULTIPLE_CHOICE') {
+                const correctOpts = options.filter(o => o.isCorrect)
+                const correctIds = correctOpts.map(o => o.id).sort()
+                const userIds = [...((userAnswer as string[]) || [])].sort()
+                isCorrect = JSON.stringify(correctIds) === JSON.stringify(userIds)
+
+                const userOpts = options.filter(o => userIds.includes(o.id))
+                userText = userOpts.length ? userOpts.map(o => o.text).join(', ') : '—'
+                correctText = correctOpts.length ? correctOpts.map(o => o.text).join(', ') : '—'
+              } else {
+                const correctOpt = options.find(o => o.isCorrect)
+                const selectedOpt = options.find(o => o.id === userAnswer)
+                isCorrect = !!correctOpt && userAnswer === correctOpt.id
+                userText = selectedOpt?.text ?? '—'
+                correctText = correctOpt?.text ?? '—'
+              }
+
+              return (
+                <div
+                  key={q.id}
+                  className={`rounded-xl border px-4 py-2.5 text-sm ${
+                    isCorrect
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/20 dark:text-emerald-300'
+                      : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0 text-base">{isCorrect ? '✓' : '✗'}</span>
+                    <span className="font-medium">
+                      {i + 1}. {q.question}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs">
+                    <span className="font-semibold">Ваш ответ:</span> {userText}
+                  </p>
+                  {!isCorrect && (
+                    <p className="mt-0.5 text-xs">
+                      <span className="font-semibold">Правильный ответ:</span> {correctText}
+                    </p>
+                  )}
+                  {state.passed && !isCorrect && q.explanation && (
+                    <p className="mt-2 border-t border-current/20 pt-2 text-xs opacity-90">
+                      {q.explanation}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         )}
+
+        <Button onClick={handleRetry} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Пройти ещё раз
+        </Button>
       </div>
     )
   }

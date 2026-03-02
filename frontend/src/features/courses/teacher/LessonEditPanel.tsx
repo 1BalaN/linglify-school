@@ -42,6 +42,12 @@ interface EditLexicalItemForm {
   translations: string
 }
 
+interface EditDialogueStepForm {
+  id: string
+  prompt: string
+  options: { id: string; text: string; isCorrect: boolean }[]
+}
+
 
 function uid() { return 'new_' + Math.random().toString(36).slice(2) }
 function isNew(id: string) { return id.startsWith('new_') }
@@ -99,6 +105,20 @@ function lexicalToForm(questions: Question[]): EditLexicalItemForm[] {
   })
 }
 
+function dialogueToForm(questions: Question[]): EditDialogueStepForm[] {
+  return questions
+    .filter(q => q.type === 'SINGLE_CHOICE')
+    .sort((a, b) => a.order - b.order)
+    .map(q => {
+      const options = (q.options || []) as { id: string; text: string; isCorrect: boolean }[]
+      return {
+        id: q.id,
+        prompt: q.question,
+        options: options.map(o => ({ id: o.id, text: o.text, isCorrect: o.isCorrect })),
+      }
+    })
+}
+
 function parseContent(content: string | null): Record<string, unknown> {
   if (!content) return {}
   try { return JSON.parse(content) } catch { return {} }
@@ -150,6 +170,9 @@ export const LessonEditPanel = ({
   // ── LEXICAL specific ──
   const [lexicalItems, setLexicalItems] = useState<EditLexicalItemForm[]>([])
   const [originalLexicalQIds, setOriginalLexicalQIds] = useState<string[]>([])
+  // ── DIALOGUE specific ──
+  const [dialogueSteps, setDialogueSteps] = useState<EditDialogueStepForm[]>([])
+  const [originalDialogueQIds, setOriginalDialogueQIds] = useState<string[]>([])
 
   // ── Init from fetched lesson ──
   useEffect(() => {
@@ -211,6 +234,12 @@ export const LessonEditPanel = ({
       const items = lesson.questions ? lexicalToForm(lesson.questions) : []
       setLexicalItems(items.length > 0 ? items : [makeEmptyLexicalItem()])
       setOriginalLexicalQIds((lesson.questions || []).map(q => q.id))
+    }
+
+    if (lesson.type === 'DIALOGUE') {
+      const steps = lesson.questions ? dialogueToForm(lesson.questions) : []
+      setDialogueSteps(steps.length > 0 ? steps : [makeEmptyDialogueStep()])
+      setOriginalDialogueQIds((lesson.questions || []).map(q => q.id))
     }
   }, [lesson])
 
@@ -279,6 +308,51 @@ export const LessonEditPanel = ({
   function makeEmptyLexicalItem(): EditLexicalItemForm {
     return { id: uid(), term: '', translations: '' }
   }
+  // ── Dialogue helpers ──
+  function makeEmptyDialogueStep(): EditDialogueStepForm {
+    return {
+      id: uid(),
+      prompt: '',
+      options: [
+        { id: uid(), text: '', isCorrect: true },
+        { id: uid(), text: '', isCorrect: false },
+      ],
+    }
+  }
+  const addDialogueStep = () => setDialogueSteps(s => [...s, makeEmptyDialogueStep()])
+  const removeDialogueStep = (id: string) =>
+    setDialogueSteps(s => s.filter(x => x.id !== id))
+  const patchDialogueStep = (id: string, patch: Partial<EditDialogueStepForm>) =>
+    setDialogueSteps(s => s.map(x => (x.id === id ? { ...x, ...patch } : x)))
+  const addDialogueOption = (stepId: string) =>
+    setDialogueSteps(s =>
+      s.map(x =>
+        x.id === stepId
+          ? { ...x, options: [...x.options, { id: uid(), text: '', isCorrect: false }] }
+          : x,
+      ),
+    )
+  const removeDialogueOption = (stepId: string, optId: string) =>
+    setDialogueSteps(s =>
+      s.map(x =>
+        x.id === stepId ? { ...x, options: x.options.filter(o => o.id !== optId) } : x,
+      ),
+    )
+  const patchDialogueOption = (
+    stepId: string,
+    optId: string,
+    patch: Partial<{ text: string; isCorrect: boolean }>,
+  ) =>
+    setDialogueSteps(s =>
+      s.map(x =>
+        x.id === stepId
+          ? {
+              ...x,
+              options: x.options.map(o => (o.id === optId ? { ...o, ...patch } : o)),
+            }
+          : x,
+      ),
+    )
   // ── Save ──
   const handleSave = async () => {
     if (!lesson) return
@@ -350,6 +424,27 @@ export const LessonEditPanel = ({
           .some(t => t.trim().length > 0)
         if (!hasTranslation) {
           onError(`Укажите хотя бы один перевод для "${item.term}"`)
+          return
+        }
+      }
+    } else if (lesson.type === 'DIALOGUE') {
+      if (dialogueSteps.length === 0) {
+        onError('Добавьте хотя бы один шаг диалога')
+        return
+      }
+      for (const step of dialogueSteps) {
+        if (!step.prompt.trim()) {
+          onError('Заполните текст реплики собеседника для всех шагов')
+          return
+        }
+        if (step.options.length < 2) {
+          onError('В каждом шаге диалога должно быть минимум два варианта ответа')
+          return
+        }
+        const hasText = step.options.some(o => o.text.trim())
+        const hasCorrect = step.options.some(o => o.isCorrect && o.text.trim())
+        if (!hasText || !hasCorrect) {
+          onError('В каждом шаге диалога должен быть хотя бы один непустой правильный вариант')
           return
         }
       }
@@ -501,6 +596,44 @@ export const LessonEditPanel = ({
               points: payload.points,
             }
             await updateQuestion({ id: item.id, data: updatePayload }).unwrap()
+          }
+        }
+      }
+
+      // ── Sync dialogue steps (DIALOGUE) ──
+      if (lesson.type === 'DIALOGUE') {
+        const currentIds = dialogueSteps.filter(step => !isNew(step.id)).map(step => step.id)
+        const toDelete = originalDialogueQIds.filter(id => !currentIds.includes(id))
+        for (const id of toDelete) {
+          await deleteQuestion(id).unwrap()
+        }
+
+        for (let i = 0; i < dialogueSteps.length; i++) {
+          const step = dialogueSteps[i]
+          const options = step.options
+            .filter(o => o.text.trim())
+            .map(o => ({ ...o, text: o.text.trim() }))
+
+          const payload: CreateQuestionDto = {
+            lessonId: lesson.id,
+            type: 'SINGLE_CHOICE',
+            order: i + 1,
+            question: step.prompt.trim(),
+            options,
+            points: 1,
+          }
+
+          if (isNew(step.id)) {
+            await createQuestion(payload).unwrap()
+          } else {
+            const updatePayload: UpdateQuestionDto = {
+              type: payload.type as QuestionType,
+              order: payload.order,
+              question: payload.question,
+              options: payload.options,
+              points: payload.points,
+            }
+            await updateQuestion({ id: step.id, data: updatePayload }).unwrap()
           }
         }
       }
@@ -940,6 +1073,121 @@ export const LessonEditPanel = ({
                           setLexicalItems(items => items.filter(x => x.id !== item.id))
                         }
                         type="button"
+                        className="mt-2 text-muted-foreground hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {lesson.type === 'DIALOGUE' && (
+          <div className="space-y-4 rounded-xl border border-sky-200 bg-sky-50/50 p-4 dark:border-sky-900/30 dark:bg-sky-950/20">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium text-sky-700 dark:text-sky-400">
+                <MessageSquare className="h-4 w-4" />
+                <span>Диалоговые шаги ({dialogueSteps.length})</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={addDialogueStep}
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Добавить шаг
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {dialogueSteps.map((step, index) => (
+                <div key={step.id} className="rounded-lg border border-border bg-card p-4">
+                  <div className="mb-3 flex items-start gap-2">
+                    <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-xs font-bold text-sky-600 dark:text-sky-300">
+                      {index + 1}
+                    </span>
+                    <div className="flex-1 space-y-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          Реплика собеседника *
+                        </label>
+                        <textarea
+                          value={step.prompt}
+                          onChange={e =>
+                            patchDialogueStep(step.id, { prompt: e.target.value })
+                          }
+                          placeholder="Например: Waiter: Good evening! Do you have a reservation?"
+                          className="min-h-[60px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-medium text-muted-foreground">
+                            Варианты ответа ученика (один правильный) *
+                          </label>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            type="button"
+                            onClick={() => addDialogueOption(step.id)}
+                            className="text-[11px]"
+                          >
+                            <Plus className="mr-1 h-3 w-3" />
+                            Добавить вариант
+                          </Button>
+                        </div>
+
+                        {step.options.map(opt => (
+                          <div key={opt.id} className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              checked={opt.isCorrect}
+                              onChange={e => {
+                                if (e.target.checked) {
+                                  // только один правильный вариант
+                                  step.options.forEach(o =>
+                                    patchDialogueOption(step.id, o.id, {
+                                      isCorrect: o.id === opt.id,
+                                    }),
+                                  )
+                                }
+                              }}
+                              className="h-4 w-4 shrink-0 text-primary"
+                              name={`dialogue-${step.id}`}
+                            />
+                            <Input
+                              value={opt.text}
+                              onChange={e =>
+                                patchDialogueOption(step.id, opt.id, {
+                                  text: e.target.value,
+                                })
+                              }
+                              placeholder="Вариант ответа"
+                              className="flex-1 text-sm"
+                            />
+                            {step.options.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => removeDialogueOption(step.id, opt.id)}
+                                className="text-muted-foreground hover:text-red-500"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {dialogueSteps.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeDialogueStep(step.id)}
                         className="mt-2 text-muted-foreground hover:text-red-500"
                       >
                         <Trash2 className="h-4 w-4" />

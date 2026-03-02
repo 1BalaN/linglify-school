@@ -179,10 +179,35 @@ class LessonService {
       })
     }
 
+    // Ответы пользователя по вопросам урока (последний ответ на каждый вопрос)
+    let answersByQuestion: Record<string, unknown> | null = null
+    if (userId && lesson.questions.length > 0) {
+      const answers = await prisma.answer.findMany({
+        where: {
+          userId,
+          questionId: {
+            in: lesson.questions.map(q => q.id),
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
+
+      const latest: Record<string, unknown> = {}
+      for (const ans of answers) {
+        if (!latest[ans.questionId]) {
+          latest[ans.questionId] = ans
+        }
+      }
+      answersByQuestion = latest
+    }
+
     return {
       ...lesson,
       userProgress: progress,
       hasAccess: isEnrolled || isTeacher || isAdmin,
+      userAnswers: answersByQuestion,
     }
   }
 

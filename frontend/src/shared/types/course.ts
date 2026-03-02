@@ -2,7 +2,7 @@ export type CourseLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
 
 export type CourseStatus = 'DRAFT' | 'PENDING_REVIEW' | 'IN_REVIEW' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED'
 
-export type LessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE' | 'LEXICAL'
+export type LessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE' | 'LEXICAL' | 'DIALOGUE'
 
 export type QuestionType = 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_IN_BLANK' | 'MATCHING'
 
@@ -89,6 +89,8 @@ export interface Lesson {
   hasAccess?: boolean
   userProgress?: LessonProgress | null
   progress?: LessonProgress | null
+  /** Последние ответы пользователя по вопросам урока (questionId -> Answer) */
+  userAnswers?: Record<string, Answer> | null
 }
 
 export interface Attachment {

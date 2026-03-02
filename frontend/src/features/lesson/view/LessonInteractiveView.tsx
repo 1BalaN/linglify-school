@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { MessageSquare, RefreshCw, Lightbulb } from 'lucide-react'
 import { Button } from '@/shared/ui'
-import type { Question, QuestionOption } from '@/shared/types/course'
+import type { Question, QuestionOption, Answer } from '@/shared/types/course'
+import { useSubmitAnswerMutation } from '@/entities/lesson'
 
 type OptionWithBlank = QuestionOption & { blankIndex?: number }
 
@@ -42,19 +43,79 @@ function countRequiredAnswers(questions: Question[]): number {
   return questions.reduce((sum, q) => sum + Math.max(1, countBlanks(q.question)), 0)
 }
 
+function buildInitialInteractiveState(
+  questions: Question[],
+  initialCompleted?: boolean,
+  initialScore?: number | null,
+  initialAnswers?: Record<string, Answer> | null,
+) {
+  const answers: Record<string, string> = {}
+  const cumulativeResults: Record<string, boolean> = {}
+
+  if (initialCompleted && initialAnswers) {
+    for (const q of questions) {
+      const ans = initialAnswers[q.id]
+      if (!ans) continue
+
+      // Для интерактива сохраняем массив значений по пропускам
+      if (Array.isArray(ans.answer)) {
+        (ans.answer as string[]).forEach((val, idx) => {
+          answers[`${q.id}_${idx}`] = String(val ?? '')
+        })
+      } else if (typeof ans.answer === 'string') {
+        answers[`${q.id}_0`] = ans.answer
+      }
+
+      const correctByBlank = getCorrectTextsByBlank((q.options || []) as OptionWithBlank[])
+      cumulativeResults[q.id] = isExerciseCorrect(q, answers, correctByBlank)
+    }
+  }
+
+  const score =
+    initialCompleted && typeof initialScore === 'number'
+      ? initialScore
+      : 0
+
+  return {
+    answers,
+    cumulativeResults,
+    submitted: !!initialCompleted && Object.keys(answers).length > 0,
+    score,
+  }
+}
+
 interface LessonInteractiveViewProps {
   questions: Question[]
   onComplete: (score: number) => void
+  initialCompleted?: boolean
+  initialScore?: number | null
+  initialAnswers?: Record<string, Answer> | null
 }
 
-export const LessonInteractiveView = ({ questions, onComplete }: LessonInteractiveViewProps) => {
+export const LessonInteractiveView = ({
+  questions,
+  onComplete,
+  initialCompleted,
+  initialScore,
+  initialAnswers,
+}: LessonInteractiveViewProps) => {
+  const initialState = buildInitialInteractiveState(
+    questions,
+    initialCompleted,
+    initialScore,
+    initialAnswers,
+  )
+
   const [phase, setPhase] = useState<'first' | 'retry'>('first')
   const [displayedQuestions, setDisplayedQuestions] = useState<Question[]>(questions)
-  const [cumulativeResults, setCumulativeResults] = useState<Record<string, boolean>>({})
-  const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [submitted, setSubmitted] = useState(false)
-  const [score, setScore] = useState(0)
+  const [cumulativeResults, setCumulativeResults] = useState<Record<string, boolean>>(
+    initialState.cumulativeResults,
+  )
+  const [answers, setAnswers] = useState<Record<string, string>>(initialState.answers)
+  const [submitted, setSubmitted] = useState(initialState.submitted)
+  const [score, setScore] = useState(initialState.score)
   const [hintsRevealed, setHintsRevealed] = useState<Record<string, boolean>>({})
+  const [submitAnswer] = useSubmitAnswerMutation()
 
   const totalQuestions = questions.length
   const requiredAnswerCount = countRequiredAnswers(displayedQuestions)
@@ -74,6 +135,17 @@ export const LessonInteractiveView = ({ questions, onComplete }: LessonInteracti
       const correctByBlank = getCorrectTextsByBlank(options)
       results[q.id] = isExerciseCorrect(q, answers, correctByBlank)
     }
+
+    // Сохраняем ответы пользователя по вопросам
+    questions.forEach(q => {
+      const blanksCount = countBlanks(q.question)
+      if (blanksCount === 0) return
+      const values: string[] = []
+      for (let bi = 0; bi < blanksCount; bi++) {
+        values.push(answers[`${q.id}_${bi}`] ?? '')
+      }
+      submitAnswer({ questionId: q.id, answer: values }).catch(() => {})
+    })
 
     if (phase === 'first') {
       setCumulativeResults(results)
@@ -133,6 +205,34 @@ export const LessonInteractiveView = ({ questions, onComplete }: LessonInteracti
       return true
     })
 
+  if (initialCompleted && !submitted) {
+    // safeguard, но по умолчанию submitted уже true
+  }
+
+  if (submitted && initialCompleted && Object.keys(cumulativeResults).length === 0) {
+    // Режим просмотра: показываем только итог и кнопку повтора
+    return (
+      <div className="space-y-6">
+        <div
+          className={`rounded-xl border p-4 text-center ${
+            score >= 60
+              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/30 dark:bg-emerald-950/20'
+              : 'border-red-200 bg-red-50 dark:border-red-900/30 dark:bg-red-950/20'
+          }`}
+        >
+          <p className="text-2xl font-bold text-primary">{score}%</p>
+          <p className="text-sm text-muted-foreground">Интерактив уже пройден.</p>
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleRetryAll}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Пройти заново
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {submitted && (
@@ -147,17 +247,17 @@ export const LessonInteractiveView = ({ questions, onComplete }: LessonInteracti
           <p className="text-sm text-muted-foreground">
             {Object.values(cumulativeResults).filter(Boolean).length} из {totalQuestions} верно
           </p>
-          {score < 60 && (
-            <div className="mt-3 flex flex-wrap justify-center gap-2">
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            {score < 60 && (
               <Button variant="outline" size="sm" onClick={handleRetryWrong}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Повторить только ошибочные ({questions.filter(q => !cumulativeResults[q.id]).length})
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleRetryAll}>
-                Пройти заново все
-              </Button>
-            </div>
-          )}
+            )}
+            <Button variant="ghost" size="sm" onClick={handleRetryAll}>
+              Пройти заново всё
+            </Button>
+          </div>
         </div>
       )}
 

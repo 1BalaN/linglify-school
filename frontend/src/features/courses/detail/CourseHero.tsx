@@ -131,11 +131,6 @@ export const CourseHero = ({
               <div className="mb-2 text-4xl font-bold text-cyan-600 dark:text-cyan-400">
                 {formatPrice(course.price, course.currency)}
               </div>
-              {course.price > 0 && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Единоразовый платеж
-                </p>
-              )}
             </div>
 
             {canEdit ? (

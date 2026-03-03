@@ -11,12 +11,13 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Проверяем localStorage и системные настройки
+    // Синхронизация с inline-скриптом в index.html (избегаем мерцания)
+    if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) {
+      return 'dark'
+    }
     const savedTheme = localStorage.getItem('theme') as Theme | null
     if (savedTheme) return savedTheme
-    
-    // Если нет сохраненной темы, проверяем системную
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark'
     }
     return 'light'

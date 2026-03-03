@@ -69,7 +69,7 @@ export const CourseFormCreating = ({
             onChange={(e) => handleChange('shortDescription', e.target.value)}
             onBlur={() => validateField('shortDescription')}
             placeholder="Кратко опишите курс для каталога"
-            className="min-h-[70px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="min-h-[70px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary scroll-soft"
           />
           {fieldErrors.shortDescription && (
             <p className="text-xs text-red-600 flex items-center gap-1">
@@ -88,7 +88,7 @@ export const CourseFormCreating = ({
             onChange={(e) => handleChange('description', e.target.value)}
             onBlur={() => validateField('description')}
             placeholder="Подробно опишите содержание курса (минимум 50 символов)"
-            className="min-h-[140px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="min-h-[140px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary scroll-soft"
             required
           />
           <p className="text-xs text-muted-foreground">
@@ -200,7 +200,7 @@ export const CourseFormCreating = ({
             onChange={(e) => handleChange('learningOutcomesInput', e.target.value)}
             onBlur={() => validateField('learningOutcomesInput')}
             placeholder="Базовая грамматика A2&#10;1000+ новых слов&#10;Навыки общения"
-            className="min-h-[100px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="min-h-[100px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary scroll-soft"
             required
           />
           <p className="text-xs text-muted-foreground">

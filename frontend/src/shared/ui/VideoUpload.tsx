@@ -133,12 +133,12 @@ export const VideoUpload = ({ value, onChange, label = 'Видео', required = 
         </div>
       )}
 
-      {value && (
+      {/* {value && (
         <div className="rounded-lg border border-border bg-card/50 p-2 text-xs text-muted-foreground truncate">
           <Video className="inline mr-1 h-3 w-3" />
           {value}
         </div>
-      )}
+      )} */}
     </div>
   )
 }

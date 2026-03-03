@@ -152,12 +152,26 @@ export const CourseLessonsPage = () => {
               <div className="flex items-center gap-2">
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    course.isPublished
+                    course.status === 'PUBLISHED'
                       ? 'bg-emerald-500/10 text-emerald-600'
-                      : 'bg-yellow-500/10 text-yellow-700'
+                      : course.status === 'PENDING_REVIEW' || course.status === 'IN_REVIEW'
+                        ? 'bg-blue-500/10 text-blue-700'
+                        : course.status === 'REJECTED'
+                          ? 'bg-red-500/10 text-red-700'
+                          : 'bg-yellow-500/10 text-yellow-700'
                   }`}
                 >
-                  {course.isPublished ? 'Опубликован' : 'Черновик'}
+                  {course.status === 'PUBLISHED'
+                    ? 'Опубликован'
+                    : course.status === 'PENDING_REVIEW'
+                      ? 'Отправлен на модерацию'
+                      : course.status === 'IN_REVIEW'
+                        ? 'На модерации'
+                        : course.status === 'REJECTED'
+                          ? 'Отклонён'
+                          : course.status === 'ARCHIVED'
+                            ? 'Архивирован'
+                            : 'Черновик'}
                 </span>
                 <Button className='text-xs' variant="outline" size="sm" onClick={() => setIsEditingCourse(true)}>
                   <Settings className="mr-1 h-4 w-4" />
@@ -165,6 +179,17 @@ export const CourseLessonsPage = () => {
                 </Button>
               </div>
             </div>
+
+            {course.lastReviewComment && course.status === 'REJECTED' && (
+              <div className="mt-4 rounded-xl bg-amber-50/80 p-3 text-xs text-amber-900 shadow-sm ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-50 dark:ring-amber-900/40">
+                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                  Комментарий модератора
+                </div>
+                <p className="whitespace-pre-line leading-snug">
+                  {course.lastReviewComment}
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <CourseMetaEditForm

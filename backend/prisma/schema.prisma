@@ -142,6 +142,8 @@ enum LessonType {
   VIDEO       // Видео урок
   TEXT        // Текстовый материал
   INTERACTIVE // Интерактивный урок
+  LEXICAL     // Лексический тренажёр
+  DIALOGUE    // Диалоговый урок
   TEST        // Тест
 }
 
@@ -190,6 +192,10 @@ model Course {
   tags            String[]      @default([])
   prerequisites   String[]      @default([]) // ID предварительных курсов
   learningOutcomes String[]     @default([]) // Что изучит студент
+  // Модерация
+  lastReviewComment String?     @db.Text
+  lastReviewedAt   DateTime?
+  lastReviewedById String?
   
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt

@@ -52,11 +52,11 @@ export const useAdminModeration = () => {
     return base
   }, [courses])
 
-  const changeStatus = async (id: string, status: CourseStatus) => {
+  const changeStatus = async (id: string, status: CourseStatus, comment?: string) => {
     try {
       setActionLoading(id)
       setMessage(null)
-      await updateStatus({ id, status }).unwrap()
+      await updateStatus({ id, status, ...(comment ? { comment } : {}) }).unwrap()
       setMessage({ type: 'success', text: 'Статус обновлён' })
     } catch {
       setMessage({ type: 'error', text: 'Ошибка обновления' })

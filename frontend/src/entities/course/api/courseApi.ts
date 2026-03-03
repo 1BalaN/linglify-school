@@ -67,12 +67,12 @@ export const courseApi = api.injectEndpoints({
     // Изменить статус курса
     updateCourseStatus: builder.mutation<
       { data: Course },
-      { id: string; status: string }
+      { id: string; status: string; comment?: string }
     >({
-      query: ({ id, status }) => ({
+      query: ({ id, status, comment }) => ({
         url: `/courses/${id}/status`,
         method: 'PATCH',
-        body: { status },
+        body: { status, ...(comment ? { comment } : {}) },
       }),
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Course', id },

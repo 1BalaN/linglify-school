@@ -338,12 +338,20 @@ class CourseService {
   }
 
   /**
-   * Изменить статус курса
+   * Изменить статус курса (FSM + проверки готовности)
    */
   async updateCourseStatus(courseId: string, userId: string, userRole: UserRole, dto: UpdateCourseStatusDto) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { teacherId: true },
+      include: {
+        lessons: {
+          select: {
+            id: true,
+            type: true,
+            isPublished: true,
+          },
+        },
+      },
     })
 
     if (!course) {
@@ -354,16 +362,91 @@ class CourseService {
       throw new AppError(403, 'ACCESS_DENIED', 'Нет доступа к изменению статуса курса')
     }
 
-    // Автоматически устанавливаем isPublished при PUBLISHED
-    const updateData: { status: CourseStatus; isPublished?: boolean; publishedAt?: Date } = { 
-      status: dto.status 
+    const currentStatus = course.status
+    const nextStatus = dto.status
+
+    // Разрешённые переходы статуса
+    const allowedTransitions: Record<CourseStatus, CourseStatus[]> = {
+      [CourseStatus.DRAFT]: [CourseStatus.PENDING_REVIEW],
+      [CourseStatus.PENDING_REVIEW]: [CourseStatus.IN_REVIEW],
+      [CourseStatus.IN_REVIEW]: [CourseStatus.PUBLISHED, CourseStatus.REJECTED],
+      [CourseStatus.REJECTED]: [CourseStatus.PENDING_REVIEW],
+      [CourseStatus.PUBLISHED]: [CourseStatus.ARCHIVED],
+      [CourseStatus.ARCHIVED]: [],
     }
-    
-    if (dto.status === CourseStatus.PUBLISHED) {
+
+    if (!allowedTransitions[currentStatus]?.includes(nextStatus)) {
+      throw new AppError(
+        400,
+        'INVALID_STATUS_TRANSITION',
+        `Недопустимый переход статуса курса: ${currentStatus} → ${nextStatus}`
+      )
+    }
+
+    // Проверки при отправке на модерацию
+    if (nextStatus === CourseStatus.PENDING_REVIEW) {
+      if (!course.title?.trim() || !course.description?.trim()) {
+        throw new AppError(
+          400,
+          'COURSE_NOT_READY_FOR_REVIEW',
+          'Для отправки на модерацию необходимо заполнить название и описание курса'
+        )
+      }
+
+      if (course.lessonsCount <= 0 || course.lessons.length === 0) {
+        throw new AppError(
+          400,
+          'COURSE_NOT_READY_FOR_REVIEW',
+          'Для отправки на модерацию необходимо добавить хотя бы один урок'
+        )
+      }
+    }
+
+    // Проверки при публикации
+    if (nextStatus === CourseStatus.PUBLISHED) {
+      if (course.lessonsCount <= 0 || course.lessons.length === 0) {
+        throw new AppError(
+          400,
+          'COURSE_NOT_READY_FOR_PUBLISH',
+          'Нельзя опубликовать курс без уроков'
+        )
+      }
+    }
+
+    // Автополя публикации и модерации
+    const updateData: {
+      status: CourseStatus
+      isPublished?: boolean
+      publishedAt?: Date | null
+      lastReviewComment?: string | null
+      lastReviewedAt?: Date | null
+      lastReviewedById?: string | null
+    } = {
+      status: nextStatus,
+    }
+
+    if (nextStatus === CourseStatus.PUBLISHED) {
       updateData.isPublished = true
       updateData.publishedAt = new Date()
-    } else if (dto.status === CourseStatus.DRAFT || dto.status === CourseStatus.ARCHIVED) {
+      updateData.lastReviewComment = dto.comment ?? null
+      updateData.lastReviewedAt = new Date()
+      updateData.lastReviewedById = userId
+    } else if (nextStatus === CourseStatus.DRAFT || nextStatus === CourseStatus.ARCHIVED) {
       updateData.isPublished = false
+      updateData.publishedAt = null
+    } else if (nextStatus === CourseStatus.REJECTED) {
+      if (!dto.comment || !dto.comment.trim()) {
+        throw new AppError(
+          400,
+          'REVIEW_COMMENT_REQUIRED',
+          'Для отклонения курса необходимо указать причину'
+        )
+      }
+      updateData.lastReviewComment = dto.comment.trim()
+      updateData.lastReviewedAt = new Date()
+      updateData.lastReviewedById = userId
+      updateData.isPublished = false
+      updateData.publishedAt = null
     }
 
     const updatedCourse = await prisma.course.update({
@@ -378,34 +461,9 @@ class CourseService {
    * Опубликовать/снять с публикации курс
    */
   async publishCourse(courseId: string, userId: string, userRole: UserRole, dto: PublishCourseDto) {
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-      select: { teacherId: true, status: true },
-    })
-
-    if (!course) {
-      throw new AppError(404, 'COURSE_NOT_FOUND', 'Курс не найден')
-    }
-
-    if (course.teacherId !== userId && userRole !== UserRole.ADMIN) {
-      throw new AppError(403, 'ACCESS_DENIED', 'Нет доступа к публикации курса')
-    }
-
-    // Можно публиковать только курсы со статусом IN_REVIEW или PUBLISHED
-    if (dto.isPublished && course.status !== CourseStatus.IN_REVIEW && course.status !== CourseStatus.PUBLISHED) {
-      throw new AppError(400, 'INVALID_STATUS', 'Курс должен быть на модерации или уже опубликован')
-    }
-
-    const updatedCourse = await prisma.course.update({
-      where: { id: courseId },
-      data: {
-        isPublished: dto.isPublished,
-        publishedAt: dto.isPublished ? new Date() : null,
-        status: dto.isPublished ? CourseStatus.PUBLISHED : CourseStatus.DRAFT,
-      },
-    })
-
-    return updatedCourse
+    // Делегируем в updateCourseStatus, чтобы единообразно обрабатывать FSM и проверки
+    const nextStatus = dto.isPublished ? CourseStatus.PUBLISHED : CourseStatus.DRAFT
+    return this.updateCourseStatus(courseId, userId, userRole, { status: nextStatus })
   }
 
   /**
@@ -434,8 +492,15 @@ class CourseService {
 
   /**
    * Зачислить пользователя на курс
+   *
+   * В обычном случае (через контроллер) платные курсы запрещены,
+   * а для Stripe webhook можно явно разрешить зачисление платного курса через options.allowPaid.
    */
-  async enrollCourse(userId: string, dto: EnrollCourseDto) {
+  async enrollCourse(
+    userId: string,
+    dto: EnrollCourseDto,
+    options?: { allowPaid?: boolean }
+  ) {
     const course = await prisma.course.findUnique({
       where: { id: dto.courseId },
       select: { id: true, isPublished: true, price: true },
@@ -463,8 +528,15 @@ class CourseService {
       throw new AppError(400, 'ALREADY_ENROLLED', 'Вы уже зачислены на этот курс')
     }
 
-    // TODO: Здесь должна быть логика оплаты для платных курсов
-    // Пока зачисляем бесплатно
+    // Для платных курсов зачисление через обычный API запрещено,
+    // его должен выполнять только Stripe webhook с allowPaid = true.
+    if (course.price > 0 && !options?.allowPaid) {
+      throw new AppError(
+        403,
+        'COURSE_IS_PAID',
+        'Этот курс является платным. Для доступа необходимо оформить оплату.'
+      )
+    }
 
     const enrollment = await prisma.enrollment.create({
       data: {

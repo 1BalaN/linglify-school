@@ -1,20 +1,42 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
-import { useGetLessonByIdQuery, useUpdateProgressMutation } from '@/entities/lesson'
+import { useGetLessonByIdQuery, useGetCourseLessonsQuery, useUpdateProgressMutation } from '@/entities/lesson'
 import {
   Loader2,
   AlertCircle,
   ChevronRight,
+  ChevronLeft,
   CheckCircle,
   ClipboardCheck,
   MessageSquare,
+  FileText,
 } from 'lucide-react'
 import { Button, VideoPlayer } from '@/shared/ui'
 import { getAdditionalTextFromContent } from '@/shared/lib/lessonContent'
-import { LessonHeader, LessonInteractiveView, LessonTestView } from '@/features/lesson/view'
+import { LessonHeader, LessonInteractiveView, LessonTestView, LessonLexicalView, LessonDialogueView } from '@/features/lesson/view'
+import type { Answer } from '@/shared/types/course'
 
+function buildAttachmentUrl(url: string, name?: string | null): string {
+  if (!url) return '#'
+  try {
+    const u = new URL(url)
+    if (u.hostname.includes('res.cloudinary.com') && u.pathname.includes('/raw/upload/')) {
+      return url
+    }
+    const [prefix, rest] = u.pathname.split('/upload/')
+    if (!rest) return url
+    const safeName = (name || 'file')
+      .trim()
+      .replace(/[^a-zA-Z0-9._-]+/g, '_')
+      .slice(0, 80) || 'file'
+    u.pathname = `${prefix}/upload/fl_attachment:${safeName}/${rest}`
+    return u.toString()
+  } catch {
+    return url
+  }
+}
 
 export const LessonPage = () => {
   const { lessonId } = useParams<{ lessonId: string }>()
@@ -23,6 +45,13 @@ export const LessonPage = () => {
   const { data, isLoading, error } = useGetLessonByIdQuery(lessonId!)
   const [updateProgress] = useUpdateProgressMutation()
   const [isCompleting, setIsCompleting] = useState(false)
+  const lesson = data?.data
+  const { data: lessonsData } = useGetCourseLessonsQuery(
+    lesson?.courseId ?? '', { skip: !lesson?.courseId })
+  const courseLessons = lessonsData?.data ?? []
+  const currentIndex = courseLessons.findIndex(l => l.id === lesson?.id)
+  const prevLesson = currentIndex > 0 ? courseLessons[currentIndex - 1] : null
+  const nextLesson = currentIndex >= 0 && currentIndex < courseLessons.length - 1 ? courseLessons[currentIndex + 1] : null
 
   useEffect(() => {
     const startTime = Date.now()
@@ -61,9 +90,7 @@ export const LessonPage = () => {
     )
   }
 
-  const lesson = data.data
-
-  if (!lesson.hasAccess) {
+  if (!lesson?.hasAccess) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="glass-card max-w-md p-8 text-center">
@@ -72,7 +99,7 @@ export const LessonPage = () => {
           <p className="mb-6 text-muted-foreground">
             Для доступа к этому уроку необходимо записаться на курс
           </p>
-          <Button onClick={() => navigate(`/courses/${lesson.courseId}`)}>
+          <Button onClick={() => navigate(`/courses/${lesson?.courseId}`)}>
             Перейти к курсу
           </Button>
         </div>
@@ -93,6 +120,7 @@ export const LessonPage = () => {
   }
 
   const isCompleted = lesson.userProgress?.isCompleted
+  const userAnswers = lesson.userAnswers || null
   const additionalText = getAdditionalTextFromContent(lesson.content)
 
   return (
@@ -104,12 +132,49 @@ export const LessonPage = () => {
           type={lesson.type}
           durationSeconds={lesson.duration ?? undefined}
           isCompleted={isCompleted}
-          onBackToCourse={() => navigate(`/courses/${lesson.courseId}`)}
+          onBackToCourse={() => navigate(`/courses/${lesson.courseId}/learn`)}
         />
         {/* VIDEO */}
         {lesson.type === 'VIDEO' && (
           <>
             {lesson.videoUrl && <VideoPlayer videoUrl={lesson.videoUrl} title={lesson.title} />}
+            {Array.isArray(lesson.attachments) && lesson.attachments.length > 0 && (
+              <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-foreground">
+                  <FileText className="h-4 w-4" />
+                  Методички и файлы
+                </h3>
+                <ul className="space-y-2">
+                  {lesson.attachments.map((att, i) => (
+                    <li key={i} className="flex items-center justify-between gap-3">
+                      {(() => {
+                        const isCloudinaryRaw =
+                          att.url?.includes('res.cloudinary.com') && att.url?.includes('/raw/upload/')
+                        const href = isCloudinaryRaw
+                          ? `/api/upload/document/download?url=${encodeURIComponent(att.url)}${
+                              att.name ? `&name=${encodeURIComponent(att.name)}` : ''
+                            }`
+                          : buildAttachmentUrl(att.url, att.name)
+                        return (
+                          <a
+                            href={href}
+                            rel="noopener noreferrer"
+                            className="break-all text-primary underline hover:no-underline"
+                          >
+                            {att.name || 'Файл'}
+                          </a>
+                        )
+                      })()}
+                      {att.size ? (
+                        <span className="text-xs text-muted-foreground">
+                          {(att.size / (1024 * 1024)).toFixed(1)} МБ
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {additionalText && (
               <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <h3 className="mb-3 text-base font-semibold text-foreground">Дополнительные материалы</h3>
@@ -137,7 +202,14 @@ export const LessonPage = () => {
               </div>
             )}
             {lesson.questions && lesson.questions.length > 0 ? (
-              <LessonTestView questions={lesson.questions} content={lesson.content} onComplete={handleComplete} />
+              <LessonTestView
+                questions={lesson.questions}
+                content={lesson.content}
+                onComplete={handleComplete}
+                initialCompleted={!!lesson.userProgress?.isCompleted}
+                initialScore={lesson.userProgress?.score ?? null}
+                initialAnswers={userAnswers as Record<string, Answer> | null}
+              />
             ) : (
               <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                 <ClipboardCheck className="mx-auto mb-3 h-10 w-10 opacity-40" />
@@ -155,7 +227,13 @@ export const LessonPage = () => {
               </div>
             )}
             {lesson.questions && lesson.questions.length > 0 ? (
-              <LessonInteractiveView questions={lesson.questions} onComplete={handleComplete} />
+              <LessonInteractiveView
+                questions={lesson.questions}
+                onComplete={handleComplete}
+                initialCompleted={!!lesson.userProgress?.isCompleted}
+                initialScore={lesson.userProgress?.score ?? null}
+                initialAnswers={userAnswers as Record<string, Answer> | null}
+              />
             ) : (
               <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                 <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
@@ -164,15 +242,85 @@ export const LessonPage = () => {
             )}
           </>
         )}
-        {/* Navigation arrow */}
-        {isCompleted && (
-          <div className="mt-8 flex justify-end">
-            <Button variant="outline" onClick={() => navigate(`/courses/${lesson.courseId}/learn`)}>
-              Вернуться к урокам
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
+        {/* LEXICAL */}
+        {lesson.type === 'LEXICAL' && (
+          <>
+            {lesson.videoUrl && (
+              <div className="mb-6">
+                <VideoPlayer videoUrl={lesson.videoUrl} title={lesson.title} />
+              </div>
+            )}
+            {lesson.questions && lesson.questions.length > 0 ? (
+              <LessonLexicalView
+                questions={lesson.questions}
+                onComplete={handleComplete}
+                initialCompleted={!!lesson.userProgress?.isCompleted}
+                initialScore={lesson.userProgress?.score ?? null}
+              />
+            ) : (
+              <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
+                <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
+                <p>Слова для тренажёра ещё не добавлены</p>
+              </div>
+            )}
+          </>
         )}
+        {/* DIALOGUE */}
+        {lesson.type === 'DIALOGUE' && (
+          <>
+            {lesson.videoUrl && (
+              <div className="mb-6">
+                <VideoPlayer videoUrl={lesson.videoUrl} title={lesson.title} />
+              </div>
+            )}
+            {lesson.questions && lesson.questions.length > 0 ? (
+              <LessonDialogueView
+                questions={lesson.questions}
+                onComplete={handleComplete}
+                initialCompleted={!!lesson.userProgress?.isCompleted}
+                initialScore={lesson.userProgress?.score ?? null}
+                initialAnswers={userAnswers as Record<string, Answer> | null}
+              />
+            ) : (
+              <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
+                <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
+                <p>Диалоговые шаги ещё не добавлены</p>
+              </div>
+            )}
+          </>
+        )}
+        {/* Навигация: предыдущий / следующий урок */}
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
+          <div className="flex items-center gap-2">
+            {prevLesson && prevLesson.hasAccess ? (
+              <Link
+                to={`/lessons/${prevLesson.id}`}
+                className="inline-flex h-10 items-center justify-center rounded-xl border-2 border-primary/20 bg-background px-4 font-semibold transition-all hover:scale-105 hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                Предыдущий урок
+              </Link>
+            ) : (
+              <span className="text-sm text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {nextLesson && nextLesson.hasAccess ? (
+              <Link
+                to={`/lessons/${nextLesson.id}`}
+                className="inline-flex h-10 items-center justify-center rounded-xl border-2 border-primary/20 bg-background px-4 font-semibold transition-all hover:scale-105 hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Следующий урок
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Link>
+            ) : (
+              <Button variant="outline" onClick={() => navigate(`/courses/${lesson.courseId}/learn`)}>
+                К списку уроков
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

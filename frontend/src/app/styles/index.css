@@ -53,6 +53,9 @@
   * {
     @apply border-border;
   }
+  html {
+    @apply transition-colors duration-150;
+  }
   body {
     @apply bg-background text-foreground antialiased;
   }
@@ -81,6 +84,24 @@
   
   .shadow-glow {
     @apply shadow-lg shadow-primary/20 dark:shadow-primary/40;
+  }
+
+  .scroll-soft {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) transparent;
+  }
+  .scroll-soft::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scroll-soft::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll-soft::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--primary) / 0.3);
+    border-radius: 9999px;
+  }
+  .scroll-soft::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--primary) / 0.5);
   }
   
   .animate-float {

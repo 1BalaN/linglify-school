@@ -46,6 +46,8 @@ export interface Course {
   tags: string[]
   prerequisites: string[]
   learningOutcomes: string[]
+  lastReviewComment?: string | null
+  lastReviewedAt?: string | null
   
   createdAt: string
   updatedAt: string

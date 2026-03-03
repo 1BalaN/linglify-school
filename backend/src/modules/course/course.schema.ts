@@ -25,6 +25,7 @@ export const updateCourseSchema = createCourseSchema.partial()
 // Валидация для изменения статуса курса
 export const updateCourseStatusSchema = z.object({
   status: z.nativeEnum(CourseStatus, { errorMap: () => ({ message: 'Некорректный статус курса' }) }),
+  comment: z.string().max(1000).optional(),
 })
 
 // Валидация для публикации курса

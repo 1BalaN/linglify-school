@@ -687,7 +687,7 @@ export const LessonEditPanel = ({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Длительность (мин)</label>
+            <label className="mb-3.5 block text-sm font-medium">Длительность (мин)</label>
             <Input
               type="number"
               value={duration}
@@ -696,7 +696,7 @@ export const LessonEditPanel = ({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Видео</label>
+            {/* <label className="mb-1 block text-sm font-medium">Видео</label> */}
             <VideoUpload value={videoUrl} onChange={setVideoUrl} label="Видео урока" />
           </div>
         </div>
@@ -809,10 +809,6 @@ export const LessonEditPanel = ({
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <h4 className="text-sm font-semibold">Вопросы ({testQuestions.length})</h4>
-                <Button variant="outline" size="sm" onClick={addQ} type="button">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Добавить вопрос
-                </Button>
               </div>
 
               <div className="space-y-4">
@@ -925,10 +921,6 @@ export const LessonEditPanel = ({
                 <MessageSquare className="h-4 w-4" />
                 <span>Интерактивные упражнения ({exercises.length})</span>
               </div>
-              <Button variant="outline" size="sm" type="button" onClick={addEx}>
-                <Plus className="mr-1 h-3 w-3" />
-                Добавить упражнение
-              </Button>
             </div>
 
             <div className="space-y-4">
@@ -1010,15 +1002,6 @@ export const LessonEditPanel = ({
                 <MessageSquare className="h-4 w-4" />
                 <span>Лексический тренажёр ({lexicalItems.length})</span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                type="button"
-                onClick={() => setLexicalItems(items => [...items, makeEmptyLexicalItem()])}
-              >
-                <Plus className="mr-1 h-3 w-3" />
-                Добавить слово
-              </Button>
             </div>
 
             <div className="space-y-4">
@@ -1081,6 +1064,16 @@ export const LessonEditPanel = ({
                   </div>
                 </div>
               ))}
+              <Button
+                className="mt-3 w-full"
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={() => setLexicalItems(items => [...items, makeEmptyLexicalItem()])}
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Добавить слово
+              </Button>
             </div>
           </div>
         )}
@@ -1092,15 +1085,6 @@ export const LessonEditPanel = ({
                 <MessageSquare className="h-4 w-4" />
                 <span>Диалоговые шаги ({dialogueSteps.length})</span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                type="button"
-                onClick={addDialogueStep}
-              >
-                <Plus className="mr-1 h-3 w-3" />
-                Добавить шаг
-              </Button>
             </div>
 
             <div className="space-y-4">
@@ -1196,6 +1180,16 @@ export const LessonEditPanel = ({
                   </div>
                 </div>
               ))}
+              <Button
+                className="mt-3 w-full"
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={addDialogueStep}
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Добавить шаг
+              </Button>
             </div>
           </div>
         )}

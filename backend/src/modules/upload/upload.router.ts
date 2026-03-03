@@ -83,4 +83,8 @@ router.post(
   uploadController.uploadDocument
 )
 
+// Скачивание документа через прокси, чтобы сохранить человекочитаемое имя файла
+// Дополнительно не защищаем requireAuth, так как исходный Cloudinary URL уже публичный.
+router.get('/document/download', uploadController.downloadDocument.bind(uploadController))
+
 export default router

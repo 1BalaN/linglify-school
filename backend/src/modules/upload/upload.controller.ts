@@ -1,4 +1,5 @@
 import type { Response } from 'express'
+import https from 'https'
 import type { AuthRequest } from '../../shared/types/express'
 import { v2 as cloudinary } from 'cloudinary'
 import { config } from '../../config/env'
@@ -133,6 +134,64 @@ class UploadController {
         size: file.size,
       },
     })
+  }
+
+  /**
+   * GET /api/upload/document/download
+   * Прокси для скачивания документа с Cloudinary с человекочитаемым именем файла.
+   */
+  downloadDocument(req: AuthRequest, res: Response) {
+    const { url, name } = req.query
+
+    if (!url || typeof url !== 'string') {
+      res.status(400).json({ error: { code: 'INVALID_URL', message: 'Некорректная ссылка на файл.' } })
+      return
+    }
+
+    try {
+      const parsed = new URL(url)
+
+      // Разрешаем только Cloudinary raw-документы из нашей папки
+      if (
+        !parsed.hostname.includes('res.cloudinary.com') ||
+        !parsed.pathname.includes('/raw/upload/') ||
+        !parsed.pathname.includes('/linglify/documents/')
+      ) {
+        res.status(400).json({ error: { code: 'INVALID_DOCUMENT_URL', message: 'Недопустимый источник файла.' } })
+        return
+      }
+
+      const safeName =
+        (typeof name === 'string' && name.trim().replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 80)) || 'document'
+
+      https
+        .get(parsed.toString(), cloudRes => {
+          const status = cloudRes.statusCode ?? 500
+
+          if (status >= 400) {
+            res
+              .status(502)
+              .json({ error: { code: 'DOCUMENT_DOWNLOAD_FAILED', message: 'Не удалось скачать документ.' } })
+            cloudRes.resume()
+            return
+          }
+
+          const contentType = cloudRes.headers['content-type'] ?? 'application/octet-stream'
+          res.setHeader('Content-Type', contentType)
+          res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(safeName)}"`)
+
+          cloudRes.pipe(res)
+        })
+        .on('error', () => {
+          if (!res.headersSent) {
+            res
+              .status(502)
+              .json({ error: { code: 'DOCUMENT_DOWNLOAD_FAILED', message: 'Ошибка при скачивании документа.' } })
+          }
+        })
+    } catch {
+      res.status(400).json({ error: { code: 'INVALID_URL', message: 'Некорректная ссылка на файл.' } })
+    }
   }
 }
 

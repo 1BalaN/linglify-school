@@ -147,13 +147,24 @@ export const LessonPage = () => {
                 <ul className="space-y-2">
                   {lesson.attachments.map((att, i) => (
                     <li key={i} className="flex items-center justify-between gap-3">
-                      <a
-                        href={buildAttachmentUrl(att.url, att.name)}
-                        rel="noopener noreferrer"
-                        className="break-all text-primary underline hover:no-underline"
-                      >
-                        {att.name || 'Файл'}
-                      </a>
+                      {(() => {
+                        const isCloudinaryRaw =
+                          att.url?.includes('res.cloudinary.com') && att.url?.includes('/raw/upload/')
+                        const href = isCloudinaryRaw
+                          ? `/api/upload/document/download?url=${encodeURIComponent(att.url)}${
+                              att.name ? `&name=${encodeURIComponent(att.name)}` : ''
+                            }`
+                          : buildAttachmentUrl(att.url, att.name)
+                        return (
+                          <a
+                            href={href}
+                            rel="noopener noreferrer"
+                            className="break-all text-primary underline hover:no-underline"
+                          >
+                            {att.name || 'Файл'}
+                          </a>
+                        )
+                      })()}
                       {att.size ? (
                         <span className="text-xs text-muted-foreground">
                           {(att.size / (1024 * 1024)).toFixed(1)} МБ

@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useUpdateCourseStatusMutation } from "@/entities/course"
 import { statusConfig } from "@/shared/constants/courseStatus"
 import { Course } from "@/shared/types/course"
 import { Button } from "@/shared/ui"
 import { Link } from "react-router-dom"
+import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
 type AdminCoursesListProps = {
   courses: Course[]
@@ -10,12 +12,30 @@ type AdminCoursesListProps = {
 }
 
 export const AdminCoursesList = ({courses, isCoursesLoading}: AdminCoursesListProps) => {
-  const [updateCourseStatus] = useUpdateCourseStatusMutation()  
+  const [updateCourseStatus] = useUpdateCourseStatusMutation()
+  const [statusError, setStatusError] = useState<string | null>(null)
+  const [statusInfo, setStatusInfo] = useState<string | null>(null)
+
+  const mapModerationError = (code?: string, message?: string): string => {
+    switch (code) {
+      case 'COURSE_NOT_READY_FOR_REVIEW':
+        return 'Курс ещё не готов к модерации. Заполните название, полное описание и добавьте хотя бы один урок.'
+      case 'INVALID_STATUS_TRANSITION':
+        return 'Этот курс сейчас нельзя отправить на модерацию. Проверьте его статус — возможно, он уже на проверке или опубликован.'
+      default:
+        return message || 'Не удалось отправить курс на модерацию. Попробуйте позже.'
+    }
+  }
   const handleSendToModeration = async (courseId: string) => {
     try {
+      setStatusError(null)
+      setStatusInfo(null)
       await updateCourseStatus({ id: courseId, status: 'PENDING_REVIEW' }).unwrap()
+      setStatusInfo('Курс отправлен на модерацию и появится в разделе модерации у администратора.')
     } catch (error) {
-      console.error('Ошибка при отправке на модерацию', error)
+      const err = error as { data?: { message?: string; code?: string } }
+      const msg = mapModerationError(err?.data?.code, err?.data?.message)
+      setStatusError(msg)
     }
   }
   return (
@@ -26,6 +46,34 @@ export const AdminCoursesList = ({courses, isCoursesLoading}: AdminCoursesListPr
           Последние {courses.length} курсов
         </span>
       </div>
+
+      {statusError && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span className="flex-1">{statusError}</span>
+          <button
+            type="button"
+            onClick={() => setStatusError(null)}
+            className="ml-2 text-red-500/70 hover:text-red-700 dark:text-red-300"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {statusInfo && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span className="flex-1">{statusInfo}</span>
+          <button
+            type="button"
+            onClick={() => setStatusInfo(null)}
+            className="ml-2 text-emerald-500/70 hover:text-emerald-700 dark:text-emerald-300"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {isCoursesLoading ? (
         <div className="py-8 text-center text-muted-foreground">Загрузка...</div>

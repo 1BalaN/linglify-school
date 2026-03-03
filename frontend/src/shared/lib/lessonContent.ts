@@ -1,7 +1,12 @@
 export interface LessonContentParsed {
   text?: string
   passThreshold?: number
-  // exercises shape is loosely typed, используется только в интерактивах
+  /** Таймер на весь тест (минуты). Опционально. */
+  timeLimitMinutes?: number
+  /** Перемешивать порядок вопросов */
+  shuffleQuestions?: boolean
+  /** Перемешивать варианты ответов в каждом вопросе */
+  shuffleOptions?: boolean
   exercises?: Array<{
     id?: string
     sentence: string
@@ -34,5 +39,21 @@ export function getPassThresholdFromContent(content: string | null, fallback = 7
 export function getAdditionalTextFromContent(content: string | null): string {
   const parsed = parseLessonContent(content)
   return typeof parsed.text === 'string' ? parsed.text : ''
+}
+
+export function getTestOptionsFromContent(content: string | null): {
+  timeLimitMinutes: number | null
+  shuffleQuestions: boolean
+  shuffleOptions: boolean
+} {
+  const parsed = parseLessonContent(content)
+  return {
+    timeLimitMinutes:
+      typeof parsed.timeLimitMinutes === 'number' && parsed.timeLimitMinutes > 0
+        ? parsed.timeLimitMinutes
+        : null,
+    shuffleQuestions: !!parsed.shuffleQuestions,
+    shuffleOptions: !!parsed.shuffleOptions,
+  }
 }
 

@@ -2,7 +2,7 @@ export type CourseLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
 
 export type CourseStatus = 'DRAFT' | 'PENDING_REVIEW' | 'IN_REVIEW' | 'REJECTED' | 'PUBLISHED' | 'ARCHIVED'
 
-export type LessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE'
+export type LessonType = 'VIDEO' | 'TEST' | 'INTERACTIVE' | 'LEXICAL' | 'DIALOGUE'
 
 export type QuestionType = 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_IN_BLANK' | 'MATCHING'
 
@@ -46,6 +46,8 @@ export interface Course {
   tags: string[]
   prerequisites: string[]
   learningOutcomes: string[]
+  lastReviewComment?: string | null
+  lastReviewedAt?: string | null
   
   createdAt: string
   updatedAt: string
@@ -89,6 +91,8 @@ export interface Lesson {
   hasAccess?: boolean
   userProgress?: LessonProgress | null
   progress?: LessonProgress | null
+  /** Последние ответы пользователя по вопросам урока (questionId -> Answer) */
+  userAnswers?: Record<string, Answer> | null
 }
 
 export interface Attachment {
@@ -119,6 +123,8 @@ export interface QuestionOption {
   id: string
   text: string
   isCorrect: boolean
+  /** Для FILL_IN_BLANK с несколькими пропусками: индекс пропуска (0, 1, …) */
+  blankIndex?: number
 }
 
 export interface Enrollment {

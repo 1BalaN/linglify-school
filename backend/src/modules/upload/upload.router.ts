@@ -34,6 +34,25 @@ const imageUpload = multer({
   },
 })
 
+const documentUpload = multer({
+  storage,
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'application/vnd.oasis.opendocument.text',
+    ]
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true)
+    } else {
+      cb(new Error('Допустимые форматы: PDF, DOC, DOCX, TXT, ODT'))
+    }
+  },
+})
+
 // Загрузка видео (только для учителей и админов)
 router.post(
   '/video',
@@ -53,5 +72,19 @@ router.post(
   imageUpload.single('image') as any,
   uploadController.uploadImage
 )
+
+// Загрузка документа (методички к урокам: PDF, DOC, DOCX, TXT, ODT)
+router.post(
+  '/document',
+  requireAuth,
+  requireRole('TEACHER', 'ADMIN'),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  documentUpload.single('document') as any,
+  uploadController.uploadDocument
+)
+
+// Скачивание документа через прокси, чтобы сохранить человекочитаемое имя файла
+// Дополнительно не защищаем requireAuth, так как исходный Cloudinary URL уже публичный.
+router.get('/document/download', uploadController.downloadDocument.bind(uploadController))
 
 export default router

@@ -6,7 +6,7 @@ type CoursesListProps = {
   courses: Course[]
   isLoading: boolean
   actionLoading: string | null
-  onStatusChange: (id: string, status: CourseStatus) => void
+  onStatusChange: (id: string, status: CourseStatus, comment?: string) => void
   onDelete: (id: string) => void
 }
 
@@ -28,7 +28,7 @@ export const CoursesList = ({
 
   if (!courses.length) {
     return (
-      <div className="glass-card py-12 text-center">
+      <div className="glass-card py-12 text-center rounded-xl">
         <p className="text-muted-foreground">Курсов с таким статусом нет</p>
       </div>
     )

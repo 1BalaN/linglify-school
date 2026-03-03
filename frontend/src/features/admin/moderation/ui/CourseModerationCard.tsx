@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { Button } from '@/shared/ui'
 import {
   Eye,
@@ -13,13 +13,15 @@ import { CourseStatus, statusConfig } from '@/shared/constants/courseStatus'
 type CourseModerationCardProps = {
   course: Course
   loading: boolean
-  onStatusChange: (id: string, status: CourseStatus) => void
+  onStatusChange: (id: string, status: CourseStatus, comment?: string) => void
   onDelete: (id: string) => void
 }
 
 export const CourseModerationCard = memo(
   ({ course, loading, onStatusChange, onDelete }: CourseModerationCardProps) => {
     const navigate = useNavigate()
+    const [rejectReason, setRejectReason] = useState('')
+    const [showRejectInput, setShowRejectInput] = useState(false)
 
     const statusInfo = statusConfig[course.status]
     const StatusIcon = statusInfo.icon
@@ -45,6 +47,18 @@ export const CourseModerationCard = memo(
               <p className="mb-3 text-sm text-muted-foreground line-clamp-2">
                 {course.shortDescription}
               </p>
+            )}
+
+            {course.lastReviewComment && course.status === 'REJECTED' && (
+              <div className="mt-3 rounded-xl bg-amber-50/80 p-3 text-xs text-amber-900 shadow-sm ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-50 dark:ring-amber-900/40">
+                <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                  <XCircle className="h-3 w-3" />
+                  Комментарий модератора
+                </div>
+                <div className="whitespace-pre-line leading-snug">
+                  {course.lastReviewComment}
+                </div>
+              </div>
             )}
           </div>
 
@@ -72,7 +86,7 @@ export const CourseModerationCard = memo(
                 <Button
                   size="sm"
                   variant="danger"
-                  onClick={() => onStatusChange(course.id, 'REJECTED')}
+                  onClick={() => setShowRejectInput(prev => !prev)}
                   disabled={loading}
                 >
                   <XCircle className="mr-1 h-3 w-3" />
@@ -95,7 +109,7 @@ export const CourseModerationCard = memo(
                 <Button
                   size="sm"
                   variant="danger"
-                  onClick={() => onStatusChange(course.id, 'REJECTED')}
+                  onClick={() => setShowRejectInput(prev => !prev)}
                   disabled={loading}
                 >
                   <XCircle className="mr-1 h-3 w-3" />
@@ -117,25 +131,45 @@ export const CourseModerationCard = memo(
               </Button>
             )}
 
-            <select
-              value={course.status}
-              onChange={e =>
-                onStatusChange(
-                  course.id,
-                  e.target.value as CourseStatus
-                )
-              }
-              disabled={loading}
-              className="w-full rounded-lg border-2 border-input bg-background/60 px-3 py-2 text-xs font-medium text-foreground backdrop-blur transition-all duration-200 hover:border-primary/50 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {(Object.keys(statusConfig) as CourseStatus[]).map(
-                status => (
-                  <option key={status} value={status}>
-                    {statusConfig[status].label}
-                  </option>
-                )
-              )}
-            </select>
+            {showRejectInput && (
+              <div className="mt-2 space-y-2 rounded-lg border border-red-200/60 bg-red-50/50 p-2 text-xs text-red-800 dark:border-red-900/60 dark:bg-red-950/40">
+                <label className="text-[11px] font-semibold">
+                  Причина отклонения
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  placeholder="Кратко опишите, что нужно доработать в курсе"
+                  disabled={loading}
+                  className="h-16 w-full resize-none rounded-md border border-red-200 bg-white/80 px-2 py-1 text-xs text-foreground shadow-sm outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 dark:bg-red-950/60"
+                />
+                <div className="flex justify-end gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowRejectInput(false)
+                      setRejectReason('')
+                    }}
+                    disabled={loading}
+                  >
+                    Отмена
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    disabled={loading || !rejectReason.trim()}
+                    onClick={() => {
+                      onStatusChange(course.id, 'REJECTED', rejectReason.trim())
+                      setShowRejectInput(false)
+                    }}
+                  >
+                    <XCircle className="mr-1 h-3 w-3" />
+                    Отклонить
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <Button
               size="sm"

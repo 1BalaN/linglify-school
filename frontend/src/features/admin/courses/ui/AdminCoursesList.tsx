@@ -33,8 +33,10 @@ export const AdminCoursesList = ({courses, isCoursesLoading}: AdminCoursesListPr
       await updateCourseStatus({ id: courseId, status: 'PENDING_REVIEW' }).unwrap()
       setStatusInfo('Курс отправлен на модерацию и появится в разделе модерации у администратора.')
     } catch (error) {
-      const err = error as { data?: { message?: string; code?: string } }
-      const msg = mapModerationError(err?.data?.code, err?.data?.message)
+      const err = error as { data?: { error?: { code?: string; message?: string } } }
+      const code = err?.data?.error?.code
+      const message = err?.data?.error?.message
+      const msg = mapModerationError(code, message)
       setStatusError(msg)
     }
   }

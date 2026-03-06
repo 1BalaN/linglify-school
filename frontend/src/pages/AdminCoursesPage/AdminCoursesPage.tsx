@@ -76,7 +76,9 @@ export const AdminCoursesPage = () => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation()
-  const { data: coursesData, isLoading: isCoursesLoading, refetch } =useGetCoursesQuery(initialFilters)
+  const [filters, setFilters] = useState<GetCoursesQuery>(initialFilters)
+  const { data: coursesData, isLoading: isCoursesLoading, refetch } =
+    useGetCoursesQuery(filters)
 
   useEffect(() => {
     if(!isAuthenticated && !user) {
@@ -84,7 +86,11 @@ export const AdminCoursesPage = () => {
     }
   }, [isAuthenticated, user, navigate])
 
-  const courses = useMemo(() => (coursesData?.data || []) as Course[], [coursesData])
+  const courses = useMemo(
+    () => (coursesData?.data || []) as Course[],
+    [coursesData]
+  )
+  const pagination = coursesData?.pagination
 
   const handleChange = useCallback(
     (field: keyof FormState, value: string) => {
@@ -177,6 +183,12 @@ export const AdminCoursesPage = () => {
     
   }
 
+  const handlePageChange = (page: number) => {
+    if (!pagination) return
+    const nextPage = Math.min(Math.max(1, page), pagination.totalPages)
+    setFilters(prev => ({ ...prev, page: nextPage }))
+  }
+
   if (!isTeacherOrAdmin) {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-red-50 via-background to-orange-50 dark:from-red-950 dark:via-background dark:to-orange-950">
@@ -229,7 +241,12 @@ export const AdminCoursesPage = () => {
           />
 
           {/* Список курсов */}
-          <AdminCoursesList courses={courses} isCoursesLoading={isCoursesLoading} />
+          <AdminCoursesList
+            courses={courses}
+            isCoursesLoading={isCoursesLoading}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
     </div>

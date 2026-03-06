@@ -20,6 +20,7 @@ import {
   AdminMessagesPage,
   AdminCoursesPage,
   AdminModerationPage,
+  AdminPlacementPage,
   CoursesPage,
   CourseDetailPage,
   CourseLessonsPage,
@@ -30,6 +31,7 @@ import {
   CertificateViewPage,
   PaymentSuccessPage,
   PaymentCancelPage,
+  PlacementTestPage,
 } from '@/pages'
 
 
@@ -80,6 +82,14 @@ export const AppRouter = () => {
         element={(
           <ProtectedRoute roles={['ADMIN']}>
             <AdminMessagesPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/admin/placement"
+        element={(
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminPlacementPage />
           </ProtectedRoute>
         )}
       />
@@ -152,6 +162,7 @@ export const AppRouter = () => {
       />
       <Route path="/payment/success" element={<PaymentSuccessPage />} />
       <Route path="/payment/cancel" element={<PaymentCancelPage />} />
+      <Route path="/placement-test" element={<PlacementTestPage />} />
           
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

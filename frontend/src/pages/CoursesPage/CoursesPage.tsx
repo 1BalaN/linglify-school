@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useGetCoursesQuery } from '@/entities/course'
 import type { GetCoursesQuery } from '@/shared/types/course'
 import { Loader2 } from 'lucide-react'
 import { CoursesFilters, CatalogCourseCard } from '@/features/courses/catalog'
+import { Button } from '@/shared/ui'
 
 const DEFAULT_FILTERS: GetCoursesQuery = {
   page: 1,
@@ -104,13 +105,24 @@ export const CoursesPage = () => {
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-600 dark:from-cyan-600 dark:to-blue-700 py-16">
         <div className="container mx-auto max-w-7xl px-4">
-          <div className="max-w-3xl">
-            <h1 className="mb-3 text-4xl font-bold text-white md:text-5xl">
+          <div className="max-w-3xl space-y-4">
+            <h1 className="text-4xl font-bold text-white md:text-5xl">
               Каталог курсов
             </h1>
             <p className="text-lg text-white/90">
               Выберите курс для изучения иностранного языка и начните свой путь к свободному владению
             </p>
+            <div>
+              <Link to="/placement-test">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-white/60 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                >
+                  Не знаешь свой уровень? Пройди тест !
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

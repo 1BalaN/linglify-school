@@ -53,6 +53,27 @@ const documentUpload = multer({
   },
 })
 
+const audioUpload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/ogg',
+      'audio/webm',
+      'audio/wav',
+      'audio/x-wav',
+      'audio/m4a',
+    ]
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true)
+    } else {
+      cb(new Error('Допустимые форматы: MP3, OGG, WAV, M4A'))
+    }
+  },
+})
+
 // Загрузка видео (только для учителей и админов)
 router.post(
   '/video',
@@ -81,6 +102,16 @@ router.post(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   documentUpload.single('document') as any,
   uploadController.uploadDocument
+)
+
+// Загрузка аудио (для аудиоматериалов / прослушивания)
+router.post(
+  '/audio',
+  requireAuth,
+  requireRole('TEACHER', 'ADMIN'),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  audioUpload.single('audio') as any,
+  uploadController.uploadAudio
 )
 
 // Скачивание документа через прокси, чтобы сохранить человекочитаемое имя файла

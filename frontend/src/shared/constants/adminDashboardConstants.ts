@@ -1,4 +1,4 @@
-import { BarChart3, BookOpen, HelpCircle, MessageSquare, Settings, Shield, Users } from "lucide-react";
+import { BarChart3, BookOpen, HelpCircle, MessageSquare, Settings, Shield, Users, Target } from "lucide-react";
 
 export const adminDashboardQuickLinks = [
     {
@@ -29,6 +29,13 @@ export const adminDashboardQuickLinks = [
       icon: BookOpen,
       link: '/admin/courses',
       color: 'from-orange-500 to-amber-500',
+    },
+    {
+      title: 'Placement-тест',
+      description: 'Вопросы для определения уровня студентов',
+      icon: Target,
+      link: '/admin/placement',
+      color: 'from-cyan-500 to-blue-500',
     },
     {
       title: 'Модерация',

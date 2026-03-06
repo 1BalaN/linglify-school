@@ -16,6 +16,7 @@ import questionRouter from './modules/question/question.router'
 import uploadRouter from './modules/upload/upload.router'
 import certificateRouter from './modules/certificate/certificate.router'
 import paymentRouter, { paymentWebhookRouter } from './modules/payment/payment.router'
+import placementRouter from './modules/placement/placement.router'
 
 const app = express()
 
@@ -55,6 +56,7 @@ app.use('/api/questions', questionRouter)
 app.use('/api/upload', uploadRouter)
 app.use('/api/certificates', certificateRouter)
 app.use('/api/payments', paymentRouter)
+app.use('/api/placement', placementRouter)
 
 // Error handlers
 app.use(notFoundHandler)

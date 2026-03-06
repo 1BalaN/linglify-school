@@ -372,7 +372,7 @@ class CourseService {
       [CourseStatus.IN_REVIEW]: [CourseStatus.PUBLISHED, CourseStatus.REJECTED],
       [CourseStatus.REJECTED]: [CourseStatus.PENDING_REVIEW],
       [CourseStatus.PUBLISHED]: [CourseStatus.ARCHIVED],
-      [CourseStatus.ARCHIVED]: [],
+      [CourseStatus.ARCHIVED]: [CourseStatus.DRAFT],
     }
 
     if (!allowedTransitions[currentStatus]?.includes(nextStatus)) {

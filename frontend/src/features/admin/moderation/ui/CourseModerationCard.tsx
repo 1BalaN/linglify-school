@@ -118,6 +118,18 @@ export const CourseModerationCard = memo(
               </>
             )}
 
+            {course.status === 'PUBLISHED' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onStatusChange(course.id, 'ARCHIVED')}
+                disabled={loading}
+              >
+                <XCircle className="mr-1 h-3 w-3" />
+                Архивировать
+              </Button>
+            )}
+
             {course.status === 'REJECTED' && (
               <Button
                 size="sm"
@@ -128,6 +140,17 @@ export const CourseModerationCard = memo(
                 disabled={loading}
               >
                 Вернуть на проверку
+              </Button>
+            )}
+
+            {course.status === 'ARCHIVED' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onStatusChange(course.id, 'DRAFT')}
+                disabled={loading}
+              >
+                Вернуть в черновики
               </Button>
             )}
 

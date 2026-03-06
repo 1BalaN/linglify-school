@@ -1,6 +1,6 @@
 import { COURSE_CATEGORIES } from '@/shared/constants/courseCategories'
 import { CourseLevel } from '@/shared/types/course'
-import { Button, Input } from '@/shared/ui'
+import { Button, Input, ImageUpload } from '@/shared/ui'
 import { PlusCircle, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { FormState } from '@/pages/AdminCoursesPage/AdminCoursesPage'
 
@@ -160,13 +160,32 @@ export const CourseFormCreating = ({
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">
-            Обложка (URL)
+            Обложка курса
           </label>
-          <Input
-            value={form.coverImage}
-            onChange={(e) => handleChange('coverImage', e.target.value)}
-            placeholder="https://example.com/cover.jpg"
-          />
+          <div className="rounded-xl border border-border bg-background/40 p-3 md:p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start">
+              <div className="md:w-1/2 space-y-1">
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Ссылка на изображение
+                </span>
+                <Input
+                  value={form.coverImage}
+                  onChange={e => handleChange('coverImage', e.target.value)}
+                  placeholder="https://example.com/cover.jpg"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Можно указать прямую ссылку на картинку либо загрузить файл справа.
+                </p>
+              </div>
+              <div className="md:w-1/2">
+                <ImageUpload
+                  value={form.coverImage}
+                  onChange={url => handleChange('coverImage', url)}
+                  label="Загрузить файл обложки"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-2">

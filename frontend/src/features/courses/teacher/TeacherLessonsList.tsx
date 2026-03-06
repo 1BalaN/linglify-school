@@ -39,7 +39,7 @@ export const TeacherLessonsList = ({
 
   if (lessons.length === 0) {
     return (
-      <div className="glass-card py-12 text-center">
+      <div className="glass-card py-12 text-center rounded-xl">
         <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
         <p className="text-muted-foreground">
           Уроков пока нет. Добавьте первый урок.

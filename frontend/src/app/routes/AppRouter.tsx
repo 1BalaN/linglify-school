@@ -16,6 +16,7 @@ import {
   PrivacyPage,
   TermsPage,
   AdminDashboardPage,
+  AdminAnalyticsPage,
   AdminFAQPage,
   AdminMessagesPage,
   AdminCoursesPage,
@@ -23,6 +24,7 @@ import {
   AdminPlacementPage,
   CoursesPage,
   CourseDetailPage,
+  CourseAnalyticsPage,
   CourseLessonsPage,
   StudentCoursePage,
   LessonPage,
@@ -66,6 +68,14 @@ export const AppRouter = () => {
         element={(
           <ProtectedRoute roles={['ADMIN']}>
             <AdminDashboardPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/admin/analytics"
+        element={(
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminAnalyticsPage />
           </ProtectedRoute>
         )}
       />
@@ -117,6 +127,14 @@ export const AppRouter = () => {
       {/* Course routes */}
       <Route path="/courses" element={<CoursesPage />} />
       <Route path="/courses/:id" element={<CourseDetailPage />} />
+      <Route
+        path="/courses/:id/analytics"
+        element={(
+          <ProtectedRoute roles={['TEACHER', 'ADMIN']}>
+            <CourseAnalyticsPage />
+          </ProtectedRoute>
+        )}
+      />
       <Route
         path="/courses/:id/lessons"
         element={(

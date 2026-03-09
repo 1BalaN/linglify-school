@@ -104,6 +104,16 @@
     background-color: hsl(var(--primary) / 0.5);
   }
   
+  /* Recharts axis ticks (используем тему, а не жёсткий чёрный) */
+  .recharts-cartesian-axis-tick text {
+    fill: hsl(var(--muted-foreground));
+  }
+
+  /* Recharts axis labels */
+  .recharts-label {
+    fill: hsl(var(--foreground));
+  }
+  
   .animate-float {
     animation: float 3s ease-in-out infinite;
   }

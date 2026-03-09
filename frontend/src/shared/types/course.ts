@@ -147,6 +147,16 @@ export interface Enrollment {
   course?: Course
 }
 
+export interface CourseStudent extends Enrollment {
+  user?: {
+    id: string
+    firstName: string | null
+    lastName: string | null
+    email: string
+    avatar: string | null
+  }
+}
+
 export interface LessonProgress {
   id: string
   userId: string

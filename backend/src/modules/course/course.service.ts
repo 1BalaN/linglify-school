@@ -599,6 +599,44 @@ class CourseService {
   }
 
   /**
+   * Получить список учеников курса (для преподавателя курса или админа)
+   */
+  async getCourseStudents(courseId: string, userId: string, userRole: UserRole) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: {
+        teacherId: true,
+      },
+    })
+
+    if (!course) {
+      throw new AppError(404, 'COURSE_NOT_FOUND', 'Курс не найден')
+    }
+
+    if (course.teacherId !== userId && userRole !== UserRole.ADMIN) {
+      throw new AppError(403, 'ACCESS_DENIED', 'Нет доступа к списку учеников этого курса')
+    }
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: { courseId },
+      orderBy: { enrolledAt: 'desc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
+    })
+
+    return enrollments
+  }
+
+  /**
    * Создать отзыв на курс
    */
   async createReview(userId: string, dto: CreateReviewDto, userRole?: UserRole) {

@@ -50,7 +50,6 @@ export const adminDashboardQuickLinks = [
       icon: BarChart3,
       link: '/admin/analytics',
       color: 'from-indigo-500 to-blue-500',
-      badge: 'Скоро',
     },
     {
       title: 'Настройки',

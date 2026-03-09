@@ -11,6 +11,7 @@ import {
   updateReviewSchema,
 } from './course.schema'
 import type { AuthRequest } from '../../shared/middleware/auth'
+import { courseIdParamsSchema } from './course.students.schema'
 
 class CourseController {
   /**
@@ -144,6 +145,22 @@ class CourseController {
    */
   async getUserCourses(req: AuthRequest, res: Response) {
     const enrollments = await courseService.getUserCourses(req.user!.userId)
+
+    res.json({ data: enrollments })
+  }
+
+  /**
+   * GET /api/courses/:id/students
+   * Получить список учеников курса (для преподавателя курса или админа)
+   */
+  async getCourseStudents(req: AuthRequest, res: Response) {
+    const { id } = courseIdParamsSchema.parse(req.params)
+
+    const enrollments = await courseService.getCourseStudents(
+      id,
+      req.user!.userId,
+      req.user!.role
+    )
 
     res.json({ data: enrollments })
   }

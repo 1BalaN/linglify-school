@@ -54,6 +54,13 @@ router.post('/:id/enroll', requireAuth, courseController.enrollCourse)
 
 router.get('/my/enrolled', requireAuth, courseController.getUserCourses)
 
+router.get(
+  '/:id/students',
+  requireAuth,
+  requireRole('TEACHER', 'ADMIN'),
+  courseController.getCourseStudents
+)
+
 // Отзывы
 router.post('/:id/reviews', requireAuth, courseController.createReview)
 

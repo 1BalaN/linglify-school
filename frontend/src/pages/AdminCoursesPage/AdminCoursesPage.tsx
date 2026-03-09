@@ -76,7 +76,15 @@ export const AdminCoursesPage = () => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation()
-  const [filters, setFilters] = useState<GetCoursesQuery>(initialFilters)
+  const [filters, setFilters] = useState<GetCoursesQuery>(() => {
+    if (isTeacherOrAdmin && user?.role === 'TEACHER') {
+      return {
+        ...initialFilters,
+        teacherId: user.id,
+      }
+    }
+    return initialFilters
+  })
   const { data: coursesData, isLoading: isCoursesLoading, refetch } =
     useGetCoursesQuery(filters)
 

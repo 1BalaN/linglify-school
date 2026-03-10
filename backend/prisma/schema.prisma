@@ -507,3 +507,18 @@ model PlacementAnswer {
   @@index([questionId])
   @@map("placement_answers")
 }
+
+/// Глобальные настройки платформы (singleton запись)
+model PlatformSettings {
+  id                           Int      @id @default(1)
+  requireFinalTestForCertificate Boolean @default(true)
+  minProgressForCertificate    Int      @default(100) // 0-100 (%)
+  lowRatingThreshold           Float    @default(2.5)
+  minEnrollmentsForRating      Int      @default(5)
+  placementDefaultQuestions    Int      @default(25)
+  placementAllowedLanguages    String[] @default([])
+  placementRecommendationMap   Json?
+  updatedAt                    DateTime @updatedAt
+
+  @@map("platform_settings")
+}

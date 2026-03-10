@@ -1,6 +1,7 @@
 import { Prisma, CourseLevel, PlacementSessionStatus, PlacementQuestionType } from '@prisma/client'
 import { prisma } from '../../shared/lib/prisma'
 import { AppError } from '../../shared/middleware/errorHandler'
+import { platformSettingsService } from '../settings/platformSettings.service'
 import type {
   StartPlacementDto,
   SubmitPlacementAnswerDto,
@@ -9,13 +10,28 @@ import type {
   UpdatePlacementQuestionDto,
 } from './placement.schema'
 
-const MAX_QUESTIONS = 25
 const MAX_DURATION_MINUTES = 25
 const STREAK_TO_INCREASE = 2
 const STREAK_TO_DECREASE = 2
 
 export class PlacementService {
   async startSession(userId: string | null, dto: StartPlacementDto) {
+    const settings = await platformSettingsService.getSettings()
+    const allowedLanguages = settings.placementAllowedLanguages
+
+    if (Array.isArray(allowedLanguages) && allowedLanguages.length > 0) {
+      const isAllowed = allowedLanguages.includes(dto.language)
+      if (!isAllowed) {
+        throw new AppError(
+          400,
+          'PLACEMENT_LANGUAGE_NOT_ALLOWED',
+          'Для выбранного языка placement-тест сейчас недоступен'
+        )
+      }
+    }
+
+    const maxQuestions = settings.placementDefaultQuestions || 25
+
     const now = new Date()
 
     const session = await prisma.placementSession.create({
@@ -42,7 +58,7 @@ export class PlacementService {
       session,
       question: firstQuestion,
       questionIndex: 1,
-      maxQuestions: MAX_QUESTIONS,
+      maxQuestions,
     }
   }
 
@@ -148,6 +164,8 @@ export class PlacementService {
   }
 
   async submitAnswer(userId: string | null, dto: SubmitPlacementAnswerDto) {
+    const settings = await platformSettingsService.getSettings()
+    const maxQuestions = settings.placementDefaultQuestions || 25
     const session = await prisma.placementSession.findUnique({
       where: { id: dto.sessionId },
       include: { answers: true },
@@ -205,7 +223,7 @@ export class PlacementService {
     const recentAnswers = allAnswers.slice(-3).map(a => ({ isCorrect: a.isCorrect }))
     const nextDifficulty = this.calculateNextDifficulty(session.currentDifficulty, recentAnswers)
 
-    const shouldFinishByCount = totalQuestions >= MAX_QUESTIONS
+    const shouldFinishByCount = totalQuestions >= maxQuestions
     const shouldFinishByTime = timeExceeded
     const shouldFinish = shouldFinishByCount || shouldFinishByTime
 
@@ -275,7 +293,7 @@ export class PlacementService {
       session: updatedSession,
       question: nextQuestion,
       questionIndex: totalQuestions + 1,
-      maxQuestions: MAX_QUESTIONS,
+      maxQuestions,
     }
   }
 
@@ -337,7 +355,9 @@ export class PlacementService {
   }
 
   async getRecommendedCourses(language: string, level: CourseLevel) {
-    const levelOrder: CourseLevel[] = [
+    const settings = await platformSettingsService.getSettings()
+
+    const defaultLevelOrder: CourseLevel[] = [
       CourseLevel.A1,
       CourseLevel.A2,
       CourseLevel.B1,
@@ -346,8 +366,18 @@ export class PlacementService {
       CourseLevel.C2,
     ]
 
-    const levelIndex = levelOrder.indexOf(level)
-    const allowedLevels = levelOrder.filter((_, idx) => Math.abs(idx - levelIndex) <= 1)
+    let allowedLevels: CourseLevel[]
+
+    if (settings.placementRecommendationMap) {
+      const map = settings.placementRecommendationMap as Record<
+        CourseLevel,
+        CourseLevel[]
+      >
+      allowedLevels = map[level] && map[level].length > 0 ? map[level] : [level]
+    } else {
+      const levelIndex = defaultLevelOrder.indexOf(level)
+      allowedLevels = defaultLevelOrder.filter((_, idx) => Math.abs(idx - levelIndex) <= 1)
+    }
 
     const courses = await prisma.course.findMany({
       where: {

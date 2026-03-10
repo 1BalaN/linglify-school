@@ -18,6 +18,7 @@ import certificateRouter from './modules/certificate/certificate.router'
 import paymentRouter, { paymentWebhookRouter } from './modules/payment/payment.router'
 import placementRouter from './modules/placement/placement.router'
 import analyticsRouter from './modules/analytics/analytics.router'
+import settingsRouter from './modules/settings/settings.router'
 
 const app = express()
 
@@ -59,6 +60,7 @@ app.use('/api/certificates', certificateRouter)
 app.use('/api/payments', paymentRouter)
 app.use('/api/placement', placementRouter)
 app.use('/api/analytics', analyticsRouter)
+app.use('/api/settings', settingsRouter)
 
 // Error handlers
 app.use(notFoundHandler)

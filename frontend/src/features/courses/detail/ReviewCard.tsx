@@ -1,4 +1,4 @@
-import { Edit, Trash2 } from 'lucide-react'
+import { Edit, Trash2, } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Review } from '@/shared/types/course'
 import { ReviewStarRating } from './ReviewStarRating'
@@ -24,6 +24,7 @@ export const ReviewCard = ({
   const isAdmin = currentUser?.role === 'ADMIN'
   const isReviewByTeacher = review.userId === teacherId
   const isReviewByAdmin = review.user?.role === 'ADMIN'
+  const isReviewByStudent = review.user?.role === 'STUDENT'
   const name =
     review.user?.firstName && review.user?.lastName
       ? `${review.user.firstName} ${review.user.lastName}`
@@ -68,7 +69,9 @@ export const ReviewCard = ({
             <ReviewRoleBadge role={review.user?.role} isAuthor={isReviewByTeacher} />
           </div>
           <div className="mb-2 flex items-center gap-2">
-            <ReviewStarRating rating={review.rating} size="sm" />
+            {isReviewByStudent && (
+              <ReviewStarRating rating={review.rating} size="sm" />
+            )}
             <span className="text-xs text-muted-foreground">
               {new Date(review.createdAt).toLocaleDateString('ru-RU', {
                 day: 'numeric',
@@ -109,6 +112,10 @@ export const ReviewCard = ({
           </div>
         )}
       </div>
+
+      {/* Вспомогательный контейнер для будущего inline подтверждения удаления.
+         Само подтверждение рендерится из родителя прямо под этой карточкой. */}
+      <div className="mt-3" />
     </div>
   )
 }

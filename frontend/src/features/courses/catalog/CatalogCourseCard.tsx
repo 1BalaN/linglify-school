@@ -33,7 +33,7 @@ export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
 
   return (
     <Link to={`/courses/${course.id}`} className="group block h-full">
-      <div className="glass-card h-full overflow-hidden rounded-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10">
+      <div className="glass-card h-full overflow-hidden rounded-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10 flex flex-col">
         {/* Cover */}
         <div className="relative h-44 overflow-hidden bg-gradient-to-br from-cyan-400/20 to-blue-500/20">
           {course.coverImage ? (
@@ -72,8 +72,9 @@ export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
         </div>
 
         {/* Body */}
-        <div className="flex flex-col gap-3 p-4">
-          <div>
+        <div className="flex flex-1 flex-col gap-3 p-4">
+          <div className="flex-1 space-y-3">
+            {/* Title & description */}
             <h3 className="mb-1 line-clamp-2 text-base font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
               {course.title}
             </h3>
@@ -82,53 +83,52 @@ export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
                 {course.shortDescription}
               </p>
             )}
-          </div>
-
-          {/* Teacher */}
-          <div className="flex items-center gap-2">
-            {course.teacher.avatar ? (
-              <img
-                src={course.teacher.avatar}
-                alt={course.teacher.firstName || 'T'}
-                className="h-7 w-7 rounded-full object-cover ring-1 ring-border"
-                loading="lazy"
-              />
-            ) : (
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
-                {course.teacher.firstName?.[0] ||
-                  course.teacher.email[0].toUpperCase()}
-              </div>
-            )}
-            <span className="truncate text-xs text-muted-foreground">
-              {course.teacher.firstName && course.teacher.lastName
-                ? `${course.teacher.firstName} ${course.teacher.lastName}`
-                : course.teacher.email}
-            </span>
-          </div>
-
-          {/* Stats row */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <BookOpen className="h-3.5 w-3.5" />
-              {course.lessonsCount}{' '}
-              {course.lessonsCount === 1
-                ? 'урок'
-                : course.lessonsCount < 5
-                  ? 'урока'
-                  : 'уроков'}
-            </span>
-            {course.duration && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" />
-                {formatDuration(course.duration)}
+            {/* Teacher */}
+            <div className="flex items-center gap-2">
+              {course.teacher.avatar ? (
+                <img
+                  src={course.teacher.avatar}
+                  alt={course.teacher.firstName || 'T'}
+                  className="h-7 w-7 rounded-full object-cover ring-1 ring-border"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
+                  {course.teacher.firstName?.[0] ||
+                    course.teacher.email[0].toUpperCase()}
+                </div>
+              )}
+              <span className="truncate text-xs text-muted-foreground">
+                {course.teacher.firstName && course.teacher.lastName
+                  ? `${course.teacher.firstName} ${course.teacher.lastName}`
+                  : course.teacher.email}
               </span>
-            )}
-            {course.enrolledCount > 0 && (
+            </div>
+
+            {/* Stats row */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
-                {course.enrolledCount}
+                <BookOpen className="h-3.5 w-3.5" />
+                {course.lessonsCount}{' '}
+                {course.lessonsCount === 1
+                  ? 'урок'
+                  : course.lessonsCount < 5
+                    ? 'урока'
+                    : 'уроков'}
               </span>
-            )}
+              {course.duration && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  {formatDuration(course.duration)}
+                </span>
+              )}
+              {course.enrolledCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <Users className="h-3.5 w-3.5" />
+                  {course.enrolledCount}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Price */}

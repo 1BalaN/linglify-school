@@ -48,22 +48,27 @@ export const ReviewsSection = ({
   onDeleteConfirm,
 }: ReviewsSectionProps) => {
   const isAuthenticated = !!currentUser
-  const isTeacherOrAdmin =
-    currentUser?.role === 'TEACHER' || currentUser?.role === 'ADMIN'
+  const isTeacher = currentUser?.role === 'TEACHER'
+  const isAdmin = currentUser?.role === 'ADMIN'
+  const isStudent = currentUser?.role === 'STUDENT'
+  const isTeacherOrAdmin = isTeacher || isAdmin
   const canLeaveReview = isEnrolled || isTeacherOrAdmin
 
-  const totalReviews = reviews.length
+  // Для отображения среднего рейтинга и распределения используем только отзывы студентов,
+  // чтобы оценки преподавателя/админа не искажали картину.
+  const studentReviews = reviews.filter(r => r.user?.role === 'STUDENT')
+  const totalStudentReviews = studentReviews.length
   const averageRating =
-    totalReviews > 0
-      ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+    totalStudentReviews > 0
+      ? studentReviews.reduce((sum, r) => sum + r.rating, 0) / totalStudentReviews
       : 0
 
   const distribution = [5, 4, 3, 2, 1].map(star => {
-    const count = reviews.filter(r => r.rating === star).length
+    const count = studentReviews.filter(r => r.rating === star).length
     return {
       star,
       count,
-      percent: totalReviews ? Math.round((count / totalReviews) * 100) : 0,
+      percent: totalStudentReviews ? Math.round((count / totalStudentReviews) * 100) : 0,
     }
   })
 
@@ -81,10 +86,10 @@ export const ReviewsSection = ({
             <Star className="h-7 w-7 fill-yellow-400 text-yellow-400" />
           </div>
           <p className="text-sm text-muted-foreground">
-            На основе {totalReviews}{' '}
-            {totalReviews === 1
+            На основе {totalStudentReviews}{' '}
+            {totalStudentReviews === 1
               ? 'отзыва'
-              : totalReviews < 5
+              : totalStudentReviews < 5
                 ? 'отзывов'
                 : 'отзывов'}
           </p>
@@ -138,9 +143,10 @@ export const ReviewsSection = ({
         </div>
       )}
       {/* Form */}
-      {isAuthenticated && canLeaveReview && ( !isOwnReview || editingReview ) && (
+      {isAuthenticated && canLeaveReview && (!isOwnReview || editingReview) && (
         <ReviewForm
           rating={reviewRating}
+          canRate={isStudent && isEnrolled}
           comment={reviewComment}
           error={reviewError}
           isLoading={isCreatingReview || isUpdatingReview}
@@ -165,45 +171,45 @@ export const ReviewsSection = ({
           </p>
         ) : (
           reviews.map(review => (
-            <ReviewCard
-              key={review.id}
-              review={review}
-              teacherId={teacherId}
-              currentUser={currentUser}
-              onEdit={() => {
-                setEditingReview(review)
-                setReviewRating(review.rating)
-                setReviewComment(review.comment || '')
-                setReviewError(null)
-              }}
-              onDelete={() => setDeleteReviewId(review.id)}
-            />
+            <div key={review.id} className="space-y-2">
+              <ReviewCard
+                review={review}
+                teacherId={teacherId}
+                currentUser={currentUser}
+                onEdit={() => {
+                  setEditingReview(review)
+                  setReviewRating(review.rating)
+                  setReviewComment(review.comment || '')
+                  setReviewError(null)
+                }}
+                onDelete={() => setDeleteReviewId(review.id)}
+              />
+
+              {deleteReviewId === review.id && (
+                <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
+                  <span>Удалить отзыв?</span>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={onDeleteConfirm}
+                    disabled={isUpdatingReview}
+                  >
+                    Удалить
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setDeleteReviewId(null)}
+                  >
+                    <X className="h-4 w-4" />
+                    Отмена
+                  </Button>
+                </div>
+              )}
+            </div>
           ))
         )}
       </div>
-
-      {/* Delete confirm inline (simple version) */}
-      {deleteReviewId && (
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
-          <span>Удалить отзыв?</span>
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={onDeleteConfirm}
-            disabled={isUpdatingReview}
-          >
-            Удалить
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setDeleteReviewId(null)}
-          >
-            <X className="h-4 w-4" />
-            Отмена
-          </Button>
-        </div>
-      )}
     </div>
   )
 }

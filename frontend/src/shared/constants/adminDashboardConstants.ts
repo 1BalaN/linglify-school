@@ -57,6 +57,5 @@ export const adminDashboardQuickLinks = [
       icon: Settings,
       link: '/admin/settings',
       color: 'from-gray-500 to-slate-500',
-      badge: 'Скоро',
     },
 ]

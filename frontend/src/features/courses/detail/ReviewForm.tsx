@@ -4,6 +4,7 @@ import { ReviewStarRating } from './ReviewStarRating'
 
 interface ReviewFormProps {
   rating: number
+  canRate: boolean
   comment: string
   error: string | null
   isLoading: boolean
@@ -16,6 +17,7 @@ interface ReviewFormProps {
 
 export const ReviewForm = ({
   rating,
+  canRate,
   comment,
   error,
   isLoading,
@@ -46,16 +48,24 @@ export const ReviewForm = ({
       )}
     </div>
 
-    <div className="mb-4 flex items-center gap-3">
-      <ReviewStarRating
-        rating={rating}
-        interactive
-        onChange={onRatingChange}
-        size="lg"
-      />
-      <span className="text-sm font-medium text-muted-foreground">
-        {rating} из 5
-      </span>
+    <div className="mb-4 flex flex-col gap-1">
+      <div className="flex items-center gap-3">
+        <ReviewStarRating
+          rating={rating}
+          interactive={canRate}
+          onChange={canRate ? onRatingChange : undefined}
+          size="lg"
+        />
+        {canRate ? (
+          <span className="text-sm font-medium text-muted-foreground">
+            {rating} из 5
+          </span>
+        ) : (
+          <span className="text-xs font-medium text-muted-foreground">
+            Оценка от преподавателя или администратора не влияет на общий рейтинг.
+          </span>
+        )}
+      </div>
     </div>
 
     <textarea

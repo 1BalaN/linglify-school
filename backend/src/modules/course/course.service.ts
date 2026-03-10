@@ -770,11 +770,21 @@ class CourseService {
   private async recalculateCourseRating(courseId: string) {
     const reviews = await prisma.review.findMany({
       where: { courseId, isVisible: true },
-      select: { rating: true },
+      select: {
+        rating: true,
+        user: {
+          select: {
+            role: true,
+          },
+        },
+      },
     })
 
-    const averageRating = reviews.length > 0
-      ? reviews.reduce((sum: number, r) => sum + r.rating, 0) / reviews.length
+    // В расчёт среднего рейтинга учитываем только отзывы студентов
+    const studentReviews = reviews.filter(r => r.user?.role === UserRole.STUDENT)
+
+    const averageRating = studentReviews.length > 0
+      ? studentReviews.reduce((sum: number, r) => sum + r.rating, 0) / studentReviews.length
       : null
 
     await prisma.course.update({

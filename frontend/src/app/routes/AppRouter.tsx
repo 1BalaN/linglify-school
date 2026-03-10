@@ -22,6 +22,7 @@ import {
   AdminCoursesPage,
   AdminModerationPage,
   AdminPlacementPage,
+  AdminSettingsPage,
   CoursesPage,
   CourseDetailPage,
   CourseAnalyticsPage,
@@ -100,6 +101,14 @@ export const AppRouter = () => {
         element={(
           <ProtectedRoute roles={['ADMIN']}>
             <AdminPlacementPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/admin/settings"
+        element={(
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminSettingsPage />
           </ProtectedRoute>
         )}
       />

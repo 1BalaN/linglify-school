@@ -67,6 +67,9 @@ export const api = createApi({
     'FAQ',
     'Contact',
     'PlacementQuestion',
+    'PlatformSettings',
+    'AdminAnalytics',
+    'TeacherAnalytics',
   ],
   endpoints: () => ({}),
 })

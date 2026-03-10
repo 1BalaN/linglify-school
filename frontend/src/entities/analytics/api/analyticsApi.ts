@@ -17,6 +17,7 @@ export const analyticsApi = api.injectEndpoints({
         method: 'GET',
         params: params ?? undefined,
       }),
+      providesTags: ['AdminAnalytics'],
     }),
 
     getAdminAnalyticsTimeseries: builder.query<
@@ -28,6 +29,7 @@ export const analyticsApi = api.injectEndpoints({
         method: 'GET',
         params: params ?? undefined,
       }),
+      providesTags: ['AdminAnalytics'],
     }),
 
     getTeacherCourseAnalytics: builder.query<{ data: TeacherCourseAnalytics }, string>({
@@ -35,6 +37,7 @@ export const analyticsApi = api.injectEndpoints({
         url: `/analytics/teacher/course/${courseId}`,
         method: 'GET',
       }),
+      providesTags: ['TeacherAnalytics'],
     }),
 
     getTeacherCourseTimeseries: builder.query<
@@ -46,6 +49,7 @@ export const analyticsApi = api.injectEndpoints({
         method: 'GET',
         params: periodDays ? { periodDays } : undefined,
       }),
+      providesTags: ['TeacherAnalytics'],
     }),
   }),
 })

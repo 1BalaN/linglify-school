@@ -1,6 +1,7 @@
 import { CourseLevel, CourseStatus, PlacementSessionStatus, UserRole } from '@prisma/client'
 import { prisma } from '../../shared/lib/prisma'
 import { AppError } from '../../shared/middleware/errorHandler'
+import { platformSettingsService } from '../settings/platformSettings.service'
 
 type AdminOverviewCourseStatusMap = Record<CourseStatus, number>
 
@@ -133,6 +134,8 @@ class AnalyticsService {
     const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
     const periodFrom = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000)
 
+    const settings = await platformSettingsService.getSettings()
+
     const [
       totalUsers,
       totalStudents,
@@ -206,7 +209,10 @@ class AnalyticsService {
         where: {
           averageRating: {
             not: null,
-            lte: 2.5,
+            lte: settings.lowRatingThreshold,
+          },
+          enrolledCount: {
+            gte: settings.minEnrollmentsForRating,
           },
         },
         orderBy: [

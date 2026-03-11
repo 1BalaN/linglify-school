@@ -100,23 +100,47 @@ export const AdminUsersPage = () => {
                   'lastName',
                   'role',
                   'isActive',
+                  'createdAt',
                   'enrollments',
                   'certificates',
                   'segment',
+                  'segmentLabel',
                   'lastActivity',
+                  'daysSinceLastActivity',
                 ]
-                const rows = users.map(u => [
-                  u.id,
-                  u.email,
-                  u.firstName ?? '',
-                  u.lastName ?? '',
-                  u.role,
-                  u.isActive ? 'true' : 'false',
-                  String(u._count.enrollments),
-                  String(u._count.certificates),
-                  u.segment ?? '',
-                  u.lastActivity ?? '',
-                ])
+                const now = new Date()
+                const rows = users.map(u => {
+                  const segmentLabelMap: Record<string, string> = {
+                    NEW: 'Новый',
+                    ACTIVE: 'Активный',
+                    RISK: 'Рисковый',
+                    GRAD: 'Выпускник',
+                  }
+                  const createdAt = new Date(u.createdAt)
+                  const lastActivity = u.lastActivity ? new Date(u.lastActivity) : null
+                  const daysSinceActivity =
+                    lastActivity != null
+                      ? Math.floor(
+                          (now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24)
+                        )
+                      : ''
+
+                  return [
+                    u.id,
+                    u.email,
+                    u.firstName ?? '',
+                    u.lastName ?? '',
+                    u.role,
+                    u.isActive ? 'true' : 'false',
+                    createdAt.toISOString(),
+                    String(u._count.enrollments),
+                    String(u._count.certificates),
+                    u.segment ?? '',
+                    u.segment ? segmentLabelMap[u.segment] ?? '' : '',
+                    u.lastActivity ?? '',
+                    daysSinceActivity,
+                  ]
+                })
                 const delimiter = ';'
                 const csvBody = [header, ...rows]
                   .map(r => r.map(value => `"${String(value).replace(/"/g, '""')}"`).join(delimiter))

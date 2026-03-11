@@ -119,7 +119,6 @@ export const AdminUserDetails = ({ overview }: AdminUserDetailsProps) => {
           </p>
         </div>
       )}
-
       <div className="grid grid-cols-2 gap-3 text-xs">
         <div className="rounded-xl bg-muted/60 p-3 shadow-sm">
           <p className="text-muted-foreground">Курсы</p>

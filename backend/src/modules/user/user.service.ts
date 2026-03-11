@@ -206,9 +206,29 @@ export class UserService {
   }
 
   async deleteUser(id: string) {
-    const user = await prisma.user.findUnique({ where: { id } })
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, role: true },
+    })
     if (!user) {
       throw new AppError(404, 'USER_NOT_FOUND', 'Пользователь не найден')
+    }
+
+    // Если удаляем преподавателя, заранее переназначаем его курсы на первого администратора
+    if (user.role === UserRole.TEACHER) {
+      const admin = await prisma.user.findFirst({
+        where: { role: UserRole.ADMIN },
+        select: { id: true },
+      })
+
+      if (admin) {
+        await prisma.course.updateMany({
+          where: { teacherId: user.id },
+          data: {
+            teacherId: admin.id,
+          },
+        })
+      }
     }
 
     await prisma.user.delete({ where: { id } })

@@ -21,7 +21,6 @@ export const adminDashboardQuickLinks = [
       icon: Users,
       link: '/admin/users',
       color: 'from-rose-500 to-pink-500',
-      badge: 'Скоро',
     },
     {
       title: 'Курсы',

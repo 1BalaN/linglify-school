@@ -19,6 +19,7 @@ import {
   AdminAnalyticsPage,
   AdminFAQPage,
   AdminMessagesPage,
+  AdminUsersPage,
   AdminCoursesPage,
   AdminModerationPage,
   AdminPlacementPage,
@@ -35,6 +36,7 @@ import {
   PaymentSuccessPage,
   PaymentCancelPage,
   PlacementTestPage,
+  BecomeTeacherPage,
 } from '@/pages'
 
 
@@ -93,6 +95,14 @@ export const AppRouter = () => {
         element={(
           <ProtectedRoute roles={['ADMIN']}>
             <AdminMessagesPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/admin/users"
+        element={(
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminUsersPage />
           </ProtectedRoute>
         )}
       />
@@ -177,16 +187,7 @@ export const AppRouter = () => {
         )}
       />
       <Route path="/certificates/:code" element={<CertificateViewPage />} />
-      <Route
-        path="/pricing"
-        element={
-          <div className="container mx-auto px-4 py-12 text-center">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Тарифы (в разработке)
-            </h1>
-          </div>
-        }
-      />
+      <Route path="/become-teacher" element={<BecomeTeacherPage />} />
       <Route path="/payment/success" element={<PaymentSuccessPage />} />
       <Route path="/payment/cancel" element={<PaymentCancelPage />} />
       <Route path="/placement-test" element={<PlacementTestPage />} />

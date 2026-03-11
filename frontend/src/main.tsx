@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { store } from '@/app/store'
 import { ThemeProvider } from '@/shared/lib/theme'
 import App from '@/app/App'
+import { AppErrorBoundary } from '@/shared/ui'
 import '@/app/styles/index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -12,7 +13,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <Provider store={store}>
       <BrowserRouter>
         <ThemeProvider>
-          <App />
+          <AppErrorBoundary>
+            <App />
+          </AppErrorBoundary>
         </ThemeProvider>
       </BrowserRouter>
     </Provider>

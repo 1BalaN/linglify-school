@@ -35,10 +35,10 @@ export const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/pricing"
+                  to="/become-teacher"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
-                  Тарифы
+                  Стать преподавателем
                 </Link>
               </li>
               <li>

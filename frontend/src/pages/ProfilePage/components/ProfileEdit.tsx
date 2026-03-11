@@ -15,7 +15,6 @@ const profileSchema = z.object({
   bio: z.string().max(500, 'Максимум 500 символов').optional(),
   dateOfBirth: z.string().optional(),
   preferredLanguage: z.string().optional(),
-  targetLanguages: z.string().optional(),
 })
 
 type ProfileFormData = z.infer<typeof profileSchema>
@@ -44,7 +43,6 @@ export const ProfileEdit = ({ user }: ProfileEditProps) => {
         ? new Date(user.dateOfBirth).toISOString().split('T')[0]
         : '',
       preferredLanguage: user.preferredLanguage || '',
-      targetLanguages: user.targetLanguages?.join(', ') || '',
     },
   })
 
@@ -54,12 +52,9 @@ export const ProfileEdit = ({ user }: ProfileEditProps) => {
       const payload = {
         ...data,
         avatar: avatarBase64 || undefined,
-        dateOfBirth: data.dateOfBirth 
+        dateOfBirth: data.dateOfBirth
           ? new Date(data.dateOfBirth).toISOString()
           : undefined,
-        targetLanguages: data.targetLanguages
-          ? data.targetLanguages.split(',').map(lang => lang.trim())
-          : [],
       }
       const result = await updateProfile(payload).unwrap()
       dispatch(setUser(result.data))
@@ -123,17 +118,9 @@ export const ProfileEdit = ({ user }: ProfileEditProps) => {
 
         <Input
           {...register('preferredLanguage')}
-          label="Предпочитаемый язык"
-          placeholder="Русский"
+          label="Предпочитаемые языки"
+          placeholder="Например: Английский, Немецкий"
           error={errors.preferredLanguage?.message}
-        />
-
-        <Input
-          {...register('targetLanguages')}
-          label="Изучаемые языки (через запятую)"
-          placeholder="Английский, Испанский, Французский"
-          error={errors.targetLanguages?.message}
-          helperText="Введите языки через запятую"
         />
 
         <div>

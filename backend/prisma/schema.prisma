@@ -29,25 +29,27 @@ enum OAuthProvider {
 }
 
 model User {
-  id                String         @id @default(uuid())
-  email             String         @unique
-  password          String?
-  role              UserRole       @default(STUDENT)
-  isEmailVerified   Boolean        @default(false)
-  isPhoneVerified   Boolean        @default(false)
-  phone             String?
-  firstName         String?
-  lastName          String?
-  avatar            String?
-  bio               String?
-  dateOfBirth       DateTime?
-  preferredLanguage String?
-  targetLanguages   String[]       @default([])
-  timezone          String?
-  oauthProvider     OAuthProvider?
-  oauthId           String?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  id                 String         @id @default(uuid())
+  email              String         @unique
+  password           String?
+  role               UserRole       @default(STUDENT)
+  isEmailVerified    Boolean        @default(false)
+  isPhoneVerified    Boolean        @default(false)
+  phone              String?
+  firstName          String?
+  lastName           String?
+  avatar             String?
+  bio                String?
+  dateOfBirth        DateTime?
+  preferredLanguage  String?
+  targetLanguages    String[]       @default([])
+  timezone           String?
+  oauthProvider      OAuthProvider?
+  oauthId            String?
+  isActive           Boolean        @default(true)
+  deactivationReason String?        @db.Text
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
   // Связи для авторизации
   verificationTokens VerificationToken[]

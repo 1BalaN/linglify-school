@@ -48,10 +48,10 @@ export const Header = () => {
             О платформе
           </Link>
           <Link
-            to="/pricing"
+            to="/become-teacher"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
           >
-            Тарифы
+            Стать преподавателем
           </Link>
         </nav>
         <div className="hidden items-center space-x-4 md:flex">

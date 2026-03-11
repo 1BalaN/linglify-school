@@ -61,6 +61,24 @@ export const PlacementTestPage = () => {
     shouldLoadDetails && sessionId ? { sessionId } : skipToken
   )
 
+  // Автовыбор языка по профилю пользователя (если в URL язык не задан).
+  // Если пользователь указал несколько языков через запятую, берём первый.
+  useEffect(() => {
+    const languageFromUrl = searchParams.get('language')
+    if (languageFromUrl) return
+    if (!user?.preferredLanguage) return
+
+    const preferredRaw = user.preferredLanguage
+    const preferred =
+      preferredRaw.split(',')[0]?.trim() || preferredRaw.trim() || 'Английский'
+    setLanguage(preferred)
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('language', preferred)
+      return next
+    })
+  }, [user?.preferredLanguage, searchParams, setSearchParams])
+
   useEffect(() => {
     const stepFromUrl = searchParams.get('step')
     const sessionIdFromUrl = searchParams.get('sessionId')

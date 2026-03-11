@@ -503,7 +503,7 @@ class CourseService {
   ) {
     const course = await prisma.course.findUnique({
       where: { id: dto.courseId },
-      select: { id: true, isPublished: true, price: true },
+      select: { id: true, isPublished: true, price: true, language: true },
     })
 
     if (!course) {
@@ -554,15 +554,38 @@ class CourseService {
       },
     })
 
-    // Увеличить счетчик зачисленных
-    await prisma.course.update({
-      where: { id: dto.courseId },
-      data: {
-        enrolledCount: {
-          increment: 1,
-        },
-      },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { targetLanguages: true },
     })
+
+    const existingTargets = user?.targetLanguages ?? []
+    const courseLanguage = course.language
+
+    const nextTargets = existingTargets.includes(courseLanguage)
+      ? existingTargets
+      : [...existingTargets, courseLanguage]
+
+    await prisma.$transaction([
+      // Увеличить счетчик зачисленных
+      prisma.course.update({
+        where: { id: dto.courseId },
+        data: {
+          enrolledCount: {
+            increment: 1,
+          },
+        },
+      }),
+      // Обновить изучаемые языки пользователя на основе языка курса
+      prisma.user.update({
+        where: { id: userId },
+        data: {
+          targetLanguages: {
+            set: nextTargets,
+          },
+        },
+      }),
+    ])
 
     return enrollment
   }

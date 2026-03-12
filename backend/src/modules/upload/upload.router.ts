@@ -44,11 +44,15 @@ const documentUpload = multer({
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'text/plain',
       'application/vnd.oasis.opendocument.text',
+      // для вложений в чат разрешаем также основные форматы изображений
+      'image/jpeg',
+      'image/png',
+      'image/webp',
     ]
     if (allowed.includes(file.mimetype)) {
       cb(null, true)
     } else {
-      cb(new Error('Допустимые форматы: PDF, DOC, DOCX, TXT, ODT'))
+      cb(new Error('Допустимые форматы: PDF, DOC, DOCX, TXT, ODT, JPEG, PNG, WebP'))
     }
   },
 })
@@ -94,11 +98,10 @@ router.post(
   uploadController.uploadImage
 )
 
-// Загрузка документа (методички к урокам: PDF, DOC, DOCX, TXT, ODT)
+// Загрузка документа (методички к урокам, вложения в чат: PDF, DOC, DOCX, TXT, ODT)
 router.post(
   '/document',
   requireAuth,
-  requireRole('TEACHER', 'ADMIN'),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   documentUpload.single('document') as any,
   uploadController.uploadDocument

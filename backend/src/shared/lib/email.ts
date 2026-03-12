@@ -15,34 +15,59 @@ export class EmailService {
   }
 
   private initializeTransporter() {
-    // Используем только SMTP
-    if (config.email.smtp.host && config.email.smtp.user && config.email.smtp.password) {
-      try {
-        this.transporter = nodemailer.createTransport({
-          host: config.email.smtp.host,
-          port: config.email.smtp.port,
-          secure: config.email.smtp.secure,
-          auth: {
-            user: config.email.smtp.user,
-            pass: config.email.smtp.password,
-          },
+    const { host, port, secure, user, password } = config.email.smtp
+
+    if (!host || !user || !password) {
+      console.warn('⚠️  Email service: SMTP credentials missing (SMTP_HOST, SMTP_USER, SMTP_PASSWORD)')
+      return
+    }
+
+    try {
+      this.transporter = nodemailer.createTransport({
+        host,
+        port,
+        // port 465 → SSL (secure: true), port 587 → STARTTLS (secure: false)
+        secure,
+        auth: {
+          user,
+          pass: password,
+        },
+        // Критично для облачных хостингов (Railway, Render и т.д.):
+        // Позволяет обойти проблемы с сертификатами внешних SMTP-серверов
+        tls: {
+          rejectUnauthorized: false,
+        },
+        // Таймауты — чтобы Railway не держал соединение вечно
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 15_000,
+      })
+
+      console.log(`📧 Email service: SMTP configured (${host}:${port}, secure=${secure})`)
+
+      // Проверяем соединение при старте (только в production, не блокируем запуск)
+      if (config.isProduction) {
+        this.transporter.verify((err) => {
+          if (err) {
+            console.error('❌ Email SMTP verify failed:', err.message)
+            console.error('   Проверьте SMTP_HOST, SMTP_USER, SMTP_PASSWORD и App Password для Gmail')
+          } else {
+            console.log('✅ Email SMTP connection verified successfully')
+          }
         })
-        console.log('📧 Email service: SMTP configured')
-      } catch (error) {
-        console.error('❌ Email service: Failed to configure SMTP:', error instanceof Error ? error.message : 'Unknown error')
       }
-    } else {
-      console.warn('⚠️  Email service: SMTP credentials missing (host, user, or password)')
-      console.warn('   Set SMTP_HOST, SMTP_USER, SMTP_PASSWORD in environment variables')
+    } catch (error) {
+      console.error('❌ Email service: Failed to configure SMTP:', error instanceof Error ? error.message : 'Unknown error')
     }
   }
 
   async sendEmail(options: EmailOptions): Promise<void> {
     if (!this.transporter) {
-      // SMTP не настроен - пропускаем отправку
       if (config.isDevelopment) {
         console.log(`📧 [DEV] Email would be sent to: ${options.to}`)
         console.log(`   Subject: ${options.subject}`)
+      } else {
+        console.warn(`⚠️  Email skipped (no transporter): ${options.to} — ${options.subject}`)
       }
       return
     }
@@ -55,13 +80,11 @@ export class EmailService {
         html: options.html,
       })
 
-      if (config.isDevelopment) {
-        console.log('✅ Email sent:', info.messageId, 'to:', options.to)
-      }
+      console.log(`✅ Email sent: ${info.messageId} → ${options.to}`)
     } catch (error) {
-      console.error('❌ Email error:', error instanceof Error ? error.message : 'Unknown error')
-      console.error('   To:', options.to, 'Subject:', options.subject)
-      // Не выбрасываем ошибку, чтобы не блокировать регистрацию
+      console.error('❌ Email send error:', error instanceof Error ? error.message : 'Unknown error')
+      console.error(`   To: ${options.to} | Subject: ${options.subject}`)
+      // Не выбрасываем ошибку, чтобы не блокировать основные операции (регистрация и т.д.)
     }
   }
 

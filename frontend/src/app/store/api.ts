@@ -70,6 +70,7 @@ export const api = createApi({
     'PlatformSettings',
     'AdminAnalytics',
     'TeacherAnalytics',
+    'Chat',
   ],
   endpoints: () => ({}),
 })

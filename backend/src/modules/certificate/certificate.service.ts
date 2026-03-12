@@ -4,6 +4,7 @@ import { tokenService } from '../../shared/lib/token'
 import { emailService } from '../../shared/lib/email'
 import { config } from '../../config/env'
 import { platformSettingsService } from '../settings/platformSettings.service'
+import { chatService } from '../chat/chat.service'
 
 class CertificateService {
   private async ensureEligibility(userId: string, courseId: string) {
@@ -161,6 +162,9 @@ class CertificateService {
         firstName: user.firstName ?? '',
       })
     }
+
+    // Системное сообщение в чат курса о выдаче сертификата
+    await chatService.createSystemMessageForCertificateIssued(userId, courseId, certificate.certificateCode)
 
     return certificate
   }

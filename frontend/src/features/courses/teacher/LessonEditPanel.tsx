@@ -806,11 +806,10 @@ export const LessonEditPanel = ({
               </label>
             </div>
 
-            <div>
+            <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1 scroll-soft">
               <div className="mb-3 flex items-center justify-between">
                 <h4 className="text-sm font-semibold">Вопросы ({testQuestions.length})</h4>
               </div>
-
               <div className="space-y-4">
                 {testQuestions.map((q, qi) => (
                   <div key={q.id} className="rounded-lg border border-border bg-card p-4">
@@ -905,11 +904,17 @@ export const LessonEditPanel = ({
                     </div>
                   </div>
                 ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={addQ}
+                  className="mt-3 w-full"
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  Добавить вопрос
+                </Button>
               </div>
-              <Button variant="outline" size="sm" type="button" onClick={addQ} className="mt-3 w-full">
-                <Plus className="mr-1 h-3 w-3" />
-                Добавить вопрос
-              </Button>
             </div>
           </div>
         )}
@@ -923,7 +928,7 @@ export const LessonEditPanel = ({
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1 scroll-soft">
               {exercises.map((ex, ei) => (
                 <div key={ex.id} className="rounded-lg border border-border bg-card p-4">
                   <div className="mb-3 flex items-start gap-2">
@@ -1004,7 +1009,7 @@ export const LessonEditPanel = ({
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1 scroll-soft">
               {lexicalItems.map((item, idx) => (
                 <div key={item.id} className="rounded-lg border border-border bg-card p-4">
                   <div className="mb-3 flex items-start gap-2">
@@ -1087,7 +1092,7 @@ export const LessonEditPanel = ({
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1 scroll-soft">
               {dialogueSteps.map((step, index) => (
                 <div key={step.id} className="rounded-lg border border-border bg-card p-4">
                   <div className="mb-3 flex items-start gap-2">

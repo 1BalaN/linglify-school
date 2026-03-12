@@ -5,9 +5,10 @@ import type { RootState } from '@/app/store'
 import { useGetCourseByIdQuery } from '@/entities/course'
 import { useGetCourseLessonsQuery } from '@/entities/lesson'
 import { useGetMyCertificateByCourseQuery } from '@/entities/certificate'
+import { useEnsureCourseThreadMutation } from '@/entities/chat/api/chatApi'
 import { openCertificatePdf } from '@/shared/lib/certificate'
 import { Button } from '@/shared/ui'
-import { BookOpen, Lock, Loader2 } from 'lucide-react'
+import { BookOpen, Lock, Loader2, MessageCircle } from 'lucide-react'
 import {
   StudentCourseHeader,
   StudentLessonItem,
@@ -39,6 +40,7 @@ export const StudentCoursePage = () => {
   })
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [ensureCourseThread, { isLoading: isEnsuringChat }] = useEnsureCourseThreadMutation()
 
   const course = courseData?.data
   const lessons = lessonsData?.data || []
@@ -91,6 +93,16 @@ export const StudentCoursePage = () => {
     void openCertificatePdf(certificate.id)
   }
 
+  const handleOpenChat = async () => {
+    if (!id) return
+    try {
+      await ensureCourseThread({ courseId: id }).unwrap()
+      navigate(`/chats?courseId=${id}`)
+    } catch (error) {
+      console.error('Не удалось открыть чат с преподавателем', error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <StudentCourseHeader
@@ -107,10 +119,22 @@ export const StudentCoursePage = () => {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr,350px]">
           <div className="order-2 lg:order-1">
             <div className="glass-card rounded-2xl p-6">
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-2xl font-bold text-foreground">Уроки курса</h2>
-                <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                  <span>{Math.round(progress)}% завершено</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                    <span>{Math.round(progress)}% завершено</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    onClick={handleOpenChat}
+                    disabled={isEnsuringChat}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span>Написать преподавателю</span>
+                  </Button>
                 </div>
               </div>
 

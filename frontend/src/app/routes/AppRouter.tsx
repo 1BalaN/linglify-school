@@ -37,6 +37,7 @@ import {
   PaymentCancelPage,
   PlacementTestPage,
   BecomeTeacherPage,
+  ChatsPage,
 } from '@/pages'
 
 
@@ -55,6 +56,14 @@ export const AppRouter = () => {
         element={(
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/chats"
+        element={(
+          <ProtectedRoute>
+            <ChatsPage />
           </ProtectedRoute>
         )}
       />

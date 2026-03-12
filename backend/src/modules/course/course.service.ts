@@ -11,6 +11,7 @@ import type {
   UpdateReviewDto,
 } from './course.schema'
 import { CourseStatus, UserRole } from '@prisma/client'
+import { chatService } from '../chat/chat.service'
 
 class CourseService {
   /**
@@ -119,7 +120,13 @@ class CourseService {
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy]: order },
+        orderBy:
+          sortBy === 'averageRating'
+            ? [
+                // сначала курсы с рейтингом, потом без
+                { averageRating: { sort: order, nulls: 'last' } },
+              ]
+            : { [sortBy]: order },
         include: {
           teacher: {
             select: {
@@ -454,6 +461,11 @@ class CourseService {
       data: updateData,
     })
 
+    // Если курс был переведён в архив, отправим системные сообщения студентам
+    if (nextStatus === CourseStatus.ARCHIVED) {
+      await chatService.createSystemMessageForCourseArchived(courseId)
+    }
+
     return updatedCourse
   }
 
@@ -586,6 +598,9 @@ class CourseService {
         },
       }),
     ])
+
+    // Системное сообщение в чат студент ↔ преподаватель
+    await chatService.createSystemMessageForEnrollment(userId, dto.courseId)
 
     return enrollment
   }

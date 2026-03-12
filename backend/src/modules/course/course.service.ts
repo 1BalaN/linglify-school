@@ -11,6 +11,7 @@ import type {
   UpdateReviewDto,
 } from './course.schema'
 import { CourseStatus, UserRole } from '@prisma/client'
+import { chatService } from '../chat/chat.service'
 
 class CourseService {
   /**
@@ -119,7 +120,13 @@ class CourseService {
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy]: order },
+        orderBy:
+          sortBy === 'averageRating'
+            ? [
+                // сначала курсы с рейтингом, потом без
+                { averageRating: { sort: order, nulls: 'last' } },
+              ]
+            : { [sortBy]: order },
         include: {
           teacher: {
             select: {
@@ -372,7 +379,7 @@ class CourseService {
       [CourseStatus.IN_REVIEW]: [CourseStatus.PUBLISHED, CourseStatus.REJECTED],
       [CourseStatus.REJECTED]: [CourseStatus.PENDING_REVIEW],
       [CourseStatus.PUBLISHED]: [CourseStatus.ARCHIVED],
-      [CourseStatus.ARCHIVED]: [],
+      [CourseStatus.ARCHIVED]: [CourseStatus.DRAFT],
     }
 
     if (!allowedTransitions[currentStatus]?.includes(nextStatus)) {
@@ -454,6 +461,11 @@ class CourseService {
       data: updateData,
     })
 
+    // Если курс был переведён в архив, отправим системные сообщения студентам
+    if (nextStatus === CourseStatus.ARCHIVED) {
+      await chatService.createSystemMessageForCourseArchived(courseId)
+    }
+
     return updatedCourse
   }
 
@@ -503,7 +515,7 @@ class CourseService {
   ) {
     const course = await prisma.course.findUnique({
       where: { id: dto.courseId },
-      select: { id: true, isPublished: true, price: true },
+      select: { id: true, isPublished: true, price: true, language: true },
     })
 
     if (!course) {
@@ -554,15 +566,41 @@ class CourseService {
       },
     })
 
-    // Увеличить счетчик зачисленных
-    await prisma.course.update({
-      where: { id: dto.courseId },
-      data: {
-        enrolledCount: {
-          increment: 1,
-        },
-      },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { targetLanguages: true },
     })
+
+    const existingTargets = user?.targetLanguages ?? []
+    const courseLanguage = course.language
+
+    const nextTargets = existingTargets.includes(courseLanguage)
+      ? existingTargets
+      : [...existingTargets, courseLanguage]
+
+    await prisma.$transaction([
+      // Увеличить счетчик зачисленных
+      prisma.course.update({
+        where: { id: dto.courseId },
+        data: {
+          enrolledCount: {
+            increment: 1,
+          },
+        },
+      }),
+      // Обновить изучаемые языки пользователя на основе языка курса
+      prisma.user.update({
+        where: { id: userId },
+        data: {
+          targetLanguages: {
+            set: nextTargets,
+          },
+        },
+      }),
+    ])
+
+    // Системное сообщение в чат студент ↔ преподаватель
+    await chatService.createSystemMessageForEnrollment(userId, dto.courseId)
 
     return enrollment
   }
@@ -593,6 +631,44 @@ class CourseService {
         },
       },
       orderBy: { enrolledAt: 'desc' },
+    })
+
+    return enrollments
+  }
+
+  /**
+   * Получить список учеников курса (для преподавателя курса или админа)
+   */
+  async getCourseStudents(courseId: string, userId: string, userRole: UserRole) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: {
+        teacherId: true,
+      },
+    })
+
+    if (!course) {
+      throw new AppError(404, 'COURSE_NOT_FOUND', 'Курс не найден')
+    }
+
+    if (course.teacherId !== userId && userRole !== UserRole.ADMIN) {
+      throw new AppError(403, 'ACCESS_DENIED', 'Нет доступа к списку учеников этого курса')
+    }
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: { courseId },
+      orderBy: { enrolledAt: 'desc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
     })
 
     return enrollments
@@ -732,11 +808,21 @@ class CourseService {
   private async recalculateCourseRating(courseId: string) {
     const reviews = await prisma.review.findMany({
       where: { courseId, isVisible: true },
-      select: { rating: true },
+      select: {
+        rating: true,
+        user: {
+          select: {
+            role: true,
+          },
+        },
+      },
     })
 
-    const averageRating = reviews.length > 0
-      ? reviews.reduce((sum: number, r) => sum + r.rating, 0) / reviews.length
+    // В расчёт среднего рейтинга учитываем только отзывы студентов
+    const studentReviews = reviews.filter(r => r.user?.role === UserRole.STUDENT)
+
+    const averageRating = studentReviews.length > 0
+      ? studentReviews.reduce((sum: number, r) => sum + r.rating, 0) / studentReviews.length
       : null
 
     await prisma.course.update({

@@ -8,11 +8,16 @@ import { ProfileEdit } from './components/ProfileEdit'
 import { PasswordChange } from './components/PasswordChange'
 import { PhoneVerification } from './components/PhoneVerification'
 import { ProfileCertificates } from './components/ProfileCertificates'
+import { useGetCurrentUserQuery } from '@/entities/user'
 
 type Tab = 'info' | 'edit' | 'password' | 'phone' | 'certificates'
 
 export const ProfilePage = () => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
+  const { data: currentUserData } = useGetCurrentUserQuery(undefined, {
+    skip: !isAuthenticated,
+  })
+  const effectiveUser = currentUserData?.data ?? user
   const [activeTab, setActiveTab] = useState<Tab>('info')
 
   if (!isAuthenticated) {
@@ -24,7 +29,7 @@ export const ProfilePage = () => {
     { id: 'edit' as Tab, label: 'Редактировать', icon: Settings },
     { id: 'password' as Tab, label: 'Безопасность', icon: Shield },
     { id: 'phone' as Tab, label: 'Телефон', icon: Phone },
-    ...(user?.role === 'STUDENT'
+    ...(effectiveUser?.role === 'STUDENT'
       ? [{ id: 'certificates' as Tab, label: 'Сертификаты', icon: Award }]
       : []),
   ]
@@ -65,10 +70,10 @@ export const ProfilePage = () => {
 
         {/* Content */}
         <div className="rounded-2xl glass-card p-8 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
-          {activeTab === 'info' && <ProfileInfo user={user!} />}
-          {activeTab === 'edit' && <ProfileEdit user={user!} />}
+          {activeTab === 'info' && effectiveUser && <ProfileInfo user={effectiveUser} />}
+          {activeTab === 'edit' && effectiveUser && <ProfileEdit user={effectiveUser} />}
           {activeTab === 'password' && <PasswordChange />}
-          {activeTab === 'phone' && <PhoneVerification user={user!} />}
+          {activeTab === 'phone' && effectiveUser && <PhoneVerification user={effectiveUser} />}
           {activeTab === 'certificates' && <ProfileCertificates />}
         </div>
       </div>

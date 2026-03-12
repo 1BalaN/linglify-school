@@ -5,8 +5,9 @@ import { RootState } from '@/app/store'
 import { logout, useLogoutMutation } from '@/entities/user'
 import { Button } from '@/shared/ui'
 import { useTheme } from '@/shared/lib/theme'
-import { BookOpen, User, LogOut, Menu, Moon, Sun, Shield, GraduationCap } from 'lucide-react'
+import { BookOpen, User, LogOut, Menu, Moon, Sun, Shield, GraduationCap, MessageCircle } from 'lucide-react'
 import { useState } from 'react'
+import { useGetMyThreadsQuery } from '@/entities/chat/api/chatApi'
 
 export const Header = () => {
   const dispatch = useDispatch()
@@ -14,6 +15,28 @@ export const Header = () => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
   const [logoutMutation] = useLogoutMutation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const { data: chatsData } = useGetMyThreadsQuery(undefined, {
+    skip: !isAuthenticated || !user,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  })
+
+  const hasUnreadChats = (() => {
+    if (!user || !chatsData) return false
+    const threads = chatsData.data
+    if (user.role === 'STUDENT') {
+      return threads.some(t => t.hasUnreadForStudent)
+    }
+    if (user.role === 'TEACHER') {
+      return threads.some(t => t.hasUnreadForTeacher)
+    }
+    if (user.role === 'ADMIN') {
+      return threads.some(t => t.hasUnreadForAdmin)
+    }
+    return false
+  })()
 
   const handleLogout = async () => {
     try {
@@ -48,10 +71,10 @@ export const Header = () => {
             О платформе
           </Link>
           <Link
-            to="/pricing"
+            to="/become-teacher"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
           >
-            Тарифы
+            Стать преподавателем
           </Link>
         </nav>
         <div className="hidden items-center space-x-4 md:flex">
@@ -69,6 +92,21 @@ export const Header = () => {
 
           {isAuthenticated && user ? (
             <div className="flex items-center space-x-3">
+              {isAuthenticated && user && (
+                <Link to="/chats">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="relative flex items-center gap-2"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    {hasUnreadChats && (
+                      <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.25)]" />
+                    )}
+                    <span className="hidden lg:inline">Чаты</span>
+                  </Button>
+                </Link>
+              )}
               {user.role === 'STUDENT' && (
                 <Link to="/my-courses">
                   <Button
@@ -189,11 +227,11 @@ export const Header = () => {
               О платформе
             </Link>
             <Link
-              to="/pricing"
+              to="/become-teacher"
               className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
-              Тарифы
+              Стать преподавателем
             </Link>
             <div className="border-t border-border pt-4">
               {isAuthenticated && user ? (
@@ -230,6 +268,14 @@ export const Header = () => {
                       </span>
                     </Link>
                   )}
+                  <Link
+                    to="/chats"
+                    className="mt-2 flex items-center space-x-2 rounded-lg px-3 py-2 hover:bg-accent mb-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <MessageCircle className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">Чаты</span>
+                  </Link>
                   <Link
                     to="/profile"
                     className="flex items-center space-x-2 rounded-lg px-3 py-2 hover:bg-accent"

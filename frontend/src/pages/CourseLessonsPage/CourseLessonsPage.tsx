@@ -109,10 +109,18 @@ export const CourseLessonsPage = () => {
       <div className="container mx-auto max-w-5xl px-4">
 
         {/* Top bar */}
-        <div className="mb-6 flex items-center justify-between">
-          <Button variant="outline" onClick={() => navigate(`/courses/${id}`)}>
-            <ArrowLeft className="mr-2 h-4 w-4" />К курсу
-          </Button>
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => navigate(`/courses/${id}`)}>
+              <ArrowLeft className="mr-2 h-4 w-4" />К курсу
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/courses/${id}/analytics`)}
+            >
+              Аналитика курса
+            </Button>
+          </div>
           <Button variant="danger" onClick={() => setDeleteCourseModal(true)}>
             <Trash2 className="mr-2 h-4 w-4" />Удалить курс
           </Button>

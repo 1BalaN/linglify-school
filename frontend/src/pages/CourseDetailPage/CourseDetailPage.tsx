@@ -174,8 +174,8 @@ export const CourseDetailPage = () => {
                 setReviewRating(5)
                 setEditingReview(null)
               } catch (err) {
-                const e = err as { data?: { message?: string } }
-                setReviewError(e?.data?.message || 'Ошибка при сохранении отзыва')
+                const e = err as { data?: { error?: { message?: string } } }
+                setReviewError(e?.data?.error?.message || 'Ошибка при сохранении отзыва')
               }
             }}
             onDeleteConfirm={async () => {

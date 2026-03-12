@@ -9,6 +9,7 @@ import type {
   UpdateReviewDto,
   Review,
   Enrollment,
+  CourseStudent,
 } from '@/shared/types/course'
 
 export const courseApi = api.injectEndpoints({
@@ -126,13 +127,21 @@ export const courseApi = api.injectEndpoints({
         url: '/courses/my/enrolled',
         method: 'GET',
       }),
-      providesTags: (result) =>
+      providesTags: result =>
         result
           ? [
               ...result.data.map(({ id }) => ({ type: 'Enrollment' as const, id })),
               { type: 'Enrollment', id: 'LIST' },
             ]
           : [{ type: 'Enrollment', id: 'LIST' }],
+    }),
+
+    // Получить список учеников курса
+    getCourseStudents: builder.query<{ data: CourseStudent[] }, string>({
+      query: id => ({
+        url: `/courses/${id}/students`,
+        method: 'GET',
+      }),
     }),
 
     // Создать отзыв
@@ -190,6 +199,7 @@ export const {
   useDeleteCourseMutation,
   useEnrollCourseMutation,
   useGetUserCoursesQuery,
+   useGetCourseStudentsQuery,
   useCreateReviewMutation,
   useUpdateReviewMutation,
   useDeleteReviewMutation,

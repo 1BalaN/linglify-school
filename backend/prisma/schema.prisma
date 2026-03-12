@@ -29,25 +29,27 @@ enum OAuthProvider {
 }
 
 model User {
-  id                String         @id @default(uuid())
-  email             String         @unique
-  password          String?
-  role              UserRole       @default(STUDENT)
-  isEmailVerified   Boolean        @default(false)
-  isPhoneVerified   Boolean        @default(false)
-  phone             String?
-  firstName         String?
-  lastName          String?
-  avatar            String?
-  bio               String?
-  dateOfBirth       DateTime?
-  preferredLanguage String?
-  targetLanguages   String[]       @default([])
-  timezone          String?
-  oauthProvider     OAuthProvider?
-  oauthId           String?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  id                 String         @id @default(uuid())
+  email              String         @unique
+  password           String?
+  role               UserRole       @default(STUDENT)
+  isEmailVerified    Boolean        @default(false)
+  isPhoneVerified    Boolean        @default(false)
+  phone              String?
+  firstName          String?
+  lastName           String?
+  avatar             String?
+  bio                String?
+  dateOfBirth        DateTime?
+  preferredLanguage  String?
+  targetLanguages    String[]       @default([])
+  timezone           String?
+  oauthProvider      OAuthProvider?
+  oauthId            String?
+  isActive           Boolean        @default(true)
+  deactivationReason String?        @db.Text
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
   // Связи для авторизации
   verificationTokens VerificationToken[]
@@ -60,6 +62,15 @@ model User {
   answers           Answer[]       @relation("UserAnswers")
   reviews           Review[]       @relation("UserReviews")
   certificates      Certificate[]  @relation("UserCertificates")
+
+  // Placement test
+  placementSessions PlacementSession[]
+
+  // Чаты
+  chatThreadsAsStudent ChatThread[] @relation("ChatStudent")
+  chatThreadsAsTeacher ChatThread[] @relation("ChatTeacher")
+  chatSupportThreads   ChatThread[] @relation("ChatSupportUser")
+  sentMessages         ChatMessage[] @relation("UserChatMessages")
 
   @@unique([oauthProvider, oauthId])
   @@map("users")
@@ -155,6 +166,30 @@ enum QuestionType {
   MATCHING        // Сопоставление
 }
 
+/// Тип вопроса в placement-тесте
+enum PlacementQuestionType {
+  GRAMMAR   // Грамматика / Use of English
+  VOCAB     // Лексика
+  READING   // Чтение
+  LISTENING // Аудирование
+}
+
+/// Статус сессии placement-теста
+enum PlacementSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ChatThreadType {
+  COURSE_DM
+  SUPPORT
+}
+
+enum ChatMessageType {
+  USER
+  SYSTEM
+}
+
 model Course {
   id              String        @id @default(uuid())
   title           String
@@ -206,6 +241,7 @@ model Course {
   reviews         Review[]
   certificates    Certificate[]
   progress        Progress[]
+  chatThreads     ChatThread[]
 
   @@index([teacherId])
   @@index([level])
@@ -408,4 +444,159 @@ model Certificate {
   @@index([courseId])
   @@index([certificateCode])
   @@map("certificates")
+}
+
+/// Вопрос placement-теста
+model PlacementQuestion {
+  id          String                @id @default(uuid())
+  language    String                                // Целевой язык (например, "Английский", "German", "en")
+  type        PlacementQuestionType                 // Тип навыка
+  difficulty  Int                                   // 1–6, примерно A1–C2
+
+  prompt      String                @db.Text        // Текст вопроса
+  context     String?               @db.Text        // Дополнительный текст / отрывок (для Reading, Listening)
+  mediaUrl    String?                               // URL аудио (для Listening) или другого ресурса
+
+  // Варианты ответов (0..n). correctOptionIndex указывает на правильный.
+  options             String[]                       // Тексты опций
+  correctOptionIndex  Int
+  explanation         String?        @db.Text       // Объяснение правильного ответа (для результата)
+
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  // Связи
+  answers     PlacementAnswer[]
+
+  @@index([language])
+  @@index([type])
+  @@index([difficulty])
+  @@map("placement_questions")
+}
+
+/// Сессия прохождения placement-теста
+model PlacementSession {
+  id           String                 @id @default(uuid())
+  userId       String?
+  user         User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  language     String                                 // Язык, для которого проходит тест
+  status       PlacementSessionStatus @default(IN_PROGRESS)
+
+  startedAt    DateTime               @default(now())
+  finishedAt   DateTime?
+
+  // Результаты
+  estimatedLevel CourseLevel?                        // Расчитанный уровень A1–C2
+  rawScore       Int              @default(0)        // Числовой балл
+  totalQuestions Int              @default(0)        // Сколько вопросов было пройдено
+
+  // Технические поля
+  // Сохраняем последний использованный уровень сложности (для адаптации)
+  currentDifficulty Int?                             // 1–6
+
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  // Связи
+  answers      PlacementAnswer[]
+
+  @@index([userId])
+  @@index([language])
+  @@index([status])
+  @@map("placement_sessions")
+}
+
+/// Ответ пользователя в рамках placement-теста
+model PlacementAnswer {
+  id          String           @id @default(uuid())
+  sessionId   String
+  session     PlacementSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  questionId  String
+  question    PlacementQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  givenOptionIndex Int                        // Индекс выбранного варианта
+  isCorrect        Boolean
+  timeMs           Int?                       // Время на ответ в миллисекундах
+
+  createdAt   DateTime        @default(now())
+
+  @@index([sessionId])
+  @@index([questionId])
+  @@map("placement_answers")
+}
+
+/// Тред чата (диалог)
+model ChatThread {
+  id        String         @id @default(uuid())
+  type      ChatThreadType
+
+  // Для диалогов студент ↔ преподаватель по курсу
+  courseId  String?
+  course    Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentId String?
+  student   User?          @relation("ChatStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacherId String?
+  teacher   User?          @relation("ChatTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  // Для чата с поддержкой
+  userId    String?
+  user      User?          @relation("ChatSupportUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  hasUnreadForStudent Boolean @default(false)
+  hasUnreadForTeacher Boolean @default(false)
+  hasUnreadForAdmin   Boolean @default(false)
+  lastMessageAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages ChatMessage[]
+
+  @@index([type])
+  @@index([courseId])
+  @@index([studentId])
+  @@index([teacherId])
+  @@index([userId])
+  @@index([lastMessageAt])
+  @@map("chat_threads")
+}
+
+/// Сообщение в рамках чата
+model ChatMessage {
+  id        String          @id @default(uuid())
+  threadId  String
+  thread    ChatThread      @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  senderId  String?
+  sender    User?           @relation("UserChatMessages", fields: [senderId], references: [id], onDelete: SetNull)
+
+  type      ChatMessageType @default(USER)
+  text      String          @db.Text
+  isRead    Boolean         @default(false)
+  readAt    DateTime?
+  attachments Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([threadId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+/// Глобальные настройки платформы (singleton запись)
+model PlatformSettings {
+  id                           Int      @id @default(1)
+  requireFinalTestForCertificate Boolean @default(true)
+  minProgressForCertificate    Int      @default(100) // 0-100 (%)
+  lowRatingThreshold           Float    @default(2.5)
+  minEnrollmentsForRating      Int      @default(5)
+  placementDefaultQuestions    Int      @default(25)
+  placementAllowedLanguages    String[] @default([])
+  placementRecommendationMap   Json?
+  updatedAt                    DateTime @updatedAt
+
+  @@map("platform_settings")
 }

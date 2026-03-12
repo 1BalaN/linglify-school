@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import type { RootState } from '@/app/store'
 import { AlertCircle, Shield } from 'lucide-react'
-import { Button } from '@/shared/ui'
+import { Button, ConfirmModal } from '@/shared/ui'
 import { CoursesFilters, CoursesList, useAdminModeration } from '@/features/admin/moderation'
 
 export const AdminModerationPage = () => {
@@ -20,6 +21,8 @@ export const AdminModerationPage = () => {
     actionLoading,
     message,
   } = useAdminModeration()
+
+  const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null)
 
   if (!user || user.role !== 'ADMIN') {
     return (
@@ -62,9 +65,24 @@ export const AdminModerationPage = () => {
           isLoading={isLoading}
           actionLoading={actionLoading}
           onStatusChange={changeStatus}
-          onDelete={removeCourse}
+          onDelete={id => setDeleteCourseId(id)}
         />
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteCourseId}
+        onClose={() => setDeleteCourseId(null)}
+        onConfirm={async () => {
+          if (!deleteCourseId) return
+          await removeCourse(deleteCourseId)
+          setDeleteCourseId(null)
+        }}
+        title="Удалить курс?"
+        message="Это действие необратимо. Курс и вся его статистика будут удалены."
+        confirmText="Удалить курс"
+        cancelText="Отмена"
+        variant="danger"
+      />
     </div>
   )
 }

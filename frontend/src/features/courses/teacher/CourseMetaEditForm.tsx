@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Save, X } from 'lucide-react'
-import { Button, Input } from '@/shared/ui'
+import { Button, Input, ImageUpload } from '@/shared/ui'
 import { useUpdateCourseMutation } from '@/entities/course'
 import type { Course, CourseLevel } from '@/shared/types/course'
 import { COURSE_CATEGORIES } from '@/shared/constants/courseCategories'
@@ -113,7 +113,7 @@ export const CourseMetaEditForm = ({
           <textarea
             value={editDescription}
             onChange={e => setEditDescription(e.target.value)}
-            className="min-h-[100px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            className="min-h-[100px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none scroll-soft"
             placeholder="Описание курса"
           />
         </div>
@@ -168,12 +168,33 @@ export const CourseMetaEditForm = ({
           </p>
         </div>
         <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium">URL обложки</label>
-          <Input
-            value={editCoverImage}
-            onChange={e => setEditCoverImage(e.target.value)}
-            placeholder="https://..."
-          />
+          <label className="mb-1 block text-sm font-medium">
+            Обложка курса
+          </label>
+          <div className="rounded-xl border border-border bg-background/40 p-3 md:p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start">
+              <div className="md:w-1/2 space-y-1">
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Ссылка на изображение
+                </span>
+                <Input
+                  value={editCoverImage}
+                  onChange={e => setEditCoverImage(e.target.value)}
+                  placeholder="https://example.com/cover.jpg"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Можно указать прямую ссылку на картинку либо загрузить файл справа.
+                </p>
+              </div>
+              <div className="md:w-1/2">
+                <ImageUpload
+                  value={editCoverImage}
+                  onChange={url => setEditCoverImage(url)}
+                  label="Загрузить файл обложки"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div className="mt-4 flex gap-2">

@@ -98,6 +98,15 @@ export class AuthService {
       throw new AppError(401, 'INVALID_CREDENTIALS', 'Неверный email или пароль')
     }
 
+    if (!user.isActive) {
+      const baseMessage =
+        'Ваш аккаунт был временно заморожен администратором. Если вы считаете, что это ошибка, обратитесь в поддержку.'
+      const reason = user.deactivationReason?.trim()
+      const message = reason ? `${baseMessage}\n\nПричина: ${reason}` : baseMessage
+
+      throw new AppError(403, 'ACCOUNT_INACTIVE', message)
+    }
+
     // Проверка для OAuth пользователей без пароля
     if (!user.password) {
       if (user.oauthProvider === 'GOOGLE') {
@@ -305,6 +314,15 @@ export class AuthService {
 
       if (!user) {
         throw new AppError(401, 'INVALID_TOKEN', 'Неверный refresh token')
+      }
+
+      if (!user.isActive) {
+        const baseMessage =
+          'Ваш аккаунт был временно заморожен администратором. Если вы считаете, что это ошибка, обратитесь в поддержку.'
+        const reason = user.deactivationReason?.trim()
+        const message = reason ? `${baseMessage}\n\nПричина: ${reason}` : baseMessage
+
+        throw new AppError(403, 'ACCOUNT_INACTIVE', message)
       }
 
       const tokens = jwtService.generateTokenPair({

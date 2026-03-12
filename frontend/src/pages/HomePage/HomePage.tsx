@@ -11,8 +11,19 @@ import {
   User,
 } from 'lucide-react'
 import MainBanner from '@/assets/images/MainBanner.webp'
+import { useGetCoursesQuery } from '@/entities/course'
 
 export const HomePage = () => {
+  const { data: popularCoursesResponse, isLoading: isLoadingPopular } = useGetCoursesQuery({
+    isPublished: true,
+    sortBy: 'enrolledCount',
+    order: 'desc',
+    limit: 3,
+    page: 1,
+  })
+
+  const popularCourses = popularCoursesResponse?.data ?? []
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -177,61 +188,57 @@ export const HomePage = () => {
             </p>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                title: 'Английский для начинающих',
-                level: 'Beginner',
-                students: '2,500+',
-                lessons: '120',
-                color: 'from-blue-500 to-cyan-600',
-              },
-              {
-                title: 'Испанский разговорный',
-                level: 'Intermediate',
-                students: '1,800+',
-                lessons: '90',
-                color: 'from-orange-500 to-red-600',
-              },
-              {
-                title: 'Бизнес-английский',
-                level: 'Advanced',
-                students: '1,200+',
-                lessons: '75',
-                color: 'from-indigo-500 to-blue-600',
-              },
-            ].map((course, index) => (
-              <div
-                key={index}
-                className="overflow-hidden rounded-2xl border border-border bg-card shadow-md transition-all hover:shadow-xl hover:-translate-y-1"
-              >
+          {isLoadingPopular ? (
+            <div className="flex justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          ) : popularCourses.length === 0 ? (
+            <p className="text-center text-muted-foreground">
+              Пока нет опубликованных курсов. Как только преподаватели создадут первые курсы,
+              здесь появится список самых популярных.
+            </p>
+          ) : (
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {popularCourses.map(course => (
                 <div
-                  className={`flex h-48 items-center justify-center bg-gradient-to-br ${course.color}`}
+                  key={course.id}
+                  className="overflow-hidden rounded-2xl border border-border bg-card shadow-md transition-all hover:shadow-xl hover:-translate-y-1 flex flex-col"
                 >
-                  <BookOpen className="h-24 w-24 text-white opacity-50" />
-                </div>
-                <div className="p-6">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                      {course.level}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {course.students} студентов
-                    </span>
+                  <div className="flex h-48 items-center justify-center bg-gradient-to-br from-primary/60 to-primary">
+                    { course.coverImage ? 
+                      <img src={course.coverImage} alt={course.title} className="h-full w-full object-cover" loading="lazy"/> 
+                      : <div className="flex h-full items-center justify-center">
+                          <BookOpen className="h-14 w-14 text-primary/30" aria-hidden="true" />
+                        </div>
+                    }
                   </div>
-                  <h3 className="mb-3 text-xl font-semibold text-foreground">
-                    {course.title}
-                  </h3>
-                  <p className="mb-4 text-sm text-muted-foreground">
-                    {course.lessons} интерактивных уроков
-                  </p>
-                  <Button variant="outline" className="w-full">
-                    Узнать больше
-                  </Button>
+                  <div className="flex flex-1 flex-col p-6">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                        {course.level}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        студентов: {course.enrolledCount}
+                      </span>
+                    </div>
+                    <h3 className="mb-2 line-clamp-2 text-xl font-semibold text-foreground">
+                      {course.title}
+                    </h3>
+                    <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
+                      {course.shortDescription || course.description}
+                    </p>
+                    <div className="mt-auto pt-2">
+                      <Link to={`/courses/${course.id}`}>
+                        <Button variant="outline" className="w-full">
+                          Перейти к курсу
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="mt-12 text-center">
             <Link to="/courses">

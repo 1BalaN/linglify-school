@@ -1,3 +1,4 @@
+import http from 'http'
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
@@ -16,6 +17,14 @@ import questionRouter from './modules/question/question.router'
 import uploadRouter from './modules/upload/upload.router'
 import certificateRouter from './modules/certificate/certificate.router'
 import paymentRouter, { paymentWebhookRouter } from './modules/payment/payment.router'
+import placementRouter from './modules/placement/placement.router'
+import analyticsRouter from './modules/analytics/analytics.router'
+import settingsRouter from './modules/settings/settings.router'
+import userRouter from './modules/user/user.router'
+import chatRouter from './modules/chat/chat.router'
+import { setSocketServer } from './shared/lib/socket'
+import { jwtService } from './shared/lib/jwt'
+import { Server } from 'socket.io'
 
 const app = express()
 
@@ -55,14 +64,58 @@ app.use('/api/questions', questionRouter)
 app.use('/api/upload', uploadRouter)
 app.use('/api/certificates', certificateRouter)
 app.use('/api/payments', paymentRouter)
+app.use('/api/placement', placementRouter)
+app.use('/api/analytics', analyticsRouter)
+app.use('/api/settings', settingsRouter)
+app.use('/api/users', userRouter)
+app.use('/api/chats', chatRouter)
 
 // Error handlers
 app.use(notFoundHandler)
 app.use(errorHandler)
 
+// HTTP server + WebSocket (socket.io)
+const httpServer = http.createServer(app)
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: config.frontendUrl,
+    credentials: true,
+  },
+})
+
+setSocketServer(io)
+
+io.use((socket, next) => {
+  try {
+    const token =
+      (socket.handshake.auth?.token as string | undefined) ||
+      (socket.handshake.query?.token as string | undefined)
+
+    if (!token) {
+      return next(new Error('UNAUTHORIZED'))
+    }
+
+    const payload = jwtService.verifyAccessToken(token) as { userId: string; role: string }
+    socket.data.userId = payload.userId
+    socket.data.role = payload.role
+    return next()
+  } catch {
+    return next(new Error('UNAUTHORIZED'))
+  }
+})
+
+io.on('connection', socket => {
+ 
+  const userId: string | undefined = socket.data.userId
+  if (userId) {
+    socket.join(`user:${userId}`)
+  }
+})
+
 // Start server
 const PORT = config.port
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`)
   console.log(`📝 Environment: ${config.nodeEnv}`)
   console.log(`🔗 Frontend URL: ${config.frontendUrl}`)

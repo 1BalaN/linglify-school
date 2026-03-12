@@ -137,6 +137,49 @@ class UploadController {
   }
 
   /**
+   * POST /api/upload/audio
+   * Загрузить аудио-файл (для прослушивания / listening) в Cloudinary
+   */
+  async uploadAudio(req: AuthRequest, res: Response) {
+    if (!req.file) {
+      throw new AppError(400, 'NO_FILE', 'Файл не найден')
+    }
+
+    if (!isCloudinaryConfigured) {
+      throw new AppError(
+        503,
+        'CLOUDINARY_NOT_CONFIGURED',
+        'Хранилище файлов не настроено. Обратитесь к администратору.'
+      )
+    }
+
+    const file = req.file
+
+    const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'linglify/audio',
+          resource_type: 'video',
+          transformation: [{ quality: 'auto' }],
+        },
+        (error, result) => {
+          if (error) reject(error)
+          else if (result) resolve(result)
+          else reject(new Error('Unknown upload error'))
+        }
+      )
+      uploadStream.end(file.buffer)
+    })
+
+    res.json({
+      data: {
+        url: result.secure_url,
+        name: file.originalname || 'Audio',
+      },
+    })
+  }
+
+  /**
    * GET /api/upload/document/download
    * Прокси для скачивания документа с Cloudinary с человекочитаемым именем файла.
    */

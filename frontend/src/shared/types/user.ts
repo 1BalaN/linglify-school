@@ -18,6 +18,7 @@ export interface User {
   phone: string | null
   oauthProvider?: OAuthProvider
   hasPassword?: boolean // Есть ли пароль у пользователя
+  isActive?: boolean
   createdAt: string
   updatedAt: string
 }

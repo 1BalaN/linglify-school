@@ -66,8 +66,6 @@ export const useAdminModeration = () => {
   }
 
   const removeCourse = async (id: string) => {
-    if (!confirm('Удалить курс? Это действие необратимо!')) return
-
     try {
       setActionLoading(id)
       setMessage(null)

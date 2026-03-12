@@ -16,12 +16,17 @@ import {
   PrivacyPage,
   TermsPage,
   AdminDashboardPage,
+  AdminAnalyticsPage,
   AdminFAQPage,
   AdminMessagesPage,
+  AdminUsersPage,
   AdminCoursesPage,
   AdminModerationPage,
+  AdminPlacementPage,
+  AdminSettingsPage,
   CoursesPage,
   CourseDetailPage,
+  CourseAnalyticsPage,
   CourseLessonsPage,
   StudentCoursePage,
   LessonPage,
@@ -30,6 +35,9 @@ import {
   CertificateViewPage,
   PaymentSuccessPage,
   PaymentCancelPage,
+  PlacementTestPage,
+  BecomeTeacherPage,
+  ChatsPage,
 } from '@/pages'
 
 
@@ -51,6 +59,14 @@ export const AppRouter = () => {
           </ProtectedRoute>
         )}
       />
+      <Route
+        path="/chats"
+        element={(
+          <ProtectedRoute>
+            <ChatsPage />
+          </ProtectedRoute>
+        )}
+      />
           
       {/* Support / static pages */}
       <Route path="/help" element={<HelpPage />} />
@@ -68,6 +84,14 @@ export const AppRouter = () => {
         )}
       />
       <Route
+        path="/admin/analytics"
+        element={(
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminAnalyticsPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
         path="/admin/faq"
         element={(
           <ProtectedRoute roles={['ADMIN']}>
@@ -80,6 +104,30 @@ export const AppRouter = () => {
         element={(
           <ProtectedRoute roles={['ADMIN']}>
             <AdminMessagesPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/admin/users"
+        element={(
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminUsersPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/admin/placement"
+        element={(
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminPlacementPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/admin/settings"
+        element={(
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminSettingsPage />
           </ProtectedRoute>
         )}
       />
@@ -107,6 +155,14 @@ export const AppRouter = () => {
       {/* Course routes */}
       <Route path="/courses" element={<CoursesPage />} />
       <Route path="/courses/:id" element={<CourseDetailPage />} />
+      <Route
+        path="/courses/:id/analytics"
+        element={(
+          <ProtectedRoute roles={['TEACHER', 'ADMIN']}>
+            <CourseAnalyticsPage />
+          </ProtectedRoute>
+        )}
+      />
       <Route
         path="/courses/:id/lessons"
         element={(
@@ -140,18 +196,10 @@ export const AppRouter = () => {
         )}
       />
       <Route path="/certificates/:code" element={<CertificateViewPage />} />
-      <Route
-        path="/pricing"
-        element={
-          <div className="container mx-auto px-4 py-12 text-center">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Тарифы (в разработке)
-            </h1>
-          </div>
-        }
-      />
+      <Route path="/become-teacher" element={<BecomeTeacherPage />} />
       <Route path="/payment/success" element={<PaymentSuccessPage />} />
       <Route path="/payment/cancel" element={<PaymentCancelPage />} />
+      <Route path="/placement-test" element={<PlacementTestPage />} />
           
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

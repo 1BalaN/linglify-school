@@ -3,9 +3,12 @@ import { AppError } from '../../shared/middleware/errorHandler'
 import { tokenService } from '../../shared/lib/token'
 import { emailService } from '../../shared/lib/email'
 import { config } from '../../config/env'
+import { platformSettingsService } from '../settings/platformSettings.service'
+import { chatService } from '../chat/chat.service'
 
 class CertificateService {
   private async ensureEligibility(userId: string, courseId: string) {
+    const settings = await platformSettingsService.getSettings()
     const enrollment = await prisma.enrollment.findUnique({
       where: {
         userId_courseId: {
@@ -22,8 +25,16 @@ class CertificateService {
       throw new AppError(403, 'NOT_ENROLLED', 'Необходимо быть записанным на курс')
     }
 
-    if (!enrollment.completedAt || enrollment.progress < 100) {
+    if (enrollment.progress < settings.minProgressForCertificate) {
       throw new AppError(400, 'COURSE_NOT_COMPLETED', 'Курс ещё не завершён')
+    }
+
+    if (!settings.requireFinalTestForCertificate) {
+      return {
+        enrollment,
+        finalTestLesson: null,
+        finalTestProgress: null,
+      }
     }
 
     const finalTestLesson = await prisma.lesson.findFirst({
@@ -120,7 +131,7 @@ class CertificateService {
         userId,
         courseId,
         certificateCode,
-        finalScore: finalTestProgress.score ?? null,
+        finalScore: finalTestProgress?.score ?? null,
         completionTime,
       },
       include: {
@@ -151,6 +162,9 @@ class CertificateService {
         firstName: user.firstName ?? '',
       })
     }
+
+    // Системное сообщение в чат курса о выдаче сертификата
+    await chatService.createSystemMessageForCertificateIssued(userId, courseId, certificate.certificateCode)
 
     return certificate
   }

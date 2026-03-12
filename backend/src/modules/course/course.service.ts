@@ -120,7 +120,13 @@ class CourseService {
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy]: order },
+        orderBy:
+          sortBy === 'averageRating'
+            ? [
+                // сначала курсы с рейтингом, потом без
+                { averageRating: { sort: order, nulls: 'last' } },
+              ]
+            : { [sortBy]: order },
         include: {
           teacher: {
             select: {

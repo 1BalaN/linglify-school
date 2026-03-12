@@ -1,7 +1,7 @@
 import { COURSE_CATEGORIES } from '@/shared/constants/courseCategories'
 import { CourseLevel } from '@/shared/types/course'
 import { Button, Input, ImageUpload } from '@/shared/ui'
-import { PlusCircle, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { PlusCircle, AlertCircle, CheckCircle2, ChevronDown } from 'lucide-react'
 import { FormState } from '@/pages/AdminCoursesPage/AdminCoursesPage'
 
 
@@ -105,17 +105,20 @@ export const CourseFormCreating = ({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Уровень *</label>
-            <select
-              value={form.level}
-              onChange={(e) => handleChange('level', e.target.value as CourseLevel)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              {levels.map((lvl) => (
-                <option key={lvl} value={lvl}>
-                  {lvl}
-                </option>
-              ))}
-            </select>
+            <div className="relative group">
+              <select
+                value={form.level}
+                onChange={e => handleChange('level', e.target.value as CourseLevel)}
+                className="w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 pr-9 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                {levels.map(lvl => (
+                  <option key={lvl} value={lvl}>
+                    {lvl}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-transform duration-200 group-focus-within:rotate-180" />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -131,18 +134,21 @@ export const CourseFormCreating = ({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Категория</label>
-            <select
-              value={form.category}
-              onChange={(e) => handleChange('category', e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">Выберите категорию</option>
-              {COURSE_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+            <div className="relative group">
+              <select
+                value={form.category}
+                onChange={e => handleChange('category', e.target.value)}
+                className="w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 pr-9 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="">Выберите категорию</option>
+                {COURSE_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-transform duration-200 group-focus-within:rotate-180" />
+            </div>
           </div>
 
           <div className="space-y-2">

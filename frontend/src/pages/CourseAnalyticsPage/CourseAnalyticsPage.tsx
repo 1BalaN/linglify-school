@@ -4,10 +4,9 @@ import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
 import { AlertCircle, BarChart3, ArrowLeft } from 'lucide-react'
 import { Button } from '@/shared/ui'
-import { useGetCourseByIdQuery } from '@/entities/course'
+import { useGetCourseByIdQuery, useGetCourseStudentsQuery } from '@/entities/course'
 import { useGetTeacherCourseAnalyticsQuery } from '@/entities/analytics'
 import { TeacherCourseAnalytics, CourseStudentsTable } from '@/features/courses/teacher'
-import { useGetCourseStudentsQuery } from '@/entities/course'
 
 export const CourseAnalyticsPage = () => {
   const { id } = useParams<{ id: string }>()
@@ -15,7 +14,7 @@ export const CourseAnalyticsPage = () => {
   const user = useSelector((state: RootState) => state.auth.user)
 
   const { data: courseData, isLoading: isCourseLoading } = useGetCourseByIdQuery(id!)
-  const { data: analyticsData } = useGetTeacherCourseAnalyticsQuery(id!)
+  const { data: analyticsData, isLoading: isAnalyticsLoading } = useGetTeacherCourseAnalyticsQuery(id!)
   const { data: studentsData, isLoading: isStudentsLoading } = useGetCourseStudentsQuery(id!)
 
   useEffect(() => {
@@ -129,8 +128,22 @@ export const CourseAnalyticsPage = () => {
           </div>
         )}
 
-        {courseAnalytics && id && (
-          <TeacherCourseAnalytics courseId={id} analytics={courseAnalytics} />
+        {isAnalyticsLoading ? (
+          <div className="mb-6 space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse rounded-2xl border border-border bg-card p-6"
+              >
+                <div className="mb-4 h-5 w-1/3 rounded bg-muted" />
+                <div className="h-40 rounded-xl bg-muted" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          courseAnalytics && id && (
+            <TeacherCourseAnalytics courseId={id} analytics={courseAnalytics} />
+          )
         )}
 
         <CourseStudentsTable students={students} isLoading={isStudentsLoading} />

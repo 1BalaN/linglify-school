@@ -7,10 +7,12 @@ import type { ChatThread } from '@/shared/types/chat'
 import { ChatThreadList } from '@/features/chat/ui/ChatThreadList'
 import { ChatWindow } from '@/features/chat/ui/ChatWindow'
 import { Button } from '@/shared/ui'
+import { getSocket } from '@/shared/lib'
+import { WifiOff } from 'lucide-react'
 
 export const ChatsPage = () => {
   const { user } = useSelector((state: RootState) => state.auth)
-  const { data, isLoading } = useGetMyThreadsQuery(undefined, {
+  const { data, isLoading, refetch } = useGetMyThreadsQuery(undefined, {
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
     refetchOnReconnect: true,
@@ -18,8 +20,41 @@ export const ChatsPage = () => {
   const [ensureSupportThread, { isLoading: isEnsuringSupport }] = useEnsureSupportThreadMutation()
   const [selectedThread, setSelectedThread] = useState<ChatThread | null>(null)
   const [searchParams] = useSearchParams()
+  const [socketStatus, setSocketStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected')
 
   const threads = useMemo(() => data?.data ?? [], [data])
+
+  // Track socket connect/disconnect to show a status banner
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const onConnect = () => {
+      setSocketStatus('connected')
+      void refetch()
+    }
+    const onDisconnect = () => setSocketStatus('disconnected')
+    const onReconnectAttempt = () => setSocketStatus('reconnecting')
+    const onReconnect = () => {
+      setSocketStatus('connected')
+      void refetch()
+    }
+
+    socket.on('connect', onConnect)
+    socket.on('disconnect', onDisconnect)
+    socket.io.on('reconnect_attempt', onReconnectAttempt)
+    socket.io.on('reconnect', onReconnect)
+
+    if (socket.connected) setSocketStatus('connected')
+    else setSocketStatus('disconnected')
+
+    return () => {
+      socket.off('connect', onConnect)
+      socket.off('disconnect', onDisconnect)
+      socket.io.off('reconnect_attempt', onReconnectAttempt)
+      socket.io.off('reconnect', onReconnect)
+    }
+  }, [refetch])
 
   const handleSelect = (thread: ChatThread) => {
     setSelectedThread(thread)
@@ -73,6 +108,15 @@ export const ChatsPage = () => {
             </Button>
           )}
         </div>
+
+        {socketStatus !== 'connected' && (
+          <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+            <WifiOff className="h-4 w-4 shrink-0" />
+            {socketStatus === 'reconnecting'
+              ? 'Восстановление соединения... Новые сообщения появятся после переподключения.'
+              : 'Соединение с сервером потеряно. Пытаемся переподключиться...'}
+          </div>
+        )}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,2fr)] lg:h-[calc(100vh-200px)]">
           <div className="flex flex-col rounded-2xl border border-border bg-card p-4">

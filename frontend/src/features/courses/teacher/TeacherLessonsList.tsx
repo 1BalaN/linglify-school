@@ -31,8 +31,23 @@ export const TeacherLessonsList = ({
 
   if (isLoading) {
     return (
-      <div className="py-12 text-center text-muted-foreground">
-        Загрузка уроков...
+      <div className="space-y-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="animate-pulse rounded-xl border border-border bg-card px-5 py-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-muted" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-2/5 rounded bg-muted" />
+                <div className="h-3 w-1/4 rounded bg-muted" />
+              </div>
+              <div className="h-7 w-16 rounded bg-muted" />
+              <div className="h-7 w-7 rounded bg-muted" />
+            </div>
+          </div>
+        ))}
       </div>
     )
   }

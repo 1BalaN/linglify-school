@@ -40,6 +40,11 @@ export class UserController {
     const result = await userService.deleteUser(id)
     res.json(result)
   }
+
+  async stats(_req: AuthRequest, res: Response) {
+    const result = await userService.getStats()
+    res.json({ data: result })
+  }
 }
 
 export const userController = new UserController()

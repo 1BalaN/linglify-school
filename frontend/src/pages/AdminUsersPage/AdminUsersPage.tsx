@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import { useGetUsersAdminQuery, useGetUserOverviewQuery } from '@/entities/userAdmin/api/userAdminApi'
+import {
+  useGetUsersAdminQuery,
+  useGetUserOverviewQuery,
+  useGetUserStatsQuery,
+} from '@/entities/userAdmin/api/userAdminApi'
 import { AdminUsersTable, AdminUserDetails } from '@/features/admin/users'
 import { Modal, Button } from '@/shared/ui'
 import type { AdminUserListItem } from '@/shared/types/userAdmin'
@@ -22,14 +26,16 @@ export const AdminUsersPage = () => {
   const { data: overviewData } = useGetUserOverviewQuery(selectedUser?.id ?? '', {
     skip: !selectedUser,
   })
+  // Глобальная статистика — всегда по всей базе, не зависит от фильтров таблицы
+  const { data: statsData } = useGetUserStatsQuery()
 
   const users = data?.data.data ?? []
   const pagination = data?.data.pagination
 
-  const totalUsers = pagination?.total ?? users.length
-  const studentsCount = users.filter(u => u.role === 'STUDENT').length
-  const teachersCount = users.filter(u => u.role === 'TEACHER').length
-  const inactiveCount = users.filter(u => !u.isActive).length
+  const totalUsers = statsData?.data.total ?? pagination?.total ?? 0
+  const studentsCount = statsData?.data.students ?? 0
+  const teachersCount = statsData?.data.teachers ?? 0
+  const inactiveCount = statsData?.data.inactive ?? 0
 
   const handlePageChange = (nextPage: number) => {
     if (!pagination) return

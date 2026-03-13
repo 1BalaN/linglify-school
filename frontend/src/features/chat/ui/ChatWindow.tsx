@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import type { ChatMessage, ChatThread } from '@/shared/types/chat'
 import {
@@ -30,7 +30,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
 
   const threadId = thread?.id ?? ''
 
-  const { data, isLoading, refetch } = useGetThreadMessagesQuery(
+  const { data, isLoading } = useGetThreadMessagesQuery(
     threadId ? { threadId } : { threadId: '' },
     { skip: !threadId }
   )
@@ -91,8 +91,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
     setPendingAttachments([])
     try {
       await sendMessage({ threadId, text, attachments }).unwrap()
-      // сервер всё равно пришлёт сообщение по сокету, но можно подстраховаться refetch’ем
-      await refetch()
+      // Сообщение придёт через socket chat:message:new и добавится в setMessages
     } catch {
       // при ошибке можно вернуть текст и вложения обратно
       setMessageText(text)
@@ -115,15 +114,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
     return 'Диалог'
   }, [thread, currentUser])
 
-  if (!thread) {
-    return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/40 text-sm text-muted-foreground">
-        Выберите диалог, чтобы начать общение
-      </div>
-    )
-  }
-
-  const handleFilesSelected = async (files: FileList | null) => {
+  const handleFilesSelected = useCallback(async (files: FileList | null) => {
     if (!files || !files.length) return
     setIsUploading(true)
     try {
@@ -147,23 +138,14 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         fileInputRef.current.value = ''
       }
     }
-  }
+  }, [])
 
-  const handlePaste = async (
-    event: React.ClipboardEvent<HTMLDivElement | HTMLFormElement | HTMLInputElement>
-  ) => {
-    const { clipboardData } = event
-    if (!clipboardData) return
-
+  // Извлекает файлы из ClipboardData (работает для файлов и скриншотов)
+  const extractFilesFromClipboard = useCallback((clipboardData: DataTransfer): File[] => {
     const files: File[] = []
-
-    // Сначала берём реальные файлы, если они есть
-    if (clipboardData.files && clipboardData.files.length > 0) {
-      for (const file of Array.from(clipboardData.files)) {
-        files.push(file)
-      }
+    if (clipboardData.files?.length > 0) {
+      files.push(...Array.from(clipboardData.files))
     } else {
-      // Многие браузеры кладут скриншоты в items, а не в files
       for (const item of Array.from(clipboardData.items)) {
         if (item.kind === 'file') {
           const file = item.getAsFile()
@@ -171,14 +153,36 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         }
       }
     }
+    return files
+  }, [])
 
-    if (!files.length) return
+  // Глобальный обработчик вставки — срабатывает даже когда фокус на сообщениях,
+  // а не в поле ввода (например, пользователь скроллит историю и жмёт Ctrl+V)
+  useEffect(() => {
+    if (!threadId) return
 
-    event.preventDefault()
-    const dataTransfer = new DataTransfer()
-    files.forEach(file => dataTransfer.items.add(file))
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      if (!e.clipboardData) return
+      const files = extractFilesFromClipboard(e.clipboardData)
+      if (!files.length) return
+      e.preventDefault()
+      const dt = new DataTransfer()
+      files.forEach(f => dt.items.add(f))
+      void handleFilesSelected(dt.files)
+    }
 
-    await handleFilesSelected(dataTransfer.files)
+    document.addEventListener('paste', handleGlobalPaste)
+    return () => {
+      document.removeEventListener('paste', handleGlobalPaste)
+    }
+  }, [threadId, handleFilesSelected, extractFilesFromClipboard])
+
+  if (!thread) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/40 text-sm text-muted-foreground">
+        Выберите диалог, чтобы начать общение
+      </div>
+    )
   }
 
   const formatTime = (iso: string) =>
@@ -267,10 +271,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         )}
       </div>
 
-      <div
-        className="flex-1 space-y-3 overflow-y-auto px-4 py-3 scroll-soft"
-        onPaste={handlePaste}
-      >
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3 scroll-soft">
         {isLoading && (
           <p className="text-xs text-muted-foreground">Загрузка сообщений...</p>
         )}
@@ -325,20 +326,26 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         <div ref={bottomRef} />
       </div>
 
-      <form
-        onSubmit={handleSend}
-        className="border-t border-border px-3 py-2"
-        onPaste={handlePaste}
-      >
+      <form onSubmit={handleSend} className="border-t border-border px-3 py-2">
         {pendingAttachments.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {pendingAttachments.map(file => (
               <div
                 key={file.url}
-                className="flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-[11px]"
+                className="flex items-center gap-1.5 rounded-full bg-muted pl-3 pr-1.5 py-1 text-[11px]"
               >
-                <Paperclip className="h-3 w-3" />
+                <Paperclip className="h-3 w-3 shrink-0" />
                 <span className="max-w-[140px] truncate">{file.name}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPendingAttachments(prev => prev.filter(a => a.url !== file.url))
+                  }
+                  className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                  title="Удалить вложение"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
               </div>
             ))}
           </div>
@@ -366,7 +373,6 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
               isUploading ? 'Загружаем вложения...' : 'Напишите сообщение или вставьте скриншот Ctrl+V'
             }
             disabled={isUploading}
-            onPaste={handlePaste}
           />
           <Button type="submit" size="sm" isLoading={isSending || isUploading}>
             Отправить

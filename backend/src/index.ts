@@ -81,7 +81,16 @@ const io = new Server(httpServer, {
   cors: {
     origin: config.frontendUrl,
     credentials: true,
+    methods: ['GET', 'POST'],
   },
+  // Polling первым — Railway и другие облачные прокси могут не поддерживать
+  // WebSocket upgrade без специальной конфигурации. Клиент автоматически
+  // поднимется до WebSocket, если прокси это разрешает.
+  transports: ['polling', 'websocket'],
+  pingTimeout: 60_000,
+  pingInterval: 25_000,
+  // Максимальный размер пакета (для вложений-превью и т.д.)
+  maxHttpBufferSize: 1e7,
 })
 
 setSocketServer(io)

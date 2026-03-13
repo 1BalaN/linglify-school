@@ -51,6 +51,14 @@ export const userAdminApi = api.injectEndpoints({
       }),
       invalidatesTags: ['User'],
     }),
+
+    getUserStats: builder.query<
+      { data: { students: number; teachers: number; admins: number; inactive: number; total: number } },
+      void
+    >({
+      query: () => ({ url: '/users/stats', method: 'GET' }),
+      providesTags: ['User'],
+    }),
   }),
 })
 
@@ -60,5 +68,6 @@ export const {
   useUpdateUserRoleMutation,
   useUpdateUserStatusMutation,
   useDeleteUserMutation,
+  useGetUserStatsQuery,
 } = userAdminApi
 

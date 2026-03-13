@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import type { ChatMessage, ChatThread } from '@/shared/types/chat'
 import {
@@ -115,15 +115,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
     return 'Диалог'
   }, [thread, currentUser])
 
-  if (!thread) {
-    return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/40 text-sm text-muted-foreground">
-        Выберите диалог, чтобы начать общение
-      </div>
-    )
-  }
-
-  const handleFilesSelected = async (files: FileList | null) => {
+  const handleFilesSelected = useCallback(async (files: FileList | null) => {
     if (!files || !files.length) return
     setIsUploading(true)
     try {
@@ -147,23 +139,14 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         fileInputRef.current.value = ''
       }
     }
-  }
+  }, [])
 
-  const handlePaste = async (
-    event: React.ClipboardEvent<HTMLDivElement | HTMLFormElement | HTMLInputElement>
-  ) => {
-    const { clipboardData } = event
-    if (!clipboardData) return
-
+  // Извлекает файлы из ClipboardData (работает для файлов и скриншотов)
+  const extractFilesFromClipboard = useCallback((clipboardData: DataTransfer): File[] => {
     const files: File[] = []
-
-    // Сначала берём реальные файлы, если они есть
-    if (clipboardData.files && clipboardData.files.length > 0) {
-      for (const file of Array.from(clipboardData.files)) {
-        files.push(file)
-      }
+    if (clipboardData.files?.length > 0) {
+      files.push(...Array.from(clipboardData.files))
     } else {
-      // Многие браузеры кладут скриншоты в items, а не в files
       for (const item of Array.from(clipboardData.items)) {
         if (item.kind === 'file') {
           const file = item.getAsFile()
@@ -171,14 +154,49 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         }
       }
     }
+    return files
+  }, [])
 
-    if (!files.length) return
+  // Глобальный обработчик вставки — срабатывает даже когда фокус на сообщениях,
+  // а не в поле ввода (например, пользователь скроллит историю и жмёт Ctrl+V)
+  useEffect(() => {
+    if (!threadId) return
 
-    event.preventDefault()
-    const dataTransfer = new DataTransfer()
-    files.forEach(file => dataTransfer.items.add(file))
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      if (!e.clipboardData) return
+      const files = extractFilesFromClipboard(e.clipboardData)
+      if (!files.length) return
+      e.preventDefault()
+      const dt = new DataTransfer()
+      files.forEach(f => dt.items.add(f))
+      void handleFilesSelected(dt.files)
+    }
 
-    await handleFilesSelected(dataTransfer.files)
+    document.addEventListener('paste', handleGlobalPaste)
+    return () => {
+      document.removeEventListener('paste', handleGlobalPaste)
+    }
+  }, [threadId, handleFilesSelected, extractFilesFromClipboard])
+
+  const handlePaste = useCallback(
+    async (event: React.ClipboardEvent<HTMLDivElement | HTMLFormElement | HTMLInputElement>) => {
+      const { clipboardData } = event
+      if (!clipboardData) return
+      const files = extractFilesFromClipboard(clipboardData)
+      if (!files.length) return
+      event.preventDefault()
+      const dt = new DataTransfer()
+      files.forEach(f => dt.items.add(f))
+      await handleFilesSelected(dt.files)
+    },
+    [extractFilesFromClipboard, handleFilesSelected]
+  )
+  if (!thread) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/40 text-sm text-muted-foreground">
+        Выберите диалог, чтобы начать общение
+      </div>
+    )
   }
 
   const formatTime = (iso: string) =>

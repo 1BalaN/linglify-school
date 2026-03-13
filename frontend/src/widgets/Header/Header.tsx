@@ -7,7 +7,7 @@ import { Button } from '@/shared/ui'
 import { useTheme } from '@/shared/lib/theme'
 import { BookOpen, User, LogOut, Menu, Moon, Sun, Shield, GraduationCap, MessageCircle } from 'lucide-react'
 import { useState } from 'react'
-import { useGetMyThreadsQuery } from '@/entities/chat/api/chatApi'
+import { useGetUnreadCountQuery } from '@/entities/chat/api/chatApi'
 
 export const Header = () => {
   const dispatch = useDispatch()
@@ -16,27 +16,16 @@ export const Header = () => {
   const [logoutMutation] = useLogoutMutation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const { data: chatsData } = useGetMyThreadsQuery(undefined, {
+  // Лёгкий endpoint — не тянет весь список тредов, только счётчик непрочитанных
+  const { data: unreadData } = useGetUnreadCountQuery(undefined, {
     skip: !isAuthenticated || !user,
-    refetchOnMountOrArgChange: true,
+    refetchOnMountOrArgChange: 30,
     refetchOnFocus: true,
     refetchOnReconnect: true,
+    pollingInterval: 30_000,
   })
 
-  const hasUnreadChats = (() => {
-    if (!user || !chatsData) return false
-    const threads = chatsData.data
-    if (user.role === 'STUDENT') {
-      return threads.some(t => t.hasUnreadForStudent)
-    }
-    if (user.role === 'TEACHER') {
-      return threads.some(t => t.hasUnreadForTeacher)
-    }
-    if (user.role === 'ADMIN') {
-      return threads.some(t => t.hasUnreadForAdmin)
-    }
-    return false
-  })()
+  const hasUnreadChats = (unreadData?.count ?? 0) > 0
 
   const handleLogout = async () => {
     try {

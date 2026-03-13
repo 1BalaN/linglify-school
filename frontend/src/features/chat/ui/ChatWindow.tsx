@@ -30,7 +30,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
 
   const threadId = thread?.id ?? ''
 
-  const { data, isLoading, refetch } = useGetThreadMessagesQuery(
+  const { data, isLoading } = useGetThreadMessagesQuery(
     threadId ? { threadId } : { threadId: '' },
     { skip: !threadId }
   )
@@ -91,8 +91,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
     setPendingAttachments([])
     try {
       await sendMessage({ threadId, text, attachments }).unwrap()
-      // сервер всё равно пришлёт сообщение по сокету, но можно подстраховаться refetch’ем
-      await refetch()
+      // Сообщение придёт через socket chat:message:new и добавится в setMessages
     } catch {
       // при ошибке можно вернуть текст и вложения обратно
       setMessageText(text)

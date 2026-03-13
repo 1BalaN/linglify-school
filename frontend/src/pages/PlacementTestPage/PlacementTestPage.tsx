@@ -21,6 +21,7 @@ import {
   PlacementInProgressStep,
   PlacementResultStep,
 } from '@/features/placement/test'
+import { firstLanguage } from '@/shared/lib/utils'
 
 
 type Step = 'language' | 'inProgress' | 'finished'
@@ -68,9 +69,7 @@ export const PlacementTestPage = () => {
     if (languageFromUrl) return
     if (!user?.preferredLanguage) return
 
-    const preferredRaw = user.preferredLanguage
-    const preferred =
-      preferredRaw.split(',')[0]?.trim() || preferredRaw.trim() || 'Английский'
+    const preferred = firstLanguage(user.preferredLanguage)
     setLanguage(preferred)
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)

@@ -4,6 +4,13 @@ import { chatService } from './chat.service'
 import { createMessageSchema, getThreadMessagesQuerySchema } from './chat.schema'
 
 export class ChatController {
+  async getUnreadCount(req: AuthRequest, res: Response) {
+    const userId = req.user!.userId
+    const role = req.user!.role
+    const result = await chatService.getUnreadCount(userId, role)
+    res.json(result)
+  }
+
   async getMyThreads(req: AuthRequest, res: Response) {
     const userId = req.user!.userId
     const role = req.user!.role

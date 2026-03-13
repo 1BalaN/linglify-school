@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import type { RootState } from '@/app/store'
@@ -47,6 +47,8 @@ export const AdminPlacementPage = () => {
   const [errorModal, setErrorModal] = useState<string | null>(null)
   const [successModal, setSuccessModal] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<ErrorFormState>({})
+  const [formSavedBanner, setFormSavedBanner] = useState(false)
+  const formRef = useRef<HTMLDivElement>(null)
 
   const items: AdminPlacementQuestion[] =
     (data?.data.items as AdminPlacementQuestion[] | undefined) ?? []
@@ -175,6 +177,10 @@ export const AdminPlacementPage = () => {
         setSuccessModal('Вопрос создан')
       }
       resetForm()
+      // Scroll the form into view and briefly show a saved banner
+      setFormSavedBanner(true)
+      setTimeout(() => setFormSavedBanner(false), 2500)
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     } catch (err) {
       const e = err as { data?: { error?: { message?: string } } }
       setErrorModal(e?.data?.error?.message || 'Ошибка при сохранении вопроса')
@@ -216,6 +222,15 @@ export const AdminPlacementPage = () => {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr),minmax(0,3fr)]">
+          <div ref={formRef}>
+            {formSavedBanner && (
+              <div className="mb-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Вопрос сохранён. Форма готова к новому вопросу.
+              </div>
+            )}
           <PlacementQuestionForm
             form={form}
             errors={fieldErrors}
@@ -243,6 +258,7 @@ export const AdminPlacementPage = () => {
             onSubmit={handleSubmit}
             onReset={resetForm}
           />
+          </div>
 
           <PlacementQuestionsList
             items={items}

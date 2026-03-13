@@ -106,7 +106,7 @@ export const ChatThreadList = ({
   }
 
   return (
-    <div className="space-y-1 calc(100vh - 200px) overflow-y-auto scroll-soft pr-1">
+    <div className="flex-1 space-y-1 overflow-y-auto scroll-soft pr-1">
       {threads.length === 0 && (
         <div className="rounded-xl border border-dashed border-border/60 bg-muted/40 p-4 text-center text-xs text-muted-foreground">
           Пока нет диалогов. Начните общение с преподавателем курса или напишите в поддержку.

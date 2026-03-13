@@ -177,19 +177,6 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
     }
   }, [threadId, handleFilesSelected, extractFilesFromClipboard])
 
-  const handlePaste = useCallback(
-    async (event: React.ClipboardEvent<HTMLDivElement | HTMLFormElement | HTMLInputElement>) => {
-      const { clipboardData } = event
-      if (!clipboardData) return
-      const files = extractFilesFromClipboard(clipboardData)
-      if (!files.length) return
-      event.preventDefault()
-      const dt = new DataTransfer()
-      files.forEach(f => dt.items.add(f))
-      await handleFilesSelected(dt.files)
-    },
-    [extractFilesFromClipboard, handleFilesSelected]
-  )
   if (!thread) {
     return (
       <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/40 text-sm text-muted-foreground">
@@ -284,10 +271,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         )}
       </div>
 
-      <div
-        className="flex-1 space-y-3 overflow-y-auto px-4 py-3 scroll-soft"
-        onPaste={handlePaste}
-      >
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3 scroll-soft">
         {isLoading && (
           <p className="text-xs text-muted-foreground">Загрузка сообщений...</p>
         )}
@@ -342,20 +326,26 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         <div ref={bottomRef} />
       </div>
 
-      <form
-        onSubmit={handleSend}
-        className="border-t border-border px-3 py-2"
-        onPaste={handlePaste}
-      >
+      <form onSubmit={handleSend} className="border-t border-border px-3 py-2">
         {pendingAttachments.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {pendingAttachments.map(file => (
               <div
                 key={file.url}
-                className="flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-[11px]"
+                className="flex items-center gap-1.5 rounded-full bg-muted pl-3 pr-1.5 py-1 text-[11px]"
               >
-                <Paperclip className="h-3 w-3" />
+                <Paperclip className="h-3 w-3 shrink-0" />
                 <span className="max-w-[140px] truncate">{file.name}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPendingAttachments(prev => prev.filter(a => a.url !== file.url))
+                  }
+                  className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                  title="Удалить вложение"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
               </div>
             ))}
           </div>
@@ -383,7 +373,6 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
               isUploading ? 'Загружаем вложения...' : 'Напишите сообщение или вставьте скриншот Ctrl+V'
             }
             disabled={isUploading}
-            onPaste={handlePaste}
           />
           <Button type="submit" size="sm" isLoading={isSending || isUploading}>
             Отправить

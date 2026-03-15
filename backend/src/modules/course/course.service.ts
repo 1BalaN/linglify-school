@@ -12,6 +12,8 @@ import type {
 } from './course.schema'
 import { CourseStatus, UserRole } from '@prisma/client'
 import { chatService } from '../chat/chat.service'
+import { emailService } from '../../shared/lib/email'
+import { config } from '../../config/env'
 
 class CourseService {
   /**
@@ -601,6 +603,22 @@ class CourseService {
 
     // Системное сообщение в чат студент ↔ преподаватель
     await chatService.createSystemMessageForEnrollment(userId, dto.courseId)
+
+    // Email-уведомление о зачислении (fire-and-forget, не блокирует ответ)
+    void (async () => {
+      const enrolledUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, firstName: true },
+      })
+      if (enrolledUser) {
+        const courseUrl = `${config.frontendUrl}/courses/${dto.courseId}/lessons`
+        await emailService.sendEnrollmentEmail(enrolledUser.email, {
+          courseTitle: enrollment.course.title,
+          courseUrl,
+          firstName: enrolledUser.firstName ?? undefined,
+        })
+      }
+    })()
 
     return enrollment
   }

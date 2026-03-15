@@ -47,6 +47,42 @@ export const useAdminDashboardData = () => {
 
     const baseStats = [
       {
+        id: 'users',
+        title: 'Пользователи',
+        value: analytics?.users.total ?? 0,
+        total: null,
+        icon: Users,
+        color: 'from-emerald-500 to-teal-500',
+        link: '/admin/users',
+      },
+      {
+        id: 'courses',
+        title: 'Курсы (всего/опублик.)',
+        value: analytics?.courses.total ?? 0,
+        total: analytics?.courses.byStatus.PUBLISHED ?? 0,
+        icon: BookOpen,
+        color: 'from-indigo-500 to-blue-500',
+        link: '/admin/courses',
+      },
+      {
+        id: 'enrollments',
+        title: 'Завершённых курсов',
+        value: analytics?.enrollments.completed ?? 0,
+        total: analytics?.enrollments.total ?? 0,
+        icon: GraduationCap,
+        color: 'from-purple-500 to-pink-500',
+        link: '/admin/courses',
+      },
+      {
+        id: 'placement',
+        title: 'Placement-сессий (30 дней)',
+        value: analytics?.placement.completedSessions ?? 0,
+        total: null,
+        icon: LineChart,
+        color: 'from-cyan-500 to-sky-500',
+        link: '/admin/placement',
+      },
+      {
         id: 'unread',
         title: 'Непрочитанные',
         value: unread,
@@ -83,49 +119,6 @@ export const useAdminDashboardData = () => {
         link: '/admin/messages',
       },
     ] as AdminStatItemProps[]
-
-    if (!analytics) {
-      return baseStats
-    }
-
-    baseStats.unshift(
-      {
-        id: 'users',
-        title: 'Пользователи',
-        value: analytics.users.total,
-        total: null,
-        icon: Users,
-        color: 'from-emerald-500 to-teal-500',
-        link: '/admin/users',
-      },
-      {
-        id: 'courses',
-        title: 'Курсы (всего/опублик.)',
-        value: analytics.courses.total,
-        total: analytics.courses.byStatus.PUBLISHED ?? null,
-        icon: BookOpen,
-        color: 'from-indigo-500 to-blue-500',
-        link: '/admin/courses',
-      },
-      {
-        id: 'enrollments',
-        title: 'Завершённых курсов',
-        value: analytics.enrollments.completed,
-        total: analytics.enrollments.total,
-        icon: GraduationCap,
-        color: 'from-purple-500 to-pink-500',
-        link: '/admin/courses',
-      },
-      {
-        id: 'placement',
-        title: 'Placement-сессий (30 дней)',
-        value: analytics.placement.completedSessions,
-        total: null,
-        icon: LineChart,
-        color: 'from-cyan-500 to-sky-500',
-        link: '/admin/placement',
-      }
-    )
 
     return baseStats
   }, [messages, faqItems, analytics])

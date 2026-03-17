@@ -25,6 +25,7 @@ import chatRouter from './modules/chat/chat.router'
 import { setSocketServer } from './shared/lib/socket'
 import { jwtService } from './shared/lib/jwt'
 import { Server } from 'socket.io'
+import { startCronJobs } from './cron'
 
 const app = express()
 
@@ -128,6 +129,7 @@ httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`)
   console.log(`📝 Environment: ${config.nodeEnv}`)
   console.log(`🔗 Frontend URL: ${config.frontendUrl}`)
+  startCronJobs()
 })
 
 export default app

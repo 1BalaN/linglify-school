@@ -173,6 +173,31 @@ export class EmailService {
     })
   }
 
+  async sendEnrollmentEmail(
+    email: string,
+    options: { courseTitle: string; courseUrl: string; firstName?: string }
+  ): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: `Вы записаны на курс "${options.courseTitle}" — Linglify`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #4F46E5;">Добро пожаловать на курс${options.firstName ? `, ${options.firstName}` : ''}! 🎉</h2>
+          <p>Вы успешно записались на курс <strong>"${options.courseTitle}"</strong>.</p>
+          <p>Всё готово — можете приступать к обучению прямо сейчас!</p>
+          <a href="${options.courseUrl}"
+             style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white;
+                    text-decoration: none; border-radius: 6px; margin: 16px 0;">
+            Начать курс
+          </a>
+          <p style="color: #666; font-size: 14px;">
+            Если у вас возникнут вопросы, вы всегда можете написать преподавателю в чате на странице курса.
+          </p>
+        </div>
+      `,
+    })
+  }
+
   async sendCertificateEmail(
     email: string,
     options: { courseTitle: string; certificateUrl: string; verificationCode: string; firstName?: string }

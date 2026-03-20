@@ -253,6 +253,11 @@ model Course {
   tags            String[]      @default([])
   prerequisites   String[]      @default([]) // ID предварительных курсов
   learningOutcomes String[]     @default([]) // Что изучит студент
+
+  // Политика сертификата (на уровне курса)
+  requireFinalTestForCertificate Boolean @default(true)
+  minProgressForCertificate      Int     @default(100) // 0-100 (%)
+
   // Модерация
   lastReviewComment String?     @db.Text
   lastReviewedAt   DateTime?
@@ -616,13 +621,29 @@ model ChatMessage {
 /// Глобальные настройки платформы (singleton запись)
 model PlatformSettings {
   id                           Int      @id @default(1)
-  requireFinalTestForCertificate Boolean @default(true)
-  minProgressForCertificate    Int      @default(100) // 0-100 (%)
+
+  // Аналитика
   lowRatingThreshold           Float    @default(2.5)
   minEnrollmentsForRating      Int      @default(5)
+
+  // Placement-тест
   placementDefaultQuestions    Int      @default(25)
   placementAllowedLanguages    String[] @default([])
   placementRecommendationMap   Json?
+
+  // Подписки преподавателей
+  trialSubscriptionDays        Int      @default(30)
+
+  // Студенты
+  maxCoursesPerStudent         Int      @default(0)  // 0 = без ограничений
+
+  // Автоматизация
+  autoArchiveDaysAfterInactivity Int    @default(0)  // 0 = отключено
+  reviewModerationEnabled      Boolean  @default(false)
+
+  // Сертификаты (глобально)
+  certificateValidityMonths    Int      @default(0)  // 0 = бессрочно
+
   updatedAt                    DateTime @updatedAt
 
   @@map("platform_settings")

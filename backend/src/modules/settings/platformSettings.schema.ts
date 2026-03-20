@@ -2,19 +2,32 @@ import { z } from 'zod'
 import { CourseLevel } from '@prisma/client'
 
 export const platformSettingsUpdateSchema = z.object({
-  requireFinalTestForCertificate: z.boolean().optional(),
-  minProgressForCertificate: z.number().int().min(0).max(100).optional(),
-  lowRatingThreshold: z.number().min(0).max(5).optional(),
-  minEnrollmentsForRating: z.number().int().min(0).optional(),
-  placementDefaultQuestions: z.number().int().min(1).max(100).optional(),
-  placementAllowedLanguages: z.array(z.string().min(1)).optional(),
-  // Маппинг уровня placement -> уровни курсов, можно задать вручную в JSON
-  placementRecommendationMap: z
+  // Аналитика
+  lowRatingThreshold:              z.number().min(0).max(5).optional(),
+  minEnrollmentsForRating:         z.number().int().min(0).optional(),
+
+  // Placement-тест
+  placementDefaultQuestions:       z.number().int().min(1).max(100).optional(),
+  placementAllowedLanguages:       z.array(z.string().min(1)).optional(),
+  placementRecommendationMap:      z
     .record(
       z.nativeEnum(CourseLevel),
-      z.array(z.nativeEnum(CourseLevel)).nonempty()
+      z.array(z.nativeEnum(CourseLevel)).nonempty(),
     )
     .optional(),
+
+  // Подписки
+  trialSubscriptionDays:           z.number().int().min(1).max(365).optional(),
+
+  // Студенты
+  maxCoursesPerStudent:            z.number().int().min(0).optional(),
+
+  // Автоматизация
+  autoArchiveDaysAfterInactivity:  z.number().int().min(0).optional(),
+  reviewModerationEnabled:         z.boolean().optional(),
+
+  // Сертификаты (глобально)
+  certificateValidityMonths:       z.number().int().min(0).optional(),
 })
 
 export type PlatformSettingsUpdateDto = z.infer<typeof platformSettingsUpdateSchema>

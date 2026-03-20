@@ -46,6 +46,8 @@ export type FormState = {
   tagsInput: string
   learningOutcomesInput: string
   prerequisitesInput: string
+  requireFinalTestForCertificate: boolean
+  minProgressForCertificate: number
 }
 
 const initialFormState: FormState = {
@@ -61,6 +63,8 @@ const initialFormState: FormState = {
   tagsInput: '',
   learningOutcomesInput: '',
   prerequisitesInput: '',
+  requireFinalTestForCertificate: true,
+  minProgressForCertificate: 100,
 }
 
 export const AdminCoursesPage = () => {
@@ -101,7 +105,7 @@ export const AdminCoursesPage = () => {
   const pagination = coursesData?.pagination
 
   const handleChange = useCallback(
-    (field: keyof FormState, value: string) => {
+    (field: keyof FormState, value: string | boolean | number) => {
       setForm(prev => ({ ...prev, [field]: value }))
     },
     []
@@ -125,7 +129,7 @@ export const AdminCoursesPage = () => {
     const validator = validators[field]
     if (!validator) return
 
-    const error = validator(form[field]) || ''
+    const error = validator(form[field] as string) || ''
     setFieldErrors(prev => ({ ...prev, [field]: error }))
   }
 
@@ -160,6 +164,8 @@ export const AdminCoursesPage = () => {
         .split('\n')
         .map(p => p.trim())
         .filter(Boolean),
+      requireFinalTestForCertificate: form.requireFinalTestForCertificate,
+      minProgressForCertificate: form.minProgressForCertificate,
     }
   }
 

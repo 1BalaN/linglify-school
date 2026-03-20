@@ -5,6 +5,7 @@ import { tokenService } from '../../shared/lib/token'
 import { emailService } from '../../shared/lib/email'
 import { smsService } from '../../shared/lib/sms'
 import { AppError } from '../../shared/middleware/errorHandler'
+import { platformSettingsService } from '../settings/platformSettings.service'
 import type {
   RegisterDto,
   LoginDto,
@@ -41,9 +42,11 @@ export class AuthService {
       },
     })
 
-    // Новые преподаватели получают 30-дневный пробный период
+    // Новые преподаватели получают пробный период (длительность из настроек платформы)
     if (role === 'TEACHER') {
-      const trialEndsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      const settings = await platformSettingsService.getSettings()
+      const trialDays = settings.trialSubscriptionDays ?? 30
+      const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000)
       await prisma.teacherSubscription.create({
         data: {
           userId: user.id,

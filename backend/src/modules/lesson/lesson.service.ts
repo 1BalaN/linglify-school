@@ -10,8 +10,6 @@ import type {
 } from './lesson.schema'
 import { UserRole } from '@prisma/client'
 import { certificateService } from '../certificate/certificate.service'
-import { platformSettingsService } from '../settings/platformSettings.service'
-
 class LessonService {
   /**
    * Создать урок
@@ -736,8 +734,13 @@ class LessonService {
 
     const progress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0
 
-    const settings = await platformSettingsService.getSettings()
-    const shouldCompleteCourse = progress >= settings.minProgressForCertificate
+    // Read per-course certificate threshold
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { minProgressForCertificate: true },
+    })
+    const minProgress = course?.minProgressForCertificate ?? 100
+    const shouldCompleteCourse = progress >= minProgress
 
     const enrollment = await prisma.enrollment.update({
       where: {

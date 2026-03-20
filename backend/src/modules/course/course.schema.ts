@@ -17,6 +17,8 @@ export const createCourseSchema = z.object({
   tags: z.array(z.string()).default([]),
   prerequisites: z.array(z.string()).default([]),
   learningOutcomes: z.array(z.string()).default([]),
+  requireFinalTestForCertificate: z.boolean().default(true),
+  minProgressForCertificate: z.number().int().min(0).max(100).default(100),
 })
 
 // Валидация для обновления курса

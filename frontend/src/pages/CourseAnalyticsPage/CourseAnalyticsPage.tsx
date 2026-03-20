@@ -6,7 +6,7 @@ import { AlertCircle, BarChart3, ArrowLeft } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import { useGetCourseByIdQuery, useGetCourseStudentsQuery } from '@/entities/course'
 import { useGetTeacherCourseAnalyticsQuery } from '@/entities/analytics'
-import { TeacherCourseAnalytics, CourseStudentsTable } from '@/features/courses/teacher'
+import { TeacherCourseAnalytics, CourseStudentsTable, StudentScoresTable } from '@/features/courses/teacher'
 
 export const CourseAnalyticsPage = () => {
   const { id } = useParams<{ id: string }>()
@@ -147,6 +147,12 @@ export const CourseAnalyticsPage = () => {
         )}
 
         <CourseStudentsTable students={students} isLoading={isStudentsLoading} />
+
+        {students.length > 0 && (
+          <div className="mt-4">
+            <StudentScoresTable courseId={id!} />
+          </div>
+        )}
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle2, PlusCircle } from 'lucide-react'
-import { Button, Input, CourseBaseFields } from '@/shared/ui'
+import { Button, Input, CourseBaseFields, CourseCertificateFields } from '@/shared/ui'
 import type { CourseBaseValues, CourseBaseErrors } from '@/shared/ui/CourseBaseFields'
 import type { CourseLevel } from '@/shared/types/course'
 import type { FormState } from '@/pages/AdminCoursesPage/AdminCoursesPage'
@@ -12,7 +12,7 @@ type CourseFormCreatingProps = {
   isCreating: boolean
   levels: CourseLevel[]
   handleSubmit: (e: React.FormEvent) => void
-  handleChange: (field: keyof FormState, value: string) => void
+  handleChange: (field: keyof FormState, value: string | boolean | number) => void
   validateField: (field: keyof FormState) => void
 }
 
@@ -113,6 +113,14 @@ export const CourseFormCreating = ({
             </p>
           )}
         </div>
+
+        <CourseCertificateFields
+          values={{
+            requireFinalTestForCertificate: form.requireFinalTestForCertificate,
+            minProgressForCertificate: form.minProgressForCertificate,
+          }}
+          onChange={(field, value) => handleChange(field, value)}
+        />
 
         <div className="pt-2">
           <Button type="submit" disabled={isCreating} className="w-full md:w-auto">

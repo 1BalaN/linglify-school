@@ -19,7 +19,7 @@ export const StudentCourseProgressSidebar = ({
   const remaining = totalLessons - completedLessons
 
   return (
-    <div className="glass-card sticky top-4 rounded-2xl p-6">
+    <div className="glass-card rounded-2xl p-6">
       <h3 className="mb-4 text-lg font-semibold text-foreground">Ваш прогресс</h3>
 
       <div className="mb-6">

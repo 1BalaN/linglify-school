@@ -62,12 +62,16 @@ export const BecomeTeacherPage = () => {
         </div>
 
         {/* Pricing */}
-        <div className="mb-10 grid gap-6 md:grid-cols-2">
+        <div className="mb-10 grid items-stretch gap-6 md:grid-cols-2">
           {/* Monthly */}
-          <div className="rounded-2xl border border-border bg-card p-7">
+          <div className="flex flex-col rounded-2xl border border-border bg-card p-7">
             <p className="mb-1 text-sm font-medium text-muted-foreground">Месячная</p>
-            <p className="text-3xl font-bold">30 BYN <span className="text-base font-normal text-muted-foreground">/ мес</span></p>
-            <ul className="my-6 space-y-2.5">
+            <p className="text-3xl font-bold">
+              30 BYN <span className="text-base font-normal text-muted-foreground">/ мес</span>
+            </p>
+            {/* spacer so the list starts at the same height as the annual card */}
+            <p className="mb-2 text-xs text-transparent select-none">—</p>
+            <ul className="my-6 grow space-y-2.5">
               {PLAN_FEATURES.map(f => (
                 <li key={f} className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 shrink-0 text-emerald-500" />{f}
@@ -80,14 +84,16 @@ export const BecomeTeacherPage = () => {
           </div>
 
           {/* Annual */}
-          <div className="rounded-2xl border-2 border-primary/50 bg-card p-7 shadow-lg shadow-primary/5">
+          <div className="flex flex-col rounded-2xl border-2 border-primary/50 bg-card p-7 shadow-lg shadow-primary/5">
             <div className="mb-1 flex items-center justify-between">
               <p className="text-sm font-medium text-muted-foreground">Годовая</p>
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400">−33%</span>
             </div>
-            <p className="text-3xl font-bold">240 BYN <span className="text-base font-normal text-muted-foreground">/ год</span></p>
+            <p className="text-3xl font-bold">
+              240 BYN <span className="text-base font-normal text-muted-foreground">/ год</span>
+            </p>
             <p className="mb-2 text-xs text-muted-foreground">20 BYN в месяц</p>
-            <ul className="my-6 space-y-2.5">
+            <ul className="my-6 grow space-y-2.5">
               {PLAN_FEATURES.map(f => (
                 <li key={f} className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 shrink-0 text-emerald-500" />{f}

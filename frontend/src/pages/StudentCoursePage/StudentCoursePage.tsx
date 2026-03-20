@@ -13,6 +13,7 @@ import {
   StudentCourseHeader,
   StudentLessonItem,
   StudentCourseProgressSidebar,
+  StudentEfficiencyCard,
 } from '@/features/courses/student'
 
 export const StudentCoursePage = () => {
@@ -160,13 +161,18 @@ export const StudentCoursePage = () => {
           <aside
             className={`order-1 lg:order-2 ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}
           >
-            <StudentCourseProgressSidebar
-              completedLessons={completedLessons}
-              totalLessons={lessons.length}
-              progress={progress}
-              hasCertificate={!!certificate}
-              onViewCertificate={certificate ? handleViewCertificate : undefined}
-            />
+            <div className="flex flex-col gap-3">
+              <StudentCourseProgressSidebar
+                completedLessons={completedLessons}
+                totalLessons={lessons.length}
+                progress={progress}
+                hasCertificate={!!certificate}
+                onViewCertificate={certificate ? handleViewCertificate : undefined}
+              />
+              {progress > 0 && id && (
+                <StudentEfficiencyCard courseId={id} />
+              )}
+            </div>
           </aside>
         </div>
       </div>

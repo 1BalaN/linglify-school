@@ -4,6 +4,7 @@ import type {
   AdminAnalyticsTimeseries,
   TeacherCourseAnalytics,
   TeacherCourseAnalyticsTimeseries,
+  StudentEfficiencyScore,
 } from '@/shared/types/analytics'
 
 export const analyticsApi = api.injectEndpoints({
@@ -51,6 +52,25 @@ export const analyticsApi = api.injectEndpoints({
       }),
       providesTags: ['TeacherAnalytics'],
     }),
+
+    /** Teacher/admin: all students ranked by efficiency score */
+    getCourseStudentScores: builder.query<{ data: StudentEfficiencyScore[] }, string>({
+      query: courseId => ({
+        url: `/analytics/teacher/course/${courseId}/student-scores`,
+        method: 'GET',
+      }),
+      providesTags: ['TeacherAnalytics'],
+    }),
+
+    /** Student: own efficiency score for a course */
+    getMyEfficiencyScore: builder.query<{ data: StudentEfficiencyScore | null }, string>({
+      query: courseId => ({
+        url: `/analytics/course/${courseId}/my-score`,
+        method: 'GET',
+      }),
+      // Refetch when progress is invalidated (lesson completion)
+      providesTags: ['TeacherAnalytics', 'Progress'],
+    }),
   }),
 })
 
@@ -59,5 +79,7 @@ export const {
   useGetAdminAnalyticsTimeseriesQuery,
   useGetTeacherCourseAnalyticsQuery,
   useGetTeacherCourseTimeseriesQuery,
+  useGetCourseStudentScoresQuery,
+  useGetMyEfficiencyScoreQuery,
 } = analyticsApi
 

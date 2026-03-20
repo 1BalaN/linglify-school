@@ -32,5 +32,19 @@ router.get(
   analyticsController.getTeacherCourseTimeseries.bind(analyticsController)
 )
 
+// Student efficiency scores
+router.get(
+  '/teacher/course/:courseId/student-scores',
+  requireAuth,
+  requireRole('TEACHER', 'ADMIN'),
+  analyticsController.getCourseStudentScores.bind(analyticsController)
+)
+
+router.get(
+  '/course/:courseId/my-score',
+  requireAuth,
+  analyticsController.getMyEfficiencyScore.bind(analyticsController)
+)
+
 export default router
 

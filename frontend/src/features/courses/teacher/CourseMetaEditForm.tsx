@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Save, X } from 'lucide-react'
-import { Button, CourseBaseFields } from '@/shared/ui'
+import { Button, CourseBaseFields, CourseCertificateFields } from '@/shared/ui'
 import type { CourseBaseValues } from '@/shared/ui/CourseBaseFields'
+import type { CourseCertificateValues } from '@/shared/ui/CourseCertificateFields'
 import { useUpdateCourseMutation } from '@/entities/course'
 import type { Course, CourseLevel } from '@/shared/types/course'
 
@@ -20,6 +21,8 @@ interface CourseMetaEditFormProps {
     | 'category'
     | 'price'
     | 'currency'
+    | 'requireFinalTestForCertificate'
+    | 'minProgressForCertificate'
   >
   onClose: () => void
   onUpdated: (message: string) => void
@@ -45,8 +48,17 @@ export const CourseMetaEditForm = ({
     priceInput: course.price ? (course.price / 100).toString() : '0',
   })
 
+  const [certValues, setCertValues] = useState<CourseCertificateValues>({
+    requireFinalTestForCertificate: course.requireFinalTestForCertificate,
+    minProgressForCertificate: course.minProgressForCertificate,
+  })
+
   const handleChange = (field: keyof CourseBaseValues, value: string) => {
     setValues(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleCertChange = (field: keyof CourseCertificateValues, value: boolean | number) => {
+    setCertValues(prev => ({ ...prev, [field]: value }))
   }
 
   const handleSave = async () => {
@@ -76,6 +88,8 @@ export const CourseMetaEditForm = ({
           coverImage: values.coverImage.trim() || undefined,
           category: values.category.trim() || undefined,
           price: normalizedPrice,
+          requireFinalTestForCertificate: certValues.requireFinalTestForCertificate,
+          minProgressForCertificate: certValues.minProgressForCertificate,
         },
       }).unwrap()
 
@@ -88,8 +102,8 @@ export const CourseMetaEditForm = ({
   }
 
   return (
-    <div className="mb-6 glass-card rounded-md p-6">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="mb-6 glass-card rounded-md p-6 space-y-6">
+      <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Редактирование курса</h2>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="h-4 w-4" />
@@ -103,10 +117,15 @@ export const CourseMetaEditForm = ({
         onChange={handleChange}
       />
 
-      <div className="mt-4 flex gap-2">
+      <CourseCertificateFields
+        values={certValues}
+        onChange={handleCertChange}
+      />
+
+      <div className="flex gap-2">
         <Button onClick={handleSave} disabled={isLoading}>
           <Save className="mr-2 h-4 w-4" />
-          {isLoading ? 'Сохранение...' : 'Сохранить'}
+          {isLoading ? 'Сохранение…' : 'Сохранить'}
         </Button>
         <Button variant="outline" onClick={onClose}>
           Отмена

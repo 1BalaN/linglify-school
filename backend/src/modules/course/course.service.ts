@@ -14,6 +14,7 @@ import { CourseStatus, UserRole } from '@prisma/client'
 import { chatService } from '../chat/chat.service'
 import { emailService } from '../../shared/lib/email'
 import { config } from '../../config/env'
+import { subscriptionService } from '../subscription/subscription.service'
 
 class CourseService {
   /**
@@ -394,6 +395,18 @@ class CourseService {
 
     // Проверки при отправке на модерацию
     if (nextStatus === CourseStatus.PENDING_REVIEW) {
+      // Только для преподавателей: проверяем активную подписку
+      if (userRole === UserRole.TEACHER) {
+        const hasActiveSub = await subscriptionService.isSubscriptionActive(userId)
+        if (!hasActiveSub) {
+          throw new AppError(
+            403,
+            'SUBSCRIPTION_REQUIRED',
+            'Для публикации курсов необходима активная подписка. Оформите подписку в разделе "Подписка".'
+          )
+        }
+      }
+
       if (!course.title?.trim() || !course.description?.trim()) {
         throw new AppError(
           400,

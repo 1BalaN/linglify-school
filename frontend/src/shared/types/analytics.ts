@@ -115,3 +115,36 @@ export interface TeacherCourseAnalyticsTimeseries {
   activeStudents: number[]
 }
 
+// ── Student efficiency scoring ──────────────────────────────────────
+
+export type EfficiencyLevel = 'excellent' | 'good' | 'average' | 'poor' | 'critical'
+
+export interface StudentEfficiencyScore {
+  userId: string
+  user: {
+    id: string
+    firstName: string | null
+    lastName: string | null
+    email: string
+    avatar: string | null
+  }
+  /** Integral score E_j in [0, 1] */
+  score: number
+  /** Harrington-scale tier */
+  level: EfficiencyLevel
+  /** Normalised criteria values (0-100 for display) */
+  breakdown: {
+    accuracy:   number
+    regularity: number
+    practice:   number
+    engagement: number
+  }
+  /** Variance-based weights (0-100, sum ≈ 100) */
+  weights: {
+    accuracy:   number
+    regularity: number
+    practice:   number
+    engagement: number
+  }
+}
+

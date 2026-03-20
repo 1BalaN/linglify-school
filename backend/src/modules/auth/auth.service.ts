@@ -5,6 +5,7 @@ import { tokenService } from '../../shared/lib/token'
 import { emailService } from '../../shared/lib/email'
 import { smsService } from '../../shared/lib/sms'
 import { AppError } from '../../shared/middleware/errorHandler'
+import { platformSettingsService } from '../settings/platformSettings.service'
 import type {
   RegisterDto,
   LoginDto,
@@ -28,16 +29,32 @@ export class AuthService {
 
     const hashedPassword = await hashService.hash(dto.password)
 
+    const role = dto.role === 'TEACHER' ? 'TEACHER' : 'STUDENT'
+
     const user = await prisma.user.create({
       data: {
         email: dto.email,
         password: hashedPassword,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        role: 'STUDENT',
+        role,
         isEmailVerified: false,
       },
     })
+
+    // Новые преподаватели получают пробный период (длительность из настроек платформы)
+    if (role === 'TEACHER') {
+      const settings = await platformSettingsService.getSettings()
+      const trialDays = settings.trialSubscriptionDays ?? 30
+      const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000)
+      await prisma.teacherSubscription.create({
+        data: {
+          userId: user.id,
+          status: 'TRIAL',
+          trialEndsAt,
+        },
+      })
+    }
 
     // Создаем токен подтверждения email
     const verificationToken = tokenService.generateToken()

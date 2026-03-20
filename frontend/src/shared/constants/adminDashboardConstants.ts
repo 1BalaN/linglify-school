@@ -1,4 +1,4 @@
-import { BarChart3, BookOpen, HelpCircle, MessageSquare, Settings, Shield, Users, Target } from "lucide-react";
+import { BarChart3, BookOpen, HelpCircle, MessageSquare, Settings, Shield, Users, Target, DollarSign } from "lucide-react";
 
 export const adminDashboardQuickLinks = [
     {
@@ -56,5 +56,12 @@ export const adminDashboardQuickLinks = [
       icon: Settings,
       link: '/admin/settings',
       color: 'from-gray-500 to-slate-500',
+    },
+    {
+      title: 'Выручка',
+      description: 'Продажи курсов, комиссии и выплаты преподавателям',
+      icon: DollarSign,
+      link: '/admin/revenue',
+      color: 'from-emerald-500 to-green-600',
     },
 ]

@@ -48,7 +48,11 @@ export interface Course {
   learningOutcomes: string[]
   lastReviewComment?: string | null
   lastReviewedAt?: string | null
-  
+
+  // Политика сертификата (на уровне курса)
+  requireFinalTestForCertificate: boolean
+  minProgressForCertificate: number
+
   createdAt: string
   updatedAt: string
   
@@ -258,6 +262,8 @@ export interface CreateCourseDto {
   tags?: string[]
   prerequisites?: string[]
   learningOutcomes?: string[]
+  requireFinalTestForCertificate?: boolean
+  minProgressForCertificate?: number
 }
 
 export interface UpdateCourseDto extends Partial<CreateCourseDto> {}

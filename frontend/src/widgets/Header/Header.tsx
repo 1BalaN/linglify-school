@@ -5,7 +5,7 @@ import { RootState } from '@/app/store'
 import { logout, useLogoutMutation } from '@/entities/user'
 import { Button } from '@/shared/ui'
 import { useTheme } from '@/shared/lib/theme'
-import { BookOpen, User, LogOut, Menu, Moon, Sun, Shield, GraduationCap, MessageCircle } from 'lucide-react'
+import { BookOpen, User, LogOut, Menu, Moon, Sun, Shield, GraduationCap, MessageCircle, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { useGetUnreadCountQuery } from '@/entities/chat/api/chatApi'
 
@@ -110,13 +110,17 @@ export const Header = () => {
               )}
               {(user.role === 'TEACHER' || user.role === 'ADMIN') && (
                 <Link to="/admin/courses">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
                     <span className="hidden lg:inline">Мои курсы</span>
+                  </Button>
+                </Link>
+              )}
+              {user.role === 'TEACHER' && (
+                <Link to="/teacher/earnings">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Wallet className="h-4 w-4" />
+                    <span className="hidden lg:inline">Заработок</span>
                   </Button>
                 </Link>
               )}

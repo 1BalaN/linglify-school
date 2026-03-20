@@ -38,4 +38,50 @@ export interface RegisterDto {
   password: string
   firstName?: string
   lastName?: string
+  role?: 'STUDENT' | 'TEACHER'
+}
+
+export type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
+export type SubscriptionPlan   = 'MONTHLY' | 'ANNUAL'
+export type PayoutStatus       = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'REJECTED'
+
+export interface TeacherSubscription {
+  id: string
+  userId: string
+  status: SubscriptionStatus
+  plan: SubscriptionPlan | null
+  trialEndsAt: string | null
+  currentPeriodEnd: string | null
+  stripeCustomerId: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CourseRevenue {
+  id: string
+  courseId: string
+  course: { id: string; title: string; coverImage: string | null }
+  teacherId: string
+  teacher: { id: string; firstName: string | null; lastName: string | null; email: string; avatar: string | null }
+  studentId: string
+  student: { id: string; firstName: string | null; lastName: string | null; email: string }
+  amount: number
+  platformFee: number
+  teacherEarning: number
+  currency: string
+  stripeSessionId: string | null
+  createdAt: string
+}
+
+export interface PayoutRequest {
+  id: string
+  teacherId: string
+  teacher: { id: string; firstName: string | null; lastName: string | null; email: string }
+  amount: number
+  currency: string
+  payoutDetails: string | null
+  status: PayoutStatus
+  adminNote: string | null
+  processedAt: string | null
+  createdAt: string
 }

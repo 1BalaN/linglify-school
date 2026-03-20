@@ -1,26 +1,22 @@
 import { User as UserIcon, Mail, Calendar, Globe, Languages } from 'lucide-react'
 import type { User } from '@/shared/types/user'
-
-const formatDate = (date: string | Date, includeTime = false) => {
-  const d = new Date(date)
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const year = d.getFullYear()
-  
-  if (includeTime) {
-    const hours = String(d.getHours()).padStart(2, '0')
-    const minutes = String(d.getMinutes()).padStart(2, '0')
-    return `${day}.${month}.${year} ${hours}:${minutes}`
-  }
-  
-  return `${day}.${month}.${year}`
-}
+import { useGetMySubscriptionQuery, SubscriptionStatusBadge } from '@/entities/subscription'
+import { formatDateRU } from '@/shared/lib'
 
 interface ProfileInfoProps {
   user: User
 }
 
+function TeacherSubscriptionBadge() {
+  const { data } = useGetMySubscriptionQuery(undefined, { refetchOnMountOrArgChange: true })
+  const sub = data?.data
+  if (!sub) return null
+  return <SubscriptionStatusBadge subscription={sub} showDays />
+}
+
 export const ProfileInfo = ({ user }: ProfileInfoProps) => {
+  const isTeacher = user.role === 'TEACHER'
+
   return (
     <div className="space-y-6">
       {/* Avatar and Name */}
@@ -41,11 +37,14 @@ export const ProfileInfo = ({ user }: ProfileInfoProps) => {
             {user.firstName} {user.lastName}
           </h2>
           <p className="text-muted-foreground mb-2">{user.email}</p>
-          {user.isEmailVerified && (
-            <span className="inline-block rounded-full bg-green-500/10 px-4 py-1.5 text-xs font-semibold text-green-600 dark:text-green-400 ring-1 ring-green-500/20">
-              ✓ Email подтвержден
-            </span>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {user.isEmailVerified && (
+              <span className="inline-block rounded-full bg-green-500/10 px-4 py-1.5 text-xs font-semibold text-green-600 dark:text-green-400 ring-1 ring-green-500/20">
+                ✓ Email подтвержден
+              </span>
+            )}
+            {isTeacher && <TeacherSubscriptionBadge />}
+          </div>
         </div>
       </div>
 
@@ -92,7 +91,7 @@ export const ProfileInfo = ({ user }: ProfileInfoProps) => {
                 Дата рождения
               </p>
               <p className="font-medium text-foreground">
-                {formatDate(user.dateOfBirth)}
+                {formatDateRU(user.dateOfBirth)}
               </p>
             </div>
           </div>
@@ -159,7 +158,7 @@ export const ProfileInfo = ({ user }: ProfileInfoProps) => {
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Дата регистрации:</span>
             <span className="font-medium text-foreground">
-              {formatDate(user.createdAt, true)}
+              {formatDateRU(user.createdAt, true)}
             </span>
           </div>
           <div className="flex justify-between items-center">

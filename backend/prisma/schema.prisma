@@ -72,6 +72,13 @@ model User {
   chatSupportThreads   ChatThread[] @relation("ChatSupportUser")
   sentMessages         ChatMessage[] @relation("UserChatMessages")
 
+  // Монетизация
+  teacherSubscription  TeacherSubscription?
+  courseRevenues       CourseRevenue[]     @relation("TeacherRevenue")
+  purchases            CourseRevenue[]     @relation("StudentPurchases")
+  payoutRequests       PayoutRequest[]     @relation("TeacherPayouts")
+  processedPayouts     PayoutRequest[]     @relation("AdminProcessedPayouts")
+
   @@unique([oauthProvider, oauthId])
   @@map("users")
 }
@@ -147,6 +154,25 @@ enum CourseStatus {
   REJECTED        // Отклонен
   PUBLISHED       // Опубликован
   ARCHIVED        // Архивирован
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
 }
 
 enum LessonType {
@@ -242,6 +268,7 @@ model Course {
   certificates    Certificate[]
   progress        Progress[]
   chatThreads     ChatThread[]
+  revenues        CourseRevenue[]
 
   @@index([teacherId])
   @@index([level])
@@ -599,4 +626,74 @@ model PlatformSettings {
   updatedAt                    DateTime @updatedAt
 
   @@map("platform_settings")
+}
+
+model TeacherSubscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status               SubscriptionStatus @default(TRIAL)
+  plan                 SubscriptionPlan?
+
+  stripeCustomerId     String?
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+
+  trialEndsAt          DateTime?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("teacher_subscriptions")
+}
+
+model CourseRevenue {
+  id              String   @id @default(uuid())
+  courseId        String
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacherId       String
+  teacher         User     @relation("TeacherRevenue", fields: [teacherId], references: [id], onDelete: Cascade)
+  studentId       String
+  student         User     @relation("StudentPurchases", fields: [studentId], references: [id], onDelete: Cascade)
+
+  amount          Int      // Total amount in cents
+  platformFee     Int      // 20% in cents
+  teacherEarning  Int      // 80% in cents
+  currency        String   @default("usd")
+
+  stripeSessionId String?
+
+  createdAt       DateTime @default(now())
+
+  @@index([teacherId])
+  @@index([courseId])
+  @@map("course_revenues")
+}
+
+model PayoutRequest {
+  id            String      @id @default(uuid())
+  teacherId     String
+  teacher       User        @relation("TeacherPayouts", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  amount        Int         // Amount in cents requested
+  currency      String      @default("byn")
+  payoutDetails String?     @db.Text // Payment method: bank card, phone, IBAN, etc.
+  status        PayoutStatus @default(PENDING)
+
+  adminNote     String?     @db.Text
+  processedAt   DateTime?
+  processedById String?
+  processedBy   User?       @relation("AdminProcessedPayouts", fields: [processedById], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([teacherId])
+  @@index([status])
+  @@map("payout_requests")
 }

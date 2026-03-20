@@ -38,6 +38,9 @@ import {
   PlacementTestPage,
   BecomeTeacherPage,
   ChatsPage,
+  TeacherSubscriptionPage,
+  TeacherEarningsPage,
+  AdminRevenuePage,
 } from '@/pages'
 
 
@@ -197,6 +200,30 @@ export const AppRouter = () => {
       />
       <Route path="/certificates/:code" element={<CertificateViewPage />} />
       <Route path="/become-teacher" element={<BecomeTeacherPage />} />
+      <Route
+        path="/teacher/subscription"
+        element={(
+          <ProtectedRoute roles={['TEACHER']}>
+            <TeacherSubscriptionPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/teacher/earnings"
+        element={(
+          <ProtectedRoute roles={['TEACHER']}>
+            <TeacherEarningsPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/admin/revenue"
+        element={(
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminRevenuePage />
+          </ProtectedRoute>
+        )}
+      />
       <Route path="/payment/success" element={<PaymentSuccessPage />} />
       <Route path="/payment/cancel" element={<PaymentCancelPage />} />
       <Route path="/placement-test" element={<PlacementTestPage />} />

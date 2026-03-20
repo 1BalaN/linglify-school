@@ -71,6 +71,8 @@ export const api = createApi({
     'AdminAnalytics',
     'TeacherAnalytics',
     'Chat',
+    'Subscription',
+    'Revenue',
   ],
   endpoints: () => ({}),
 })

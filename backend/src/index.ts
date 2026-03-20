@@ -22,6 +22,8 @@ import analyticsRouter from './modules/analytics/analytics.router'
 import settingsRouter from './modules/settings/settings.router'
 import userRouter from './modules/user/user.router'
 import chatRouter from './modules/chat/chat.router'
+import subscriptionRouter from './modules/subscription/subscription.router'
+import revenueRouter from './modules/revenue/revenue.router'
 import { setSocketServer } from './shared/lib/socket'
 import { jwtService } from './shared/lib/jwt'
 import { Server } from 'socket.io'
@@ -70,6 +72,8 @@ app.use('/api/analytics', analyticsRouter)
 app.use('/api/settings', settingsRouter)
 app.use('/api/users', userRouter)
 app.use('/api/chats', chatRouter)
+app.use('/api/subscriptions', subscriptionRouter)
+app.use('/api/revenue', revenueRouter)
 
 // Error handlers
 app.use(notFoundHandler)

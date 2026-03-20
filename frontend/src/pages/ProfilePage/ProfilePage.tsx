@@ -1,16 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { RootState } from '@/app/store'
-import { User, Settings, Shield, Phone, Award } from 'lucide-react'
+import { User, Settings, Shield, Phone, Award, Crown } from 'lucide-react'
 import { ProfileInfo } from './components/ProfileInfo'
 import { ProfileEdit } from './components/ProfileEdit'
 import { PasswordChange } from './components/PasswordChange'
 import { PhoneVerification } from './components/PhoneVerification'
 import { ProfileCertificates } from './components/ProfileCertificates'
+import { TeacherSubscriptionTab } from './components/TeacherSubscriptionTab'
 import { useGetCurrentUserQuery } from '@/entities/user'
 
-type Tab = 'info' | 'edit' | 'password' | 'phone' | 'certificates'
+type Tab = 'info' | 'edit' | 'password' | 'phone' | 'certificates' | 'subscription'
 
 export const ProfilePage = () => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
@@ -18,7 +19,15 @@ export const ProfilePage = () => {
     skip: !isAuthenticated,
   })
   const effectiveUser = currentUserData?.data ?? user
-  const [activeTab, setActiveTab] = useState<Tab>('info')
+  const [searchParams] = useSearchParams()
+  const [activeTab, setActiveTab] = useState<Tab>(
+    () => (searchParams.get('tab') as Tab | null) ?? 'info'
+  )
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as Tab | null
+    if (tabParam) setActiveTab(tabParam)
+  }, [searchParams])
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
@@ -31,6 +40,9 @@ export const ProfilePage = () => {
     { id: 'phone' as Tab, label: 'Телефон', icon: Phone },
     ...(effectiveUser?.role === 'STUDENT'
       ? [{ id: 'certificates' as Tab, label: 'Сертификаты', icon: Award }]
+      : []),
+    ...(effectiveUser?.role === 'TEACHER'
+      ? [{ id: 'subscription' as Tab, label: 'Подписка', icon: Crown }]
       : []),
   ]
 
@@ -75,6 +87,7 @@ export const ProfilePage = () => {
           {activeTab === 'password' && <PasswordChange />}
           {activeTab === 'phone' && effectiveUser && <PhoneVerification user={effectiveUser} />}
           {activeTab === 'certificates' && <ProfileCertificates />}
+          {activeTab === 'subscription' && <TeacherSubscriptionTab />}
         </div>
       </div>
     </div>

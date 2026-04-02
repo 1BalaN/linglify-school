@@ -2,9 +2,11 @@ import { useState, useMemo } from 'react'
 import { ChevronDown, Search } from 'lucide-react'
 import { Input } from '@/shared/ui'
 import { useGetAllFAQsQuery } from '@/entities/faq'
+import { useTranslation } from 'react-i18next'
 
 
 export const FAQPage = () => {
+  const { t } = useTranslation('support')
   const [searchQuery, setSearchQuery] = useState('')
   const [openItems, setOpenItems] = useState<string[]>([])
   const { data, isLoading } = useGetAllFAQsQuery()
@@ -44,10 +46,10 @@ export const FAQPage = () => {
       <div className="container mx-auto max-w-4xl px-4">
         <div className="mb-12 text-center">
           <h1 className="mb-4 text-4xl font-bold text-gradient">
-            Часто задаваемые вопросы
+            {t('faq.title')}
           </h1>
           <p className="text-lg text-muted-foreground">
-            Ответы на популярные вопросы о платформе Linglify
+            {t('faq.subtitle')}
           </p>
         </div>
 
@@ -56,7 +58,7 @@ export const FAQPage = () => {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Поиск по вопросам..."
+              placeholder={t('faq.searchPlaceholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-12"
@@ -67,7 +69,7 @@ export const FAQPage = () => {
         {isLoading && (
           <div className="rounded-2xl glass-card p-12 text-center backdrop-blur-xl">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <p className="text-muted-foreground">Загрузка FAQ...</p>
+            <p className="text-muted-foreground">{t('faq.loading')}</p>
           </div>
         )}
 
@@ -130,9 +132,9 @@ export const FAQPage = () => {
         {filteredFAQ.length === 0 && (
           <div className="rounded-2xl glass-card p-12 text-center backdrop-blur-xl">
             <p className="text-muted-foreground">
-              По вашему запросу ничего не найдено. Попробуйте изменить поисковый запрос или{' '}
+              {t('faq.emptySearch')}{' '}
               <a href="/contact" className="text-primary hover:underline">
-                свяжитесь с поддержкой
+                {t('faq.contactSupportLink')}
               </a>
               .
             </p>
@@ -141,16 +143,16 @@ export const FAQPage = () => {
 
         <div className="mt-12 rounded-2xl glass-card p-8 text-center backdrop-blur-xl">
           <h3 className="mb-3 text-xl font-bold text-foreground">
-            Не нашли ответ?
+            {t('faq.notFoundAnswer')}
           </h3>
           <p className="mb-6 text-muted-foreground">
-            Наша служба поддержки всегда готова помочь
+            {t('faq.supportReady')}
           </p>
           <a
             href="/contact"
             className="inline-flex items-center rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 font-semibold text-white shadow-lg shadow-cyan-500/30 transition-all hover:shadow-xl hover:shadow-cyan-500/40"
           >
-            Связаться с поддержкой
+            {t('faq.contactSupportButton')}
           </a>
         </div>
       </div>

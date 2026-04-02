@@ -11,26 +11,30 @@ import { Button, Input } from '@/shared/ui'
 import type { User } from '@/shared/types/user'
 import { useState } from 'react'
 import { CheckCircle, Phone as PhoneIcon, Send } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-const phoneSchema = z.object({
-  phone: z
-    .string()
-    .min(10, 'Введите корректный номер телефона')
-    .regex(/^\+?[0-9]{10,15}$/, 'Неверный формат номера телефона'),
-})
+const createPhoneSchema = (t: (key: string) => string) =>
+  z.object({
+    phone: z
+      .string()
+      .min(10, t('phone.validation.invalidPhone'))
+      .regex(/^\+?[0-9]{10,15}$/, t('phone.validation.phoneFormat')),
+  })
 
-const verifySchema = z.object({
-  code: z.string().length(6, 'Код должен содержать 6 цифр'),
-})
+const createVerifySchema = (t: (key: string) => string) =>
+  z.object({
+    code: z.string().length(6, t('phone.validation.codeLen')),
+  })
 
-type PhoneFormData = z.infer<typeof phoneSchema>
-type VerifyFormData = z.infer<typeof verifySchema>
+type PhoneFormData = z.infer<ReturnType<typeof createPhoneSchema>>
+type VerifyFormData = z.infer<ReturnType<typeof createVerifySchema>>
 
 interface PhoneVerificationProps {
   user: User
 }
 
 export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
+  const { t } = useTranslation('profile')
   const dispatch = useDispatch()
   const [sendVerification, { isLoading: isSending }] =
     useSendPhoneVerificationMutation()
@@ -45,7 +49,7 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
     handleSubmit: handleSubmitPhone,
     formState: { errors: phoneErrors },
   } = useForm<PhoneFormData>({
-    resolver: zodResolver(phoneSchema),
+    resolver: zodResolver(createPhoneSchema(t)),
   })
 
   const {
@@ -53,7 +57,7 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
     handleSubmit: handleSubmitCode,
     formState: { errors: codeErrors },
   } = useForm<VerifyFormData>({
-    resolver: zodResolver(verifySchema),
+    resolver: zodResolver(createVerifySchema(t)),
   })
 
   const onSendCode = async (data: PhoneFormData) => {
@@ -87,10 +91,10 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
           <div className="text-center">
             <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-600 dark:text-green-400" />
             <h3 className="text-xl font-semibold text-green-600 dark:text-green-400">
-              Телефон подтвержден
+              {t('phone.verifiedTitle')}
             </h3>
             <p className="mt-2 text-muted-foreground">
-              Ваш номер телефона: <span className="font-medium">{user.phone}</span>
+              {t('phone.verifiedNumber')} <span className="font-medium">{user.phone}</span>
             </p>
           </div>
         </div>
@@ -106,12 +110,12 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
         </div>
         <div>
           <h3 className="text-2xl font-bold text-gradient">
-            Подтверждение телефона
+            {t('phone.title')}
           </h3>
           <p className="text-muted-foreground mt-1">
             {codeSent
-              ? 'Введите код, отправленный на ваш телефон'
-              : 'Добавьте номер телефона для дополнительной безопасности'}
+              ? t('phone.subtitleCode')
+              : t('phone.subtitleStart')}
           </p>
         </div>
       </div>
@@ -121,10 +125,10 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
           <Input
             {...registerPhone('phone')}
             type="tel"
-            label="Номер телефона"
-            placeholder="+7 (999) 123-45-67"
+            label={t('phone.phoneLabel')}
+            placeholder={t('phone.phonePlaceholder')}
             error={phoneErrors.phone?.message}
-            helperText="Введите номер в международном формате"
+            helperText={t('phone.phoneHint')}
           />
 
           <Button
@@ -133,14 +137,14 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
             isLoading={isSending}
           >
             <Send className="mr-2 h-4 w-4" />
-            Отправить код подтверждения
+            {t('phone.sendCode')}
           </Button>
         </form>
       ) : (
         <form onSubmit={handleSubmitCode(onVerify)} className="space-y-4">
           <div className="rounded-lg border border-border bg-accent/20 p-4">
             <p className="text-sm text-muted-foreground">
-              Код подтверждения отправлен на номер:
+              {t('phone.codeSentTo')}
             </p>
             <p className="mt-1 font-medium text-foreground">{phoneNumber}</p>
           </div>
@@ -148,11 +152,11 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
           <Input
             {...registerCode('code')}
             type="text"
-            label="Код подтверждения"
+            label={t('phone.codeLabel')}
             placeholder="123456"
             error={codeErrors.code?.message}
             maxLength={6}
-            helperText="6-значный код из SMS"
+            helperText={t('phone.codeHint')}
           />
 
           {verifyError && (
@@ -161,14 +165,14 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
                 ? (
                     verifyError.data as { error: { message: string } }
                   ).error.message
-                : 'Произошла ошибка при подтверждении'}
+                : t('phone.verifyError')}
             </div>
           )}
 
           {success && (
             <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400">
               <CheckCircle className="h-4 w-4" />
-              Телефон успешно подтвержден!
+              {t('phone.verifySuccess')}
             </div>
           )}
 
@@ -179,14 +183,14 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
               onClick={() => setCodeSent(false)}
               className="flex-1"
             >
-              Изменить номер
+              {t('phone.changeNumber')}
             </Button>
             <Button
               type="submit"
               className="flex-1"
               isLoading={isVerifying}
             >
-              Подтвердить
+              {t('phone.confirm')}
             </Button>
           </div>
         </form>
@@ -194,12 +198,12 @@ export const PhoneVerification = ({ user }: PhoneVerificationProps) => {
 
       <div className="rounded-lg border border-border bg-accent/20 p-4">
         <h4 className="mb-2 text-sm font-semibold text-foreground">
-          Зачем подтверждать телефон?
+          {t('phone.whyTitle')}
         </h4>
         <ul className="space-y-1 text-sm text-muted-foreground">
-          <li>• Дополнительная защита аккаунта</li>
-          <li>• Восстановление доступа при потере пароля</li>
-          <li>• Уведомления о важных событиях</li>
+          {(t('phone.whyItems', { returnObjects: true }) as string[]).map(item => (
+            <li key={item}>• {item}</li>
+          ))}
         </ul>
       </div>
     </div>

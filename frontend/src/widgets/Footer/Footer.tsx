@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import { BookOpen, Mail, Github, Send } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export const Footer = () => {
+  const { t } = useTranslation('common')
   const currentYear = new Date().getFullYear()
 
   return (
@@ -16,13 +18,12 @@ export const Footer = () => {
               <span className="text-xl font-bold text-foreground">Linglify</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Современная платформа для изучения языков с интерактивными курсами
-              и персональным подходом.
+              {t('footer.description')}
             </p>
           </div>  
           <div>
             <h3 className="mb-4 text-sm font-semibold text-foreground">
-              Платформа
+              {t('footer.columns.platform')}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -30,7 +31,7 @@ export const Footer = () => {
                   to="/courses"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
-                  Курсы
+                  {t('footer.links.courses')}
                 </Link>
               </li>
               <li>
@@ -38,7 +39,7 @@ export const Footer = () => {
                   to="/become-teacher"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
-                  Стать преподавателем
+                  {t('footer.links.becomeTeacher')}
                 </Link>
               </li>
               <li>
@@ -46,7 +47,7 @@ export const Footer = () => {
                   to="/about"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
-                  О нас
+                  {t('footer.links.aboutUs')}
                 </Link>
               </li>
             </ul>
@@ -54,7 +55,7 @@ export const Footer = () => {
 
           <div>
             <h3 className="mb-4 text-sm font-semibold text-foreground">
-              Поддержка
+              {t('footer.columns.support')}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -62,7 +63,7 @@ export const Footer = () => {
                   to="/help"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
-                  Помощь
+                  {t('footer.links.help')}
                 </Link>
               </li>
               <li>
@@ -70,7 +71,7 @@ export const Footer = () => {
                   to="/faq"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
-                  FAQ
+                  {t('footer.links.faq')}
                 </Link>
               </li>
               <li>
@@ -78,7 +79,7 @@ export const Footer = () => {
                   to="/contact"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
-                  Контакты
+                  {t('footer.links.contacts')}
                 </Link>
               </li>
             </ul>
@@ -86,7 +87,7 @@ export const Footer = () => {
 
           <div>
             <h3 className="mb-4 text-sm font-semibold text-foreground">
-              Правовая информация
+              {t('footer.columns.legal')}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -94,7 +95,7 @@ export const Footer = () => {
                   to="/privacy"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
-                  Конфиденциальность
+                  {t('footer.links.privacy')}
                 </Link>
               </li>
               <li>
@@ -102,7 +103,7 @@ export const Footer = () => {
                   to="/terms"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
-                  Условия использования
+                  {t('footer.links.terms')}
                 </Link>
               </li>
             </ul>
@@ -112,7 +113,7 @@ export const Footer = () => {
         <div className="mt-12 border-t border-border pt-8">
           <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
             <p className="text-sm text-muted-foreground">
-              © {currentYear} Linglify. Все права защищены.
+              {t('footer.copyright', { year: currentYear })}
             </p>
             <div className="flex space-x-6">
               <a

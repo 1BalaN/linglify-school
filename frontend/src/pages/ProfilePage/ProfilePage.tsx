@@ -10,10 +10,12 @@ import { PhoneVerification } from './components/PhoneVerification'
 import { ProfileCertificates } from './components/ProfileCertificates'
 import { TeacherSubscriptionTab } from './components/TeacherSubscriptionTab'
 import { useGetCurrentUserQuery } from '@/entities/user'
+import { useTranslation } from 'react-i18next'
 
 type Tab = 'info' | 'edit' | 'password' | 'phone' | 'certificates' | 'subscription'
 
 export const ProfilePage = () => {
+  const { t } = useTranslation('profile')
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
   const { data: currentUserData } = useGetCurrentUserQuery(undefined, {
     skip: !isAuthenticated,
@@ -34,15 +36,15 @@ export const ProfilePage = () => {
   }
 
   const tabs = [
-    { id: 'info' as Tab, label: 'Профиль', icon: User },
-    { id: 'edit' as Tab, label: 'Редактировать', icon: Settings },
-    { id: 'password' as Tab, label: 'Безопасность', icon: Shield },
-    { id: 'phone' as Tab, label: 'Телефон', icon: Phone },
+    { id: 'info' as Tab, label: t('page.tabs.info'), icon: User },
+    { id: 'edit' as Tab, label: t('page.tabs.edit'), icon: Settings },
+    { id: 'password' as Tab, label: t('page.tabs.password'), icon: Shield },
+    { id: 'phone' as Tab, label: t('page.tabs.phone'), icon: Phone },
     ...(effectiveUser?.role === 'STUDENT'
-      ? [{ id: 'certificates' as Tab, label: 'Сертификаты', icon: Award }]
+      ? [{ id: 'certificates' as Tab, label: t('page.tabs.certificates'), icon: Award }]
       : []),
     ...(effectiveUser?.role === 'TEACHER'
-      ? [{ id: 'subscription' as Tab, label: 'Подписка', icon: Crown }]
+      ? [{ id: 'subscription' as Tab, label: t('page.tabs.subscription'), icon: Crown }]
       : []),
   ]
 
@@ -52,10 +54,10 @@ export const ProfilePage = () => {
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-gradient mb-3">
-            Настройки профиля
+            {t('page.title')}
           </h1>
           <p className="text-lg text-muted-foreground">
-            Управляйте своим аккаунтом и настройками
+            {t('page.subtitle')}
           </p>
         </div>
 

@@ -8,8 +8,11 @@ import { useTheme } from '@/shared/lib/theme'
 import { BookOpen, User, LogOut, Menu, Moon, Sun, Shield, GraduationCap, MessageCircle, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { useGetUnreadCountQuery } from '@/entities/chat/api/chatApi'
+import { useTranslation } from 'react-i18next'
+import { LanguageSwitcher } from '@/widgets/Header/LanguageSwitcher'
 
 export const Header = () => {
+  const { t } = useTranslation('common')
   const dispatch = useDispatch()
   const { theme, toggleTheme } = useTheme()
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
@@ -51,26 +54,27 @@ export const Header = () => {
             to="/courses"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
           >
-            Курсы
+            {t('header.nav.courses')}
           </Link>
           <Link
             to="/about"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
           >
-            О платформе
+            {t('header.nav.about')}
           </Link>
           <Link
             to="/become-teacher"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
           >
-            Стать преподавателем
+            {t('header.nav.becomeTeacher')}
           </Link>
         </nav>
         <div className="hidden items-center space-x-4 md:flex">
+          <LanguageSwitcher />
           <button
             onClick={toggleTheme}
             className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-border/50 bg-background/50 backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-primary/5 hover:scale-110 active:scale-95"
-            aria-label="Toggle theme"
+            aria-label={t('header.actions.toggleTheme')}
           >
             {theme === 'light' ? (
               <Moon className="h-4 w-4 text-primary" />
@@ -92,7 +96,7 @@ export const Header = () => {
                     {hasUnreadChats && (
                       <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.25)]" />
                     )}
-                    <span className="hidden lg:inline">Чаты</span>
+                    <span className="hidden lg:inline">{t('header.actions.chats')}</span>
                   </Button>
                 </Link>
               )}
@@ -104,7 +108,7 @@ export const Header = () => {
                     className="flex items-center gap-2"
                   >
                     <GraduationCap className="h-4 w-4" />
-                    <span className="hidden lg:inline">Моё обучение</span>
+                    <span className="hidden lg:inline">{t('header.actions.myLearning')}</span>
                   </Button>
                 </Link>
               )}
@@ -112,7 +116,7 @@ export const Header = () => {
                 <Link to="/admin/courses">
                   <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
-                    <span className="hidden lg:inline">Мои курсы</span>
+                    <span className="hidden lg:inline">{t('header.actions.myCourses')}</span>
                   </Button>
                 </Link>
               )}
@@ -120,7 +124,7 @@ export const Header = () => {
                 <Link to="/teacher/earnings">
                   <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <Wallet className="h-4 w-4" />
-                    <span className="hidden lg:inline">Заработок</span>
+                    <span className="hidden lg:inline">{t('header.actions.earnings')}</span>
                   </Button>
                 </Link>
               )}
@@ -132,7 +136,7 @@ export const Header = () => {
                     className="flex items-center gap-2"
                   >
                     <Shield className="h-4 w-4" />
-                    <span className="hidden lg:inline">Админ-панель</span>
+                    <span className="hidden lg:inline">{t('header.actions.adminPanel')}</span>
                   </Button>
                 </Link>
               )}
@@ -167,12 +171,12 @@ export const Header = () => {
             <>
               <Link to="/login">
                 <Button variant="ghost" size="sm">
-                  Войти
+                  {t('header.actions.login')}
                 </Button>
               </Link>
               <Link to="/register">
                 <Button variant="primary" size="sm">
-                  Регистрация
+                  {t('header.actions.register')}
                 </Button>
               </Link>
             </>
@@ -181,10 +185,11 @@ export const Header = () => {
 
         {/* Mobile Menu Button */}
         <div className="flex items-center space-x-2 md:hidden">
+          <LanguageSwitcher />
           <button
             onClick={toggleTheme}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background transition-all hover:bg-accent"
-            aria-label="Toggle theme"
+            aria-label={t('header.actions.toggleTheme')}
           >
             {theme === 'light' ? (
               <Moon className="h-4 w-4" />
@@ -210,21 +215,21 @@ export const Header = () => {
               className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
-              Курсы
+              {t('header.nav.courses')}
             </Link>
             <Link
               to="/about"
               className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
-              О платформе
+              {t('header.nav.about')}
             </Link>
             <Link
               to="/become-teacher"
               className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
-              Стать преподавателем
+              {t('header.nav.becomeTeacher')}
             </Link>
             <div className="border-t border-border pt-4">
               {isAuthenticated && user ? (
@@ -236,7 +241,7 @@ export const Header = () => {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <GraduationCap className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium text-foreground">Моё обучение</span>
+                      <span className="text-sm font-medium text-foreground">{t('header.actions.myLearning')}</span>
                     </Link>
                   )}
                   {(user.role === 'TEACHER' || user.role === 'ADMIN') && (
@@ -246,7 +251,7 @@ export const Header = () => {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <BookOpen className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium text-foreground">Мои курсы</span>
+                      <span className="text-sm font-medium text-foreground">{t('header.actions.myCourses')}</span>
                     </Link>
                   )}
                   {user.role === 'ADMIN' && (
@@ -257,7 +262,7 @@ export const Header = () => {
                     >
                       <Shield className="h-4 w-4 text-primary" />
                       <span className="text-sm font-medium text-foreground">
-                        Админ-панель
+                        {t('header.actions.adminPanel')}
                       </span>
                     </Link>
                   )}
@@ -267,7 +272,7 @@ export const Header = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <MessageCircle className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-foreground">Чаты</span>
+                    <span className="text-sm font-medium text-foreground">{t('header.actions.chats')}</span>
                   </Link>
                   <Link
                     to="/profile"
@@ -299,19 +304,19 @@ export const Header = () => {
                     className="mt-2 w-full justify-start"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Выйти
+                    {t('header.actions.logout')}
                   </Button>
                 </>
               ) : (
                 <div className="space-y-2">
                   <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="ghost" size="sm" className="w-full">
-                      Войти
+                      {t('header.actions.login')}
                     </Button>
                   </Link>
                   <Link to="/register" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="primary" size="sm" className="w-full">
-                      Регистрация
+                      {t('header.actions.register')}
                     </Button>
                   </Link>
                 </div>

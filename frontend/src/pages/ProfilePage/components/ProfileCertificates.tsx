@@ -2,8 +2,10 @@ import { AlertCircle, Loader2, Download } from 'lucide-react'
 import { useGetMyCertificatesQuery } from '@/entities/certificate'
 import { CertificateCard } from '@/features/certificate'
 import { openCertificatePdf } from '@/shared/lib/certificate'
+import { useTranslation } from 'react-i18next'
 
 export const ProfileCertificates = () => {
+  const { t } = useTranslation('profile')
   const { data, isLoading, isError } = useGetMyCertificatesQuery()
   const certificates = data?.data ?? []
 
@@ -19,7 +21,7 @@ export const ProfileCertificates = () => {
     return (
       <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
         <AlertCircle className="h-4 w-4" />
-        <span>Не удалось загрузить сертификаты. Попробуйте обновить страницу.</span>
+        <span>{t('certificates.loadError')}</span>
       </div>
     )
   }
@@ -27,8 +29,7 @@ export const ProfileCertificates = () => {
   if (certificates.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border/60 bg-card/40 p-6 text-sm text-muted-foreground">
-        У вас пока нет сертификатов. Завершайте курсы и финальные тесты, чтобы получать
-        подтверждение об окончании.
+        {t('certificates.empty')}
       </div>
     )
   }
@@ -45,7 +46,7 @@ export const ProfileCertificates = () => {
               className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 font-medium text-primary transition-colors hover:bg-primary/10"
             >
               <Download className="h-3.5 w-3.5" />
-              Открыть / скачать PDF
+              {t('certificates.openPdf')}
             </button>
           </div>
         </div>

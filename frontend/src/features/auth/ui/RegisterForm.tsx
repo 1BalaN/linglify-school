@@ -9,24 +9,33 @@ import { useDispatch } from 'react-redux'
 import { Button, Input } from '@/shared/ui'
 import { GraduationCap, BookOpen } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
+import { Trans, useTranslation } from 'react-i18next'
 
-const registerSchema = z.object({
-  email: z.string().email('Введите корректный email'),
-  password: z
-    .string()
-    .min(8, 'Пароль должен быть не менее 8 символов')
-    .max(128, 'Пароль не должен превышать 128 символов')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Пароль должен содержать хотя бы одну заглавную букву, одну строчную букву и одну цифру'
-    ),
-  firstName: z.string().min(2, 'Имя должно содержать минимум 2 символа').max(50, 'Имя не должно превышать 50 символов'),
-  lastName: z.string().min(2, 'Фамилия должна содержать минимум 2 символа').max(50, 'Фамилия не должна превышать 50 символов'),
-})
+const createRegisterSchema = (t: (key: string) => string) =>
+  z.object({
+    email: z.string().email(t('register.errors.invalidEmail')),
+    password: z
+      .string()
+      .min(8, t('register.errors.passwordMin'))
+      .max(128, t('register.errors.passwordMax'))
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        t('register.errors.passwordPattern')
+      ),
+    firstName: z
+      .string()
+      .min(2, t('register.errors.firstNameMin'))
+      .max(50, t('register.errors.firstNameMax')),
+    lastName: z
+      .string()
+      .min(2, t('register.errors.lastNameMin'))
+      .max(50, t('register.errors.lastNameMax')),
+  })
 
-type RegisterFormData = z.infer<typeof registerSchema>
+type RegisterFormData = z.infer<ReturnType<typeof createRegisterSchema>>
 
 export const RegisterForm = () => {
+  const { t } = useTranslation('auth')
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -40,7 +49,7 @@ export const RegisterForm = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(createRegisterSchema(t)),
   })
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -61,8 +70,8 @@ export const RegisterForm = () => {
   return (
     <div className="mx-auto w-full max-w-md space-y-6 rounded-2xl glass-card p-8 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gradient">Создать аккаунт</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Начните уже сегодня</p>
+        <h2 className="text-3xl font-bold text-gradient">{t('register.title')}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t('register.subtitle')}</p>
       </div>
 
       {/* Role toggle */}
@@ -78,7 +87,7 @@ export const RegisterForm = () => {
           )}
         >
           <BookOpen className="h-4 w-4" />
-          Ученик
+          {t('register.roleStudent')}
         </button>
         <button
           type="button"
@@ -91,13 +100,17 @@ export const RegisterForm = () => {
           )}
         >
           <GraduationCap className="h-4 w-4" />
-          Преподаватель
+          {t('register.roleTeacher')}
         </button>
       </div>
 
       {selectedRole === 'TEACHER' && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
-          <strong>30 дней бесплатно</strong> — после регистрации вы получите пробный период для публикации курсов. Далее — подписка от 30 BYN/мес.
+          <Trans
+            i18nKey="register.teacherTrial"
+            ns="auth"
+            components={{ strong: <strong /> }}
+          />
         </div>
       )}
 
@@ -105,7 +118,7 @@ export const RegisterForm = () => {
         <Input
           {...registerField('firstName')}
           type="text"
-          label="Имя"
+          label={t('register.firstNameLabel')}
           placeholder="Иван"
           error={errors.firstName?.message}
           autoComplete="given-name"
@@ -114,7 +127,7 @@ export const RegisterForm = () => {
         <Input
           {...registerField('lastName')}
           type="text"
-          label="Фамилия"
+          label={t('register.lastNameLabel')}
           placeholder="Иванов"
           error={errors.lastName?.message}
           autoComplete="family-name"
@@ -132,23 +145,23 @@ export const RegisterForm = () => {
         <Input
           {...registerField('password')}
           type="password"
-          label="Пароль"
+          label={t('register.passwordLabel')}
           placeholder="••••••••"
           error={errors.password?.message}
           autoComplete="new-password"
-          helperText="Минимум 8 символов, заглавная и строчная буква, цифра"
+          helperText={t('register.passwordHelper')}
         />
 
         {error && (
           <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
             {'data' in error
               ? (error.data as { error: { message: string } }).error.message
-              : 'Произошла ошибка при регистрации'}
+              : t('register.errors.default')}
           </div>
         )}
 
         <Button type="submit" className="w-full" isLoading={isLoading}>
-          {selectedRole === 'TEACHER' ? 'Зарегистрироваться как преподаватель' : 'Зарегистрироваться'}
+          {selectedRole === 'TEACHER' ? t('register.submitTeacher') : t('register.submitStudent')}
         </Button>
       </form>
 
@@ -157,7 +170,7 @@ export const RegisterForm = () => {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-card px-2 text-muted-foreground">Или</span>
+          <span className="bg-card px-2 text-muted-foreground">{t('common:common.or')}</span>
         </div>
       </div>
 
@@ -168,12 +181,12 @@ export const RegisterForm = () => {
           <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
           <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
-        Регистрация через Google
+        {t('register.googleRegister')}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Уже есть аккаунт?{' '}
-        <Link to="/login" className="font-medium text-primary hover:underline">Войти</Link>
+        {t('register.hasAccount')}{' '}
+        <Link to="/login" className="font-medium text-primary hover:underline">{t('register.loginLink')}</Link>
       </p>
     </div>
   )

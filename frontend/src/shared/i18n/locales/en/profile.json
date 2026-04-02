@@ -1,0 +1,105 @@
+{
+  "page": {
+    "title": "Profile settings",
+    "subtitle": "Manage your account and preferences",
+    "tabs": {
+      "info": "Profile",
+      "edit": "Edit",
+      "password": "Security",
+      "phone": "Phone",
+      "certificates": "Certificates",
+      "subscription": "Subscription"
+    }
+  },
+  "info": {
+    "emailVerified": "✓ Email verified",
+    "phone": "Phone",
+    "phoneVerified": "✓ Verified",
+    "dateOfBirth": "Date of birth",
+    "preferredLanguage": "Preferred language",
+    "targetLanguages": "Learning languages",
+    "bio": "About me",
+    "accountInfo": "Account information",
+    "registeredAt": "Registration date:",
+    "role": "Role:"
+  },
+  "edit": {
+    "title": "Edit profile",
+    "subtitle": "Update your personal information",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "dateOfBirth": "Date of birth",
+    "preferredLanguage": "Preferred languages",
+    "preferredLanguagePlaceholder": "For example: English, German",
+    "bio": "About me",
+    "bioPlaceholder": "Tell us about yourself...",
+    "save": "Save changes",
+    "success": "Profile updated successfully!",
+    "error": "An error occurred while updating profile",
+    "validation": {
+      "firstNameMin": "First name must contain at least 2 characters",
+      "bioMax": "Maximum 500 characters"
+    }
+  },
+  "password": {
+    "setTitle": "Set password",
+    "changeTitle": "Change password",
+    "setSubtitle": "Set a password to sign in with email",
+    "changeSubtitle": "Update your password to improve account security",
+    "oauthTitle": "Account was registered via {{provider}}",
+    "oauthBody": "You can set an email password, and still use {{provider}} for quick sign in.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "minHint": "Minimum 6 characters",
+    "submit": "Change password",
+    "error": "An error occurred while changing password",
+    "success": "Password changed successfully!",
+    "securityTips": "Security recommendations",
+    "tips": [
+      "Use at least 8 characters",
+      "Include uppercase and lowercase letters",
+      "Add numbers and special symbols",
+      "Avoid obvious passwords"
+    ],
+    "validation": {
+      "min6": "Minimum 6 characters",
+      "newMin6": "Password must contain at least 6 characters",
+      "mismatch": "Passwords do not match"
+    }
+  },
+  "phone": {
+    "verifiedTitle": "Phone verified",
+    "verifiedNumber": "Your phone number:",
+    "title": "Phone verification",
+    "subtitleCode": "Enter the code sent to your phone",
+    "subtitleStart": "Add a phone number for extra security",
+    "phoneLabel": "Phone number",
+    "phonePlaceholder": "+1 (555) 123-45-67",
+    "phoneHint": "Enter phone number in international format",
+    "sendCode": "Send verification code",
+    "codeSentTo": "Verification code sent to:",
+    "codeLabel": "Verification code",
+    "codeHint": "6-digit code from SMS",
+    "verifyError": "An error occurred during verification",
+    "verifySuccess": "Phone verified successfully!",
+    "changeNumber": "Change number",
+    "confirm": "Confirm",
+    "whyTitle": "Why verify phone?",
+    "whyItems": [
+      "Additional account protection",
+      "Access recovery if password is lost",
+      "Important event notifications"
+    ],
+    "validation": {
+      "invalidPhone": "Please enter a valid phone number",
+      "phoneFormat": "Invalid phone format",
+      "codeLen": "Code must contain 6 digits"
+    }
+  },
+  "certificates": {
+    "loadError": "Failed to load certificates. Please refresh the page.",
+    "empty": "You do not have certificates yet. Complete courses and final tests to receive completion proof.",
+    "openPdf": "Open / download PDF"
+  }
+}

@@ -1,6 +1,213 @@
 import { Shield, Lock, Eye, Database, UserCheck, FileText } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+
+const privacyContent = {
+  ru: {
+    title: 'Политика конфиденциальности',
+    updatedAt: 'Последнее обновление: 15 февраля 2026',
+    introTitle: 'Введение',
+    introText:
+      'Образовательная платформа Linglify (далее — «Платформа», «мы», «нас») серьёзно относится к защите вашей конфиденциальности. Настоящая Политика конфиденциальности описывает, какую информацию мы собираем, как её используем и защищаем при использовании вами нашей платформы. Используя Linglify, вы соглашаетесь с условиями, описанными в данной Политике.',
+    collectTitle: 'Какую информацию мы собираем',
+    collectPersonalTitle: '1. Персональные данные',
+    collectPersonalItems: [
+      'Имя и фамилия',
+      'Адрес электронной почты',
+      'Номер телефона (опционально)',
+      'Дата рождения (опционально)',
+      'Фотография профиля (опционально)',
+      'Информация из профиля Google (при OAuth авторизации)',
+    ],
+    collectLearningTitle: '2. Данные об обучении',
+    collectLearningItems: [
+      'Прогресс прохождения курсов и уроков',
+      'Результаты тестов и упражнений',
+      'Время, проведённое на платформе',
+      'Предпочитаемые языки для изучения',
+      'Записи произношения (для проверки речи)',
+    ],
+    collectTechnicalTitle: '3. Технические данные',
+    collectTechnicalItems: [
+      'IP-адрес',
+      'Тип браузера и его версия',
+      'Операционная система',
+      'Данные cookies и локального хранилища',
+      'Информация об устройстве (разрешение экрана, язык системы)',
+    ],
+    useTitle: 'Как мы используем информацию',
+    useItems: [
+      'Предоставление и улучшение образовательных услуг',
+      'Персонализация обучения и рекомендации курсов',
+      'Аутентификация и управление учётной записью',
+      'Отправка уведомлений об обновлениях и прогрессе',
+      'Обработка платежей и управление подписками',
+      'Анализ использования платформы и улучшение функциональности',
+      'Техническая поддержка и ответы на запросы',
+      'Предотвращение мошенничества и обеспечение безопасности',
+      'Соблюдение законодательства и правовых обязательств',
+    ],
+    protectTitle: 'Защита данных',
+    protectIntro: 'Мы применяем современные технологии для защиты ваших данных:',
+    protectItems: [
+      'Шифрование данных при передаче (SSL/TLS)',
+      'Хеширование паролей с использованием bcrypt',
+      'Защищённое хранение в базе данных PostgreSQL',
+      'Регулярное резервное копирование',
+      'Ограничение доступа к персональным данным',
+      'Двухфакторная аутентификация (опционально)',
+      'Мониторинг безопасности и логирование',
+    ],
+    rightsTitle: 'Ваши права',
+    rightsIntro: 'В соответствии с законодательством о защите данных, вы имеете право:',
+    rightsItems: [
+      'Доступ: запросить копию ваших данных',
+      'Исправление: обновить или исправить неточную информацию',
+      'Удаление: запросить удаление вашей учётной записи и данных',
+      'Ограничение обработки: попросить временно прекратить обработку данных',
+      'Портируемость: получить данные в структурированном формате',
+      'Отзыв согласия: в любой момент отозвать согласие на обработку',
+      'Возражение: возразить против определённых видов обработки',
+    ],
+    rightsContact: 'Для реализации этих прав свяжитесь с нами по адресу',
+    cookiesTitle: 'Cookies и аналитика',
+    cookiesIntro: 'Мы используем cookies для улучшения работы платформы. Cookies делятся на:',
+    cookiesItems: [
+      'Необходимые: для аутентификации и базовой функциональности',
+      'Функциональные: для запоминания настроек и предпочтений',
+      'Аналитические: для анализа использования (Google Analytics)',
+    ],
+    cookiesNote:
+      'Вы можете управлять cookies через настройки браузера, но отключение некоторых cookies может ограничить функциональность платформы.',
+    thirdPartyTitle: 'Передача данных третьим лицам',
+    thirdPartyIntro: 'Мы можем передавать данные следующим третьим лицам:',
+    thirdPartyItems: [
+      'Сервисы хостинга: Vercel, Railway (хранение данных)',
+      'Аутентификация: Google OAuth',
+      'Платёжные системы: Stripe (обработка платежей)',
+      'Email-сервисы: для отправки уведомлений',
+      'SMS-сервисы: Twilio (подтверждение телефона)',
+      'Аналитика: Google Analytics',
+    ],
+    thirdPartyNote:
+      'Все партнёры соблюдают стандарты конфиденциальности и используют данные только для предоставления услуг Linglify.',
+    retentionTitle: 'Хранение данных',
+    retentionText:
+      'Мы храним ваши данные в течение всего времени существования вашей учётной записи. После удаления аккаунта персональные данные удаляются в течение 30 дней, за исключением информации, которую мы обязаны хранить по законодательству (например, данные о транзакциях).',
+    changesTitle: 'Изменения в Политике',
+    changesText:
+      'Мы можем обновлять эту Политику конфиденциальности. О существенных изменениях мы уведомим вас по электронной почте или через уведомление на платформе. Рекомендуем периодически проверять эту страницу на наличие обновлений.',
+    contactsTitle: 'Контакты',
+    contactsIntro:
+      'Если у вас есть вопросы по Политике конфиденциальности или вы хотите реализовать свои права, свяжитесь с нами:',
+    emailLabel: 'Email:',
+    telegramLabel: 'Telegram:',
+  },
+  en: {
+    title: 'Privacy Policy',
+    updatedAt: 'Last updated: February 15, 2026',
+    introTitle: 'Introduction',
+    introText:
+      'The Linglify educational platform (hereinafter referred to as the "Platform", "we", "us") takes your privacy seriously. This Privacy Policy explains what information we collect, how we use it, and how we protect it when you use our platform. By using Linglify, you agree to the terms described in this Policy.',
+    collectTitle: 'What information we collect',
+    collectPersonalTitle: '1. Personal data',
+    collectPersonalItems: [
+      'First and last name',
+      'Email address',
+      'Phone number (optional)',
+      'Date of birth (optional)',
+      'Profile picture (optional)',
+      'Information from Google profile (for OAuth authorization)',
+    ],
+    collectLearningTitle: '2. Learning data',
+    collectLearningItems: [
+      'Course and lesson progress',
+      'Test and exercise results',
+      'Time spent on the platform',
+      'Preferred learning languages',
+      'Pronunciation recordings (for speech assessment)',
+    ],
+    collectTechnicalTitle: '3. Technical data',
+    collectTechnicalItems: [
+      'IP address',
+      'Browser type and version',
+      'Operating system',
+      'Cookies and local storage data',
+      'Device information (screen resolution, system language)',
+    ],
+    useTitle: 'How we use information',
+    useItems: [
+      'Provide and improve educational services',
+      'Personalize learning and course recommendations',
+      'Authentication and account management',
+      'Send updates and progress notifications',
+      'Process payments and subscriptions',
+      'Analyze platform usage and improve functionality',
+      'Provide technical support and respond to requests',
+      'Prevent fraud and ensure security',
+      'Comply with legal requirements and obligations',
+    ],
+    protectTitle: 'Data protection',
+    protectIntro: 'We use modern technologies to protect your data:',
+    protectItems: [
+      'Data encryption in transit (SSL/TLS)',
+      'Password hashing with bcrypt',
+      'Secure storage in PostgreSQL database',
+      'Regular backups',
+      'Restricted access to personal data',
+      'Two-factor authentication (optional)',
+      'Security monitoring and logging',
+    ],
+    rightsTitle: 'Your rights',
+    rightsIntro: 'Under data protection laws, you have the right to:',
+    rightsItems: [
+      'Access: request a copy of your data',
+      'Rectification: update or correct inaccurate information',
+      'Deletion: request deletion of your account and data',
+      'Restriction: request temporary limitation of processing',
+      'Portability: receive data in a structured format',
+      'Withdraw consent: revoke consent at any time',
+      'Objection: object to certain types of processing',
+    ],
+    rightsContact: 'To exercise these rights, contact us at',
+    cookiesTitle: 'Cookies and analytics',
+    cookiesIntro: 'We use cookies to improve the platform. Cookies are divided into:',
+    cookiesItems: [
+      'Essential: for authentication and core functionality',
+      'Functional: to remember preferences and settings',
+      'Analytics: to analyze usage (Google Analytics)',
+    ],
+    cookiesNote:
+      'You can manage cookies in your browser settings, but disabling some cookies may limit platform functionality.',
+    thirdPartyTitle: 'Data sharing with third parties',
+    thirdPartyIntro: 'We may share data with the following third parties:',
+    thirdPartyItems: [
+      'Hosting providers: Vercel, Railway (data storage)',
+      'Authentication: Google OAuth',
+      'Payment systems: Stripe (payment processing)',
+      'Email services: for notifications',
+      'SMS services: Twilio (phone verification)',
+      'Analytics: Google Analytics',
+    ],
+    thirdPartyNote:
+      'All partners follow privacy standards and use data only to provide Linglify services.',
+    retentionTitle: 'Data retention',
+    retentionText:
+      'We store your data for as long as your account exists. After account deletion, personal data is deleted within 30 days, except information that must be retained by law (for example, transaction data).',
+    changesTitle: 'Policy changes',
+    changesText:
+      'We may update this Privacy Policy. We will notify you of significant changes by email or via a platform notice. We recommend checking this page periodically for updates.',
+    contactsTitle: 'Contacts',
+    contactsIntro:
+      'If you have questions about this Privacy Policy or want to exercise your rights, contact us:',
+    emailLabel: 'Email:',
+    telegramLabel: 'Telegram:',
+  },
+} as const
 
 export const PrivacyPage = () => {
+  const { i18n } = useTranslation()
+  const content = i18n.language.startsWith('en') ? privacyContent.en : privacyContent.ru
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-12">
       <div className="container mx-auto max-w-4xl px-4">
@@ -9,10 +216,10 @@ export const PrivacyPage = () => {
             <Shield className="h-8 w-8 text-white" />
           </div>
           <h1 className="mb-4 text-4xl font-bold text-gradient">
-            Политика конфиденциальности
+            {content.title}
           </h1>
           <p className="text-muted-foreground">
-            Последнее обновление: 15 февраля 2026
+            {content.updatedAt}
           </p>
         </div>
 
@@ -22,12 +229,10 @@ export const PrivacyPage = () => {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                 <FileText className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground">Введение</h2>
+              <h2 className="text-2xl font-bold text-foreground">{content.introTitle}</h2>
             </div>
             <p className="text-muted-foreground leading-relaxed">
-              Образовательная платформа Linglify (далее — «Платформа», «мы», «нас») серьёзно относится к защите вашей конфиденциальности. 
-              Настоящая Политика конфиденциальности описывает, какую информацию мы собираем, как её используем и защищаем при использовании 
-              вами нашей платформы. Используя Linglify, вы соглашаетесь с условиями, описанными в данной Политике.
+              {content.introText}
             </p>
           </div>
 
@@ -37,45 +242,38 @@ export const PrivacyPage = () => {
                 <Database className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                Какую информацию мы собираем
+                {content.collectTitle}
               </h2>
             </div>
             <div className="space-y-4 text-muted-foreground">
               <div>
                 <h3 className="mb-2 font-semibold text-foreground">
-                  1. Персональные данные
+                  {content.collectPersonalTitle}
                 </h3>
                 <ul className="ml-6 list-disc space-y-1">
-                  <li>Имя и фамилия</li>
-                  <li>Адрес электронной почты</li>
-                  <li>Номер телефона (опционально)</li>
-                  <li>Дата рождения (опционально)</li>
-                  <li>Фотография профиля (опционально)</li>
-                  <li>Информация из профиля Google (при OAuth авторизации)</li>
+                  {content.collectPersonalItems.map(item => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </div>
               <div>
                 <h3 className="mb-2 font-semibold text-foreground">
-                  2. Данные об обучении
+                  {content.collectLearningTitle}
                 </h3>
                 <ul className="ml-6 list-disc space-y-1">
-                  <li>Прогресс прохождения курсов и уроков</li>
-                  <li>Результаты тестов и упражнений</li>
-                  <li>Время, проведённое на платформе</li>
-                  <li>Предпочитаемые языки для изучения</li>
-                  <li>Записи произношения (для проверки речи)</li>
+                  {content.collectLearningItems.map(item => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </div>
               <div>
                 <h3 className="mb-2 font-semibold text-foreground">
-                  3. Технические данные
+                  {content.collectTechnicalTitle}
                 </h3>
                 <ul className="ml-6 list-disc space-y-1">
-                  <li>IP-адрес</li>
-                  <li>Тип браузера и его версия</li>
-                  <li>Операционная система</li>
-                  <li>Данные cookies и локального хранилища</li>
-                  <li>Информация об устройстве (разрешение экрана, язык системы)</li>
+                  {content.collectTechnicalItems.map(item => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -87,19 +285,13 @@ export const PrivacyPage = () => {
                 <Eye className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                Как мы используем информацию
+                {content.useTitle}
               </h2>
             </div>
             <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
-              <li>Предоставление и улучшение образовательных услуг</li>
-              <li>Персонализация обучения и рекомендации курсов</li>
-              <li>Аутентификация и управление учётной записью</li>
-              <li>Отправка уведомлений об обновлениях и прогрессе</li>
-              <li>Обработка платежей и управление подписками</li>
-              <li>Анализ использования платформы и улучшение функциональности</li>
-              <li>Техническая поддержка и ответы на запросы</li>
-              <li>Предотвращение мошенничества и обеспечение безопасности</li>
-              <li>Соблюдение законодательства и правовых обязательств</li>
+              {content.useItems.map(item => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
           </div>
 
@@ -109,21 +301,17 @@ export const PrivacyPage = () => {
                 <Lock className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                Защита данных
+                {content.protectTitle}
               </h2>
             </div>
             <div className="space-y-3 text-muted-foreground">
               <p>
-                Мы применяем современные технологии для защиты ваших данных:
+                {content.protectIntro}
               </p>
               <ul className="ml-6 list-disc space-y-1">
-                <li>Шифрование данных при передаче (SSL/TLS)</li>
-                <li>Хеширование паролей с использованием bcrypt</li>
-                <li>Защищённое хранение в базе данных PostgreSQL</li>
-                <li>Регулярное резервное копирование</li>
-                <li>Ограничение доступа к персональным данным</li>
-                <li>Двухфакторная аутентификация (опционально)</li>
-                <li>Мониторинг безопасности и логирование</li>
+                {content.protectItems.map(item => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
             </div>
           </div>
@@ -134,22 +322,18 @@ export const PrivacyPage = () => {
                 <UserCheck className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                Ваши права
+                {content.rightsTitle}
               </h2>
             </div>
             <div className="space-y-3 text-muted-foreground">
-              <p>В соответствии с законодательством о защите данных, вы имеете право:</p>
+              <p>{content.rightsIntro}</p>
               <ul className="ml-6 list-disc space-y-1">
-                <li><strong className="text-foreground">Доступ:</strong> запросить копию ваших данных</li>
-                <li><strong className="text-foreground">Исправление:</strong> обновить или исправить неточную информацию</li>
-                <li><strong className="text-foreground">Удаление:</strong> запросить удаление вашей учётной записи и данных</li>
-                <li><strong className="text-foreground">Ограничение обработки:</strong> попросить временно прекратить обработку данных</li>
-                <li><strong className="text-foreground">Портируемость:</strong> получить данные в структурированном формате</li>
-                <li><strong className="text-foreground">Отзыв согласия:</strong> в любой момент отозвать согласие на обработку</li>
-                <li><strong className="text-foreground">Возражение:</strong> возразить против определённых видов обработки</li>
+                {content.rightsItems.map(item => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
               <p className="mt-4">
-                Для реализации этих прав свяжитесь с нами по адресу{' '}
+                {content.rightsContact}{' '}
                 <a href="mailto:gormachdv@gmail.com" className="text-primary hover:underline">
                   gormachdv@gmail.com
                 </a>
@@ -159,84 +343,74 @@ export const PrivacyPage = () => {
 
           <div className="rounded-2xl glass-card p-8 backdrop-blur-xl">
             <h2 className="mb-4 text-2xl font-bold text-foreground">
-              Cookies и аналитика
+              {content.cookiesTitle}
             </h2>
             <div className="space-y-3 text-muted-foreground">
               <p>
-                Мы используем cookies для улучшения работы платформы. Cookies делятся на:
+                {content.cookiesIntro}
               </p>
               <ul className="ml-6 list-disc space-y-1">
-                <li><strong className="text-foreground">Необходимые:</strong> для аутентификации и базовой функциональности</li>
-                <li><strong className="text-foreground">Функциональные:</strong> для запоминания настроек и предпочтений</li>
-                <li><strong className="text-foreground">Аналитические:</strong> для анализа использования (Google Analytics)</li>
+                {content.cookiesItems.map(item => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
               <p className="mt-4">
-                Вы можете управлять cookies через настройки браузера, но отключение некоторых cookies 
-                может ограничить функциональность платформы.
+                {content.cookiesNote}
               </p>
             </div>
           </div>
 
           <div className="rounded-2xl glass-card p-8 backdrop-blur-xl">
             <h2 className="mb-4 text-2xl font-bold text-foreground">
-              Передача данных третьим лицам
+              {content.thirdPartyTitle}
             </h2>
             <div className="space-y-3 text-muted-foreground">
-              <p>Мы можем передавать данные следующим третьим лицам:</p>
+              <p>{content.thirdPartyIntro}</p>
               <ul className="ml-6 list-disc space-y-1">
-                <li><strong className="text-foreground">Сервисы хостинга:</strong> Vercel, Railway (хранение данных)</li>
-                <li><strong className="text-foreground">Аутентификация:</strong> Google OAuth</li>
-                <li><strong className="text-foreground">Платёжные системы:</strong> Stripe (обработка платежей)</li>
-                <li><strong className="text-foreground">Email-сервисы:</strong> для отправки уведомлений</li>
-                <li><strong className="text-foreground">SMS-сервисы:</strong> Twilio (подтверждение телефона)</li>
-                <li><strong className="text-foreground">Аналитика:</strong> Google Analytics</li>
+                {content.thirdPartyItems.map(item => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
               <p className="mt-4">
-                Все партнёры соблюдают стандарты конфиденциальности и используют данные только 
-                для предоставления услуг Linglify.
+                {content.thirdPartyNote}
               </p>
             </div>
           </div>
 
           <div className="rounded-2xl glass-card p-8 backdrop-blur-xl">
             <h2 className="mb-4 text-2xl font-bold text-foreground">
-              Хранение данных
+              {content.retentionTitle}
             </h2>
             <p className="text-muted-foreground">
-              Мы храним ваши данные в течение всего времени существования вашей учётной записи. 
-              После удаления аккаунта персональные данные удаляются в течение 30 дней, за исключением 
-              информации, которую мы обязаны хранить по законодательству (например, данные о транзакциях).
+              {content.retentionText}
             </p>
           </div>
 
           <div className="rounded-2xl glass-card p-8 backdrop-blur-xl">
             <h2 className="mb-4 text-2xl font-bold text-foreground">
-              Изменения в Политике
+              {content.changesTitle}
             </h2>
             <p className="text-muted-foreground">
-              Мы можем обновлять эту Политику конфиденциальности. О существенных изменениях мы уведомим 
-              вас по электронной почте или через уведомление на платформе. Рекомендуем периодически 
-              проверять эту страницу на наличие обновлений.
+              {content.changesText}
             </p>
           </div>
 
           <div className="rounded-2xl glass-card p-8 backdrop-blur-xl">
             <h2 className="mb-4 text-2xl font-bold text-foreground">
-              Контакты
+              {content.contactsTitle}
             </h2>
             <p className="mb-4 text-muted-foreground">
-              Если у вас есть вопросы по Политике конфиденциальности или вы хотите реализовать свои права, 
-              свяжитесь с нами:
+              {content.contactsIntro}
             </p>
             <div className="space-y-2 text-muted-foreground">
               <p>
-                <strong className="text-foreground">Email:</strong>{' '}
+                <strong className="text-foreground">{content.emailLabel}</strong>{' '}
                 <a href="mailto:gormachdv@gmail.com" className="text-primary hover:underline">
                   gormachdv@gmail.com
                 </a>
               </p>
               <p>
-                <strong className="text-foreground">Telegram:</strong>{' '}
+                <strong className="text-foreground">{content.telegramLabel}</strong>{' '}
                 <a href="https://t.me/iBa1aNCe" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                   @iBa1aNCe
                 </a>

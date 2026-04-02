@@ -1,0 +1,44 @@
+{
+  "catalog": {
+    "title": "Course catalog",
+    "subtitle": "Choose a language course and start your path to fluent communication",
+    "placementCta": "Not sure about your level? Take the test!",
+    "loadingError": "An error occurred while loading courses",
+    "notFound": "No courses found",
+    "tryFilters": "Try changing filters",
+    "foundTotal": "Courses found:",
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "filters": {
+    "title": "Filters",
+    "hide": "Hide",
+    "show": "Show",
+    "searchPlaceholder": "Search courses...",
+    "searchAction": "Run search",
+    "searchClear": "Clear search",
+    "level": "Level",
+    "category": "Category",
+    "price": "Price",
+    "free": "Free",
+    "paid": "Paid",
+    "sort": "Sort",
+    "sortNew": "Newest",
+    "sortUpdated": "Recently updated",
+    "sortTitle": "By title",
+    "sortPrice": "By price",
+    "sortPopular": "By popularity",
+    "sortRating": "By rating",
+    "reset": "Reset filters"
+  },
+  "card": {
+    "free": "Free",
+    "enrolled": "Enrolled",
+    "lesson_one": "lesson",
+    "lesson_few": "lessons",
+    "lesson_many": "lessons",
+    "minutes": "min",
+    "hours": "h",
+    "details": "Details"
+  }
+}

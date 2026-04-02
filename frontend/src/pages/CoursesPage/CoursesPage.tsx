@@ -5,6 +5,7 @@ import type { GetCoursesQuery } from '@/shared/types/course'
 import { Loader2 } from 'lucide-react'
 import { CoursesFilters, CatalogCourseCard } from '@/features/courses/catalog'
 import { Button } from '@/shared/ui'
+import { useTranslation } from 'react-i18next'
 
 const DEFAULT_FILTERS: GetCoursesQuery = {
   page: 1,
@@ -15,6 +16,7 @@ const DEFAULT_FILTERS: GetCoursesQuery = {
 }
 
 export const CoursesPage = () => {
+  const { t } = useTranslation('courses')
   const [searchParams, setSearchParams] = useSearchParams()
 
   const initialFiltersFromUrl: GetCoursesQuery = useMemo(() => {
@@ -107,10 +109,10 @@ export const CoursesPage = () => {
         <div className="container mx-auto max-w-7xl px-4">
           <div className="max-w-3xl space-y-4">
             <h1 className="text-4xl font-bold text-white md:text-5xl">
-              Каталог курсов
+              {t('catalog.title')}
             </h1>
             <p className="text-lg text-white/90">
-              Выберите курс для изучения иностранного языка и начните свой путь к свободному владению
+              {t('catalog.subtitle')}
             </p>
             <div>
               <Link to="/placement-test">
@@ -119,7 +121,7 @@ export const CoursesPage = () => {
                   variant="outline"
                   className="border-white/60 bg-white/10 text-white hover:bg-white/20 hover:text-white"
                 >
-                  Не знаешь свой уровень? Пройди тест !
+                  {t('catalog.placementCta')}
                 </Button>
               </Link>
             </div>
@@ -143,17 +145,17 @@ export const CoursesPage = () => {
             {error && (
               <div className="text-center py-20">
                 <p className="text-red-600 dark:text-red-400">
-                  Произошла ошибка при загрузке курсов
+                  {t('catalog.loadingError')}
                 </p>
               </div>
             )}
             {data && data.data.length === 0 && (
               <div className="text-center py-20">
                 <p className="text-gray-600 dark:text-gray-400 text-lg">
-                  Курсы не найдены
+                  {t('catalog.notFound')}
                 </p>
                 <p className="text-gray-500 dark:text-gray-500 mt-2">
-                  Попробуйте изменить фильтры
+                  {t('catalog.tryFilters')}
                 </p>
               </div>
             )}
@@ -161,7 +163,8 @@ export const CoursesPage = () => {
               <>
                 <div className="mb-6 flex items-center justify-between">
                   <p className="text-gray-600 dark:text-gray-400">
-                    Найдено курсов: <span className="font-semibold">{data.pagination.total}</span>
+                    {t('catalog.foundTotal', { count: data.pagination.total })}{' '}
+                    <span className="font-semibold">{data.pagination.total}</span>
                   </p>
                 </div>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -177,7 +180,7 @@ export const CoursesPage = () => {
                         disabled={data.pagination.page === 1}
                         className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
-                        Назад
+                        {t('catalog.prev')}
                       </button>
 
                       {Array.from({ length: data.pagination.totalPages }, (_, i) => i + 1).map((page) => (
@@ -199,7 +202,7 @@ export const CoursesPage = () => {
                         disabled={data.pagination.page === data.pagination.totalPages}
                         className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
-                        Вперед
+                        {t('catalog.next')}
                       </button>
                     </nav>
                   </div>

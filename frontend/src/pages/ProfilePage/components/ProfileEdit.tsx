@@ -8,22 +8,26 @@ import { Button, Input, AvatarUpload } from '@/shared/ui'
 import type { User } from '@/shared/types/user'
 import { useState } from 'react'
 import { CheckCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-const profileSchema = z.object({
-  firstName: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
-  lastName: z.string().optional(),
-  bio: z.string().max(500, 'Максимум 500 символов').optional(),
-  dateOfBirth: z.string().optional(),
-  preferredLanguage: z.string().optional(),
-})
+const createProfileSchema = (t: (key: string) => string) =>
+  z.object({
+    firstName: z.string().min(2, t('edit.validation.firstNameMin')),
+    lastName: z.string().optional(),
+    bio: z.string().max(500, t('edit.validation.bioMax')).optional(),
+    dateOfBirth: z.string().optional(),
+    preferredLanguage: z.string().optional(),
+  })
 
-type ProfileFormData = z.infer<typeof profileSchema>
+type ProfileFormData = z.infer<ReturnType<typeof createProfileSchema>>
 
 interface ProfileEditProps {
   user: User
 }
 
 export const ProfileEdit = ({ user }: ProfileEditProps) => {
+  const { t, i18n } = useTranslation('profile')
+  const isEn = i18n.language.startsWith('en')
   const dispatch = useDispatch()
   const [updateProfile, { isLoading, error }] = useUpdateProfileMutation()
   const [success, setSuccess] = useState(false)
@@ -34,7 +38,7 @@ export const ProfileEdit = ({ user }: ProfileEditProps) => {
     handleSubmit,
     formState: { errors },
   } = useForm<ProfileFormData>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(createProfileSchema(t)),
     defaultValues: {
       firstName: user.firstName || '',
       lastName: user.lastName || '',
@@ -69,10 +73,10 @@ export const ProfileEdit = ({ user }: ProfileEditProps) => {
     <div className="space-y-6">
       <div>
         <h3 className="text-2xl font-bold text-gradient">
-          Редактировать профиль
+          {t('edit.title')}
         </h3>
         <p className="text-muted-foreground mt-1">
-          Обновите свою личную информацию
+          {t('edit.subtitle')}
         </p>
       </div>
 
@@ -87,22 +91,22 @@ export const ProfileEdit = ({ user }: ProfileEditProps) => {
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
             {...register('firstName')}
-            label="Имя"
-            placeholder="Иван"
+            label={t('edit.firstName')}
+            placeholder={isEn ? 'John' : 'Иван'}
             error={errors.firstName?.message}
           />
 
           <Input
             {...register('lastName')}
-            label="Фамилия"
-            placeholder="Иванов"
+            label={t('edit.lastName')}
+            placeholder={isEn ? 'Smith' : 'Иванов'}
             error={errors.lastName?.message}
           />
         </div>
 
         <div>
           <label className="mb-2 block text-sm font-medium text-foreground">
-            Дата рождения
+            {t('edit.dateOfBirth')}
           </label>
           <input
             {...register('dateOfBirth')}
@@ -118,8 +122,8 @@ export const ProfileEdit = ({ user }: ProfileEditProps) => {
 
         <Input
           {...register('preferredLanguage')}
-          label="Предпочитаемые языки"
-          placeholder="Например: Английский, Немецкий"
+          label={t('edit.preferredLanguage')}
+          placeholder={t('edit.preferredLanguagePlaceholder')}
           error={errors.preferredLanguage?.message}
         />
 
@@ -128,13 +132,13 @@ export const ProfileEdit = ({ user }: ProfileEditProps) => {
             htmlFor="bio"
             className="mb-1.5 block text-sm font-medium text-foreground"
           >
-            О себе
+            {t('edit.bio')}
           </label>
           <textarea
             {...register('bio')}
             id="bio"
             rows={4}
-            placeholder="Расскажите о себе..."
+            placeholder={t('edit.bioPlaceholder')}
             className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
           {errors.bio && (
@@ -148,19 +152,19 @@ export const ProfileEdit = ({ user }: ProfileEditProps) => {
           <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
             {'data' in error
               ? (error.data as { error: { message: string } }).error.message
-              : 'Произошла ошибка при обновлении профиля'}
+              : t('edit.error')}
           </div>
         )}
 
         {success && (
           <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400">
             <CheckCircle className="h-4 w-4" />
-            Профиль успешно обновлен!
+            {t('edit.success')}
           </div>
         )}
 
         <Button type="submit" className="w-full" isLoading={isLoading}>
-          Сохранить изменения
+          {t('edit.save')}
         </Button>
       </form>
     </div>

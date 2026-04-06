@@ -9,8 +9,10 @@ import {
   useAdminDashboardData,
 } from '@/features/admin/dashboard'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export const AdminDashboardPage = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.dashboard' })
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
   const { messages, stats } = useAdminDashboardData()
@@ -30,11 +32,9 @@ export const AdminDashboardPage = () => {
               <LayoutDashboard className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gradient">
-                Панель администратора
-              </h1>
+              <h1 className="text-3xl font-bold text-gradient">{t('title')}</h1>
               <p className="text-muted-foreground">
-                Добро пожаловать, {user?.firstName || 'Администратор'}
+                {t('welcome', { name: user?.firstName || t('welcomeFallback') })}
               </p>
             </div>
           </div>

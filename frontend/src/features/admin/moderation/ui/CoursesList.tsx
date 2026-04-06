@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Course } from '@/shared/types/course'
 import { CourseModerationCard } from './CourseModerationCard'
 import { CourseStatus } from '@/shared/constants/courseStatus'
@@ -17,11 +18,12 @@ export const CoursesList = ({
   onStatusChange,
   onDelete,
 }: CoursesListProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.moderation.list' })
   if (isLoading) {
     return (
       <div className="py-12 text-center">
         <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
-        <p className="text-muted-foreground">Загрузка...</p>
+        <p className="text-muted-foreground">{t('loading')}</p>
       </div>
     )
   }
@@ -29,7 +31,7 @@ export const CoursesList = ({
   if (!courses.length) {
     return (
       <div className="glass-card py-12 text-center rounded-xl">
-        <p className="text-muted-foreground">Курсов с таким статусом нет</p>
+        <p className="text-muted-foreground">{t('emptyStatus')}</p>
       </div>
     )
   }

@@ -1,6 +1,8 @@
 import type { PlacementQuestionType } from '@/shared/types/placement'
 import { Button, Input, AudioUpload } from '@/shared/ui'
 import { PlusCircle, ChevronDown } from 'lucide-react'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { QuestionFormState, ErrorFormState } from '../types'
 import { typeOptions } from '../types'
 
@@ -41,6 +43,19 @@ export const PlacementQuestionForm = ({
   onSubmit,
   onReset,
 }: PlacementQuestionFormProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.placementBank.form' })
+  const { t: ts } = useTranslation('platform', { keyPrefix: 'placement.inProgress' })
+
+  const typeLabels = useMemo(
+    () => ({
+      GRAMMAR: ts('skillGrammar'),
+      VOCAB: ts('skillLexical'),
+      READING: ts('skillReading'),
+      LISTENING: ts('skillListening'),
+    }),
+    [ts],
+  )
+
   return (
     <form
       onSubmit={onSubmit}
@@ -48,40 +63,26 @@ export const PlacementQuestionForm = ({
     >
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-lg font-semibold text-foreground">
-          {editingId ? 'Редактирование вопроса' : 'Новый вопрос'}
+          {editingId ? t('editTitle') : t('newTitle')}
         </h2>
-        {editingId && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={onReset}
-          >
-            Сбросить
+        {editingId ? (
+          <Button type="button" size="sm" variant="ghost" onClick={onReset}>
+            {t('reset')}
           </Button>
-        )}
+        ) : null}
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs font-medium text-foreground">
-          Язык
-        </label>
-        <Input
-          value={form.language}
-          onChange={e => onChangeLanguage(e.target.value)}
-        />
-        {errors.language && (
-          <p className="text-[11px] text-red-600 mt-0.5">
-            {errors.language}
-          </p>
-        )}
+        <label className="block text-xs font-medium text-foreground">{t('language')}</label>
+        <Input value={form.language} onChange={e => onChangeLanguage(e.target.value)} />
+        {errors.language ? (
+          <p className="text-[11px] text-red-600 mt-0.5">{errors.language}</p>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <label className="block text-xs font-medium text-foreground">
-            Тип
-          </label>
+          <label className="block text-xs font-medium text-foreground">{t('type')}</label>
           <div className="relative">
             <select
               value={form.type}
@@ -89,10 +90,10 @@ export const PlacementQuestionForm = ({
               className="h-9 w-full appearance-none rounded-md border border-border bg-background px-2 pr-7 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             >
               {typeOptions
-                .filter(t => t.value !== 'ALL')
+                .filter(opt => opt.value !== 'ALL')
                 .map(opt => (
                   <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {typeLabels[opt.value as keyof typeof typeLabels]}
                   </option>
                 ))}
             </select>
@@ -100,9 +101,7 @@ export const PlacementQuestionForm = ({
           </div>
         </div>
         <div className="space-y-2">
-          <label className="block text-xs font-medium text-foreground">
-            Сложность (1–6)
-          </label>
+          <label className="block text-xs font-medium text-foreground">{t('difficulty')}</label>
           <Input
             type="number"
             min={1}
@@ -111,34 +110,26 @@ export const PlacementQuestionForm = ({
             onChange={e => onChangeDifficulty(Number(e.target.value) || 1)}
             className="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none text-sm"
           />
-          {errors.difficulty && (
-            <p className="text-[11px] text-red-600 mt-0.5">
-              {errors.difficulty}
-            </p>
-          )}
+          {errors.difficulty ? (
+            <p className="text-[11px] text-red-600 mt-0.5">{errors.difficulty}</p>
+          ) : null}
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs font-medium text-foreground">
-          Текст вопроса
-        </label>
+        <label className="block text-xs font-medium text-foreground">{t('prompt')}</label>
         <textarea
           value={form.prompt}
           onChange={e => onChangePrompt(e.target.value)}
           className="min-h-[80px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         />
-        {errors.prompt && (
-          <p className="text-[11px] text-red-600 mt-0.5">
-            {errors.prompt}
-          </p>
-        )}
+        {errors.prompt ? (
+          <p className="text-[11px] text-red-600 mt-0.5">{errors.prompt}</p>
+        ) : null}
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs font-medium text-foreground">
-          Контекст (для чтения/аудирования)
-        </label>
+        <label className="block text-xs font-medium text-foreground">{t('context')}</label>
         <textarea
           value={form.context}
           onChange={e => onChangeContext(e.target.value)}
@@ -147,26 +138,15 @@ export const PlacementQuestionForm = ({
       </div>
 
       <div className="space-y-2">
-        <AudioUpload
-          value={form.mediaUrl}
-          onChange={onChangeMediaUrl}
-          label="Аудио (для прослушивания / listening)"
-        />
+        <AudioUpload value={form.mediaUrl} onChange={onChangeMediaUrl} label={t('audioLabel')} />
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="block text-xs font-medium text-foreground">
-            Варианты ответа
-          </label>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={onAddOption}
-          >
+          <label className="block text-xs font-medium text-foreground">{t('options')}</label>
+          <Button type="button" size="sm" variant="ghost" onClick={onAddOption}>
             <PlusCircle className="mr-1 h-3 w-3" />
-            Добавить
+            {t('addOption')}
           </Button>
         </div>
         <div className="space-y-2">
@@ -182,32 +162,21 @@ export const PlacementQuestionForm = ({
               <Input
                 value={opt}
                 onChange={e => onChangeOption(index, e.target.value)}
-                placeholder={`Вариант ${index + 1}`}
+                placeholder={t('optionPh', { n: index + 1 })}
               />
-              {form.options.length > 2 && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => onRemoveOption(index)}
-                >
+              {form.options.length > 2 ? (
+                <Button type="button" size="sm" variant="ghost" onClick={() => onRemoveOption(index)}>
                   ×
                 </Button>
-              )}
+              ) : null}
             </div>
           ))}
         </div>
-        {errors.options && (
-          <p className="text-[11px] text-red-600 mt-1">
-            {errors.options}
-          </p>
-        )}
+        {errors.options ? <p className="text-[11px] text-red-600 mt-1">{errors.options}</p> : null}
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs font-medium text-foreground">
-          Объяснение правильного ответа
-        </label>
+        <label className="block text-xs font-medium text-foreground">{t('explanation')}</label>
         <textarea
           value={form.explanation}
           onChange={e => onChangeExplanation(e.target.value)}
@@ -217,13 +186,10 @@ export const PlacementQuestionForm = ({
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onReset}>
-          Отмена
+          {t('cancel')}
         </Button>
-        <Button type="submit">
-          {editingId ? 'Сохранить изменения' : 'Создать вопрос'}
-        </Button>
+        <Button type="submit">{editingId ? t('saveEdit') : t('create')}</Button>
       </div>
     </form>
   )
 }
-

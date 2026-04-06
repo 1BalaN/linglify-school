@@ -22,17 +22,23 @@ import {
   PlacementResultStep,
 } from '@/features/placement/test'
 import { firstLanguage } from '@/shared/lib/utils'
+import i18n from '@/shared/i18n/config'
+import { useTranslation } from 'react-i18next'
 
 
 type Step = 'language' | 'inProgress' | 'finished'
 
+const defaultTeachingLanguage = () =>
+  i18n.t('defaults.teachingLanguage', { ns: 'platform' })
+
 export const PlacementTestPage = () => {
+  const { t } = useTranslation('platform')
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [step, setStep] = useState<Step>('language')
-  const [language, setLanguage] = useState<string>(() => searchParams.get('language') || 'Английский')
+  const [language, setLanguage] = useState<string>(() => searchParams.get('language') || defaultTeachingLanguage())
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [currentQuestion, setCurrentQuestion] = useState<PlacementQuestion | null>(null)
   const [questionIndex, setQuestionIndex] = useState(0)
@@ -62,8 +68,7 @@ export const PlacementTestPage = () => {
     shouldLoadDetails && sessionId ? { sessionId } : skipToken
   )
 
-  // Автовыбор языка по профилю пользователя (если в URL язык не задан).
-  // Если пользователь указал несколько языков через запятую, берём первый.
+  // Default language from profile when not in URL; if multiple, use the first.
   useEffect(() => {
     const languageFromUrl = searchParams.get('language')
     if (languageFromUrl) return
@@ -95,7 +100,7 @@ export const PlacementTestPage = () => {
     setError(null)
 
     try {
-      const res = await startPlacement({ language: language.trim() || 'Английский' }).unwrap()
+      const res = await startPlacement({ language: language.trim() || defaultTeachingLanguage() }).unwrap()
       const data = res.data
       setSessionId(data.session.id)
       setCurrentQuestion(data.question)
@@ -113,7 +118,7 @@ export const PlacementTestPage = () => {
       const e = err as { data?: { error?: { message?: string } } }
       setError(
         e?.data?.error?.message ||
-          'Не удалось начать placement-тест. Попробуйте позже.'
+          t('placement.startError')
       )
     }
   }
@@ -151,7 +156,7 @@ export const PlacementTestPage = () => {
       const e = err as { data?: { error?: { message?: string } } }
       setError(
         e?.data?.error?.message ||
-          'Не удалось отправить ответ. Попробуйте ещё раз.'
+          t('placement.submitError')
       )
     } finally {
       setSubmitting(false)
@@ -185,13 +190,13 @@ export const PlacementTestPage = () => {
       <div className="container mx-auto max-w-4xl px-4">
         <div className="mb-8 space-y-3">
           <div className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            Определение уровня
+            {t('placement.badge')}
           </div>
           <h1 className="text-3xl font-bold text-gradient">
-            Placement-тест
+            {t('placement.title')}
           </h1>
           <p className="text-muted-foreground text-sm">
-            Ответьте на 25 вопросов (примерно 15–25 минут), чтобы мы определили ваш уровень и подобрали подходящие курсы.
+            {t('placement.intro')}
           </p>
         </div>
 

@@ -28,6 +28,10 @@
     "subtitle": "Обновите свою личную информацию",
     "firstName": "Имя",
     "lastName": "Фамилия",
+    "placeholders": {
+      "firstName": "Иван",
+      "lastName": "Иванов"
+    },
     "dateOfBirth": "Дата рождения",
     "preferredLanguage": "Предпочитаемые языки",
     "preferredLanguagePlaceholder": "Например: Английский, Немецкий",

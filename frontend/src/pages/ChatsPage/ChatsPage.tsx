@@ -9,8 +9,10 @@ import { ChatWindow } from '@/features/chat/ui/ChatWindow'
 import { Button } from '@/shared/ui'
 import { getSocket } from '@/shared/lib'
 import { WifiOff } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export const ChatsPage = () => {
+  const { t } = useTranslation('platform')
   const { user } = useSelector((state: RootState) => state.auth)
   const { data, isLoading, refetch } = useGetMyThreadsQuery(undefined, {
     refetchOnMountOrArgChange: true,
@@ -65,11 +67,11 @@ export const ChatsPage = () => {
       const res = await ensureSupportThread().unwrap()
       setSelectedThread(res.data)
     } catch {
-      // noop, можно добавить уведомление об ошибке
+      // noop — could surface an error toast here
     }
   }
 
-  // Автовыбор диалога по courseId из URL (например, /chats?courseId=123)
+  // Auto-select thread when courseId is in the URL (e.g. /chats?courseId=123)
   useEffect(() => {
     if (!threads.length) return
     const courseId = searchParams.get('courseId')
@@ -92,9 +94,9 @@ export const ChatsPage = () => {
       <div className="container mx-auto max-w-6xl px-4">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Чаты</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t('chat.pageTitle')}</h1>
             <p className="text-sm text-muted-foreground">
-              Общайтесь с преподавателями по курсам или пишите в поддержку платформы.
+              {t('chat.pageSubtitle')}
             </p>
           </div>
           {user.role !== 'ADMIN' && (
@@ -104,7 +106,7 @@ export const ChatsPage = () => {
               onClick={handleOpenSupport}
               isLoading={isEnsuringSupport}
             >
-              Написать в поддержку
+              {t('chat.support')}
             </Button>
           )}
         </div>
@@ -113,16 +115,16 @@ export const ChatsPage = () => {
           <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
             <WifiOff className="h-4 w-4 shrink-0" />
             {socketStatus === 'reconnecting'
-              ? 'Восстановление соединения... Новые сообщения появятся после переподключения.'
-              : 'Соединение с сервером потеряно. Пытаемся переподключиться...'}
+              ? t('chat.reconnecting')
+              : t('chat.disconnected')}
           </div>
         )}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,2fr)] lg:h-[calc(100vh-200px)]">
           <div className="flex flex-col rounded-2xl border border-border bg-card p-4">
-            <h2 className="mb-2 text-sm font-semibold text-foreground">Диалоги</h2>
+            <h2 className="mb-2 text-sm font-semibold text-foreground">{t('chat.dialogs')}</h2>
             {isLoading ? (
-              <p className="text-xs text-muted-foreground">Загрузка чатов...</p>
+              <p className="text-xs text-muted-foreground">{t('chat.loadingThreads')}</p>
             ) : (
               <ChatThreadList
                 threads={threads}

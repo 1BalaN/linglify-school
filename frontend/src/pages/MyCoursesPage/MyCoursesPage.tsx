@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useGetUserCoursesQuery } from '@/entities/course'
 import { AlertCircle, Loader2, BookOpen } from 'lucide-react'
@@ -5,6 +6,7 @@ import { Button } from '@/shared/ui'
 import { MyCoursesHeader, MyCoursesEmptyState, MyCourseCard } from '@/features/courses/student'
 
 export const MyCoursesPage = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'student.myCourses' })
   const { data, isLoading, isError } = useGetUserCoursesQuery()
 
   const enrollments = data?.data ?? []
@@ -14,7 +16,7 @@ export const MyCoursesPage = () => {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <Loader2 className="mx-auto mb-3 h-10 w-10 animate-spin text-primary" />
-          <p className="text-muted-foreground">Загрузка курсов...</p>
+          <p className="text-muted-foreground">{t('loading')}</p>
         </div>
       </div>
     )
@@ -25,8 +27,8 @@ export const MyCoursesPage = () => {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-3 h-10 w-10 text-red-500" />
-          <p className="text-lg font-semibold">Не удалось загрузить курсы</p>
-          <p className="mt-1 text-muted-foreground">Попробуйте обновить страницу</p>
+          <p className="text-lg font-semibold">{t('loadError')}</p>
+          <p className="mt-1 text-muted-foreground">{t('loadErrorHint')}</p>
         </div>
       </div>
     )
@@ -51,7 +53,7 @@ export const MyCoursesPage = () => {
             <Link to="/courses">
               <Button variant="outline">
                 <BookOpen className="mr-2 h-4 w-4" />
-                Найти ещё курсы
+                {t('findMore')}
               </Button>
             </Link>
           </div>

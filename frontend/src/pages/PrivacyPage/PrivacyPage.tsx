@@ -1,212 +1,54 @@
 import { Shield, Lock, Eye, Database, UserCheck, FileText } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-const privacyContent = {
-  ru: {
-    title: 'Политика конфиденциальности',
-    updatedAt: 'Последнее обновление: 15 февраля 2026',
-    introTitle: 'Введение',
-    introText:
-      'Образовательная платформа Linglify (далее — «Платформа», «мы», «нас») серьёзно относится к защите вашей конфиденциальности. Настоящая Политика конфиденциальности описывает, какую информацию мы собираем, как её используем и защищаем при использовании вами нашей платформы. Используя Linglify, вы соглашаетесь с условиями, описанными в данной Политике.',
-    collectTitle: 'Какую информацию мы собираем',
-    collectPersonalTitle: '1. Персональные данные',
-    collectPersonalItems: [
-      'Имя и фамилия',
-      'Адрес электронной почты',
-      'Номер телефона (опционально)',
-      'Дата рождения (опционально)',
-      'Фотография профиля (опционально)',
-      'Информация из профиля Google (при OAuth авторизации)',
-    ],
-    collectLearningTitle: '2. Данные об обучении',
-    collectLearningItems: [
-      'Прогресс прохождения курсов и уроков',
-      'Результаты тестов и упражнений',
-      'Время, проведённое на платформе',
-      'Предпочитаемые языки для изучения',
-      'Записи произношения (для проверки речи)',
-    ],
-    collectTechnicalTitle: '3. Технические данные',
-    collectTechnicalItems: [
-      'IP-адрес',
-      'Тип браузера и его версия',
-      'Операционная система',
-      'Данные cookies и локального хранилища',
-      'Информация об устройстве (разрешение экрана, язык системы)',
-    ],
-    useTitle: 'Как мы используем информацию',
-    useItems: [
-      'Предоставление и улучшение образовательных услуг',
-      'Персонализация обучения и рекомендации курсов',
-      'Аутентификация и управление учётной записью',
-      'Отправка уведомлений об обновлениях и прогрессе',
-      'Обработка платежей и управление подписками',
-      'Анализ использования платформы и улучшение функциональности',
-      'Техническая поддержка и ответы на запросы',
-      'Предотвращение мошенничества и обеспечение безопасности',
-      'Соблюдение законодательства и правовых обязательств',
-    ],
-    protectTitle: 'Защита данных',
-    protectIntro: 'Мы применяем современные технологии для защиты ваших данных:',
-    protectItems: [
-      'Шифрование данных при передаче (SSL/TLS)',
-      'Хеширование паролей с использованием bcrypt',
-      'Защищённое хранение в базе данных PostgreSQL',
-      'Регулярное резервное копирование',
-      'Ограничение доступа к персональным данным',
-      'Двухфакторная аутентификация (опционально)',
-      'Мониторинг безопасности и логирование',
-    ],
-    rightsTitle: 'Ваши права',
-    rightsIntro: 'В соответствии с законодательством о защите данных, вы имеете право:',
-    rightsItems: [
-      'Доступ: запросить копию ваших данных',
-      'Исправление: обновить или исправить неточную информацию',
-      'Удаление: запросить удаление вашей учётной записи и данных',
-      'Ограничение обработки: попросить временно прекратить обработку данных',
-      'Портируемость: получить данные в структурированном формате',
-      'Отзыв согласия: в любой момент отозвать согласие на обработку',
-      'Возражение: возразить против определённых видов обработки',
-    ],
-    rightsContact: 'Для реализации этих прав свяжитесь с нами по адресу',
-    cookiesTitle: 'Cookies и аналитика',
-    cookiesIntro: 'Мы используем cookies для улучшения работы платформы. Cookies делятся на:',
-    cookiesItems: [
-      'Необходимые: для аутентификации и базовой функциональности',
-      'Функциональные: для запоминания настроек и предпочтений',
-      'Аналитические: для анализа использования (Google Analytics)',
-    ],
-    cookiesNote:
-      'Вы можете управлять cookies через настройки браузера, но отключение некоторых cookies может ограничить функциональность платформы.',
-    thirdPartyTitle: 'Передача данных третьим лицам',
-    thirdPartyIntro: 'Мы можем передавать данные следующим третьим лицам:',
-    thirdPartyItems: [
-      'Сервисы хостинга: Vercel, Railway (хранение данных)',
-      'Аутентификация: Google OAuth',
-      'Платёжные системы: Stripe (обработка платежей)',
-      'Email-сервисы: для отправки уведомлений',
-      'SMS-сервисы: Twilio (подтверждение телефона)',
-      'Аналитика: Google Analytics',
-    ],
-    thirdPartyNote:
-      'Все партнёры соблюдают стандарты конфиденциальности и используют данные только для предоставления услуг Linglify.',
-    retentionTitle: 'Хранение данных',
-    retentionText:
-      'Мы храним ваши данные в течение всего времени существования вашей учётной записи. После удаления аккаунта персональные данные удаляются в течение 30 дней, за исключением информации, которую мы обязаны хранить по законодательству (например, данные о транзакциях).',
-    changesTitle: 'Изменения в Политике',
-    changesText:
-      'Мы можем обновлять эту Политику конфиденциальности. О существенных изменениях мы уведомим вас по электронной почте или через уведомление на платформе. Рекомендуем периодически проверять эту страницу на наличие обновлений.',
-    contactsTitle: 'Контакты',
-    contactsIntro:
-      'Если у вас есть вопросы по Политике конфиденциальности или вы хотите реализовать свои права, свяжитесь с нами:',
-    emailLabel: 'Email:',
-    telegramLabel: 'Telegram:',
-  },
-  en: {
-    title: 'Privacy Policy',
-    updatedAt: 'Last updated: February 15, 2026',
-    introTitle: 'Introduction',
-    introText:
-      'The Linglify educational platform (hereinafter referred to as the "Platform", "we", "us") takes your privacy seriously. This Privacy Policy explains what information we collect, how we use it, and how we protect it when you use our platform. By using Linglify, you agree to the terms described in this Policy.',
-    collectTitle: 'What information we collect',
-    collectPersonalTitle: '1. Personal data',
-    collectPersonalItems: [
-      'First and last name',
-      'Email address',
-      'Phone number (optional)',
-      'Date of birth (optional)',
-      'Profile picture (optional)',
-      'Information from Google profile (for OAuth authorization)',
-    ],
-    collectLearningTitle: '2. Learning data',
-    collectLearningItems: [
-      'Course and lesson progress',
-      'Test and exercise results',
-      'Time spent on the platform',
-      'Preferred learning languages',
-      'Pronunciation recordings (for speech assessment)',
-    ],
-    collectTechnicalTitle: '3. Technical data',
-    collectTechnicalItems: [
-      'IP address',
-      'Browser type and version',
-      'Operating system',
-      'Cookies and local storage data',
-      'Device information (screen resolution, system language)',
-    ],
-    useTitle: 'How we use information',
-    useItems: [
-      'Provide and improve educational services',
-      'Personalize learning and course recommendations',
-      'Authentication and account management',
-      'Send updates and progress notifications',
-      'Process payments and subscriptions',
-      'Analyze platform usage and improve functionality',
-      'Provide technical support and respond to requests',
-      'Prevent fraud and ensure security',
-      'Comply with legal requirements and obligations',
-    ],
-    protectTitle: 'Data protection',
-    protectIntro: 'We use modern technologies to protect your data:',
-    protectItems: [
-      'Data encryption in transit (SSL/TLS)',
-      'Password hashing with bcrypt',
-      'Secure storage in PostgreSQL database',
-      'Regular backups',
-      'Restricted access to personal data',
-      'Two-factor authentication (optional)',
-      'Security monitoring and logging',
-    ],
-    rightsTitle: 'Your rights',
-    rightsIntro: 'Under data protection laws, you have the right to:',
-    rightsItems: [
-      'Access: request a copy of your data',
-      'Rectification: update or correct inaccurate information',
-      'Deletion: request deletion of your account and data',
-      'Restriction: request temporary limitation of processing',
-      'Portability: receive data in a structured format',
-      'Withdraw consent: revoke consent at any time',
-      'Objection: object to certain types of processing',
-    ],
-    rightsContact: 'To exercise these rights, contact us at',
-    cookiesTitle: 'Cookies and analytics',
-    cookiesIntro: 'We use cookies to improve the platform. Cookies are divided into:',
-    cookiesItems: [
-      'Essential: for authentication and core functionality',
-      'Functional: to remember preferences and settings',
-      'Analytics: to analyze usage (Google Analytics)',
-    ],
-    cookiesNote:
-      'You can manage cookies in your browser settings, but disabling some cookies may limit platform functionality.',
-    thirdPartyTitle: 'Data sharing with third parties',
-    thirdPartyIntro: 'We may share data with the following third parties:',
-    thirdPartyItems: [
-      'Hosting providers: Vercel, Railway (data storage)',
-      'Authentication: Google OAuth',
-      'Payment systems: Stripe (payment processing)',
-      'Email services: for notifications',
-      'SMS services: Twilio (phone verification)',
-      'Analytics: Google Analytics',
-    ],
-    thirdPartyNote:
-      'All partners follow privacy standards and use data only to provide Linglify services.',
-    retentionTitle: 'Data retention',
-    retentionText:
-      'We store your data for as long as your account exists. After account deletion, personal data is deleted within 30 days, except information that must be retained by law (for example, transaction data).',
-    changesTitle: 'Policy changes',
-    changesText:
-      'We may update this Privacy Policy. We will notify you of significant changes by email or via a platform notice. We recommend checking this page periodically for updates.',
-    contactsTitle: 'Contacts',
-    contactsIntro:
-      'If you have questions about this Privacy Policy or want to exercise your rights, contact us:',
-    emailLabel: 'Email:',
-    telegramLabel: 'Telegram:',
-  },
-} as const
+interface PrivacyContent {
+  title: string
+  updatedAt: string
+  introTitle: string
+  introText: string
+  collectTitle: string
+  collectPersonalTitle: string
+  collectPersonalItems: string[]
+  collectLearningTitle: string
+  collectLearningItems: string[]
+  collectTechnicalTitle: string
+  collectTechnicalItems: string[]
+  useTitle: string
+  useItems: string[]
+  protectTitle: string
+  protectIntro: string
+  protectItems: string[]
+  rightsTitle: string
+  rightsIntro: string
+  rightsItems: string[]
+  rightsContact: string
+  cookiesTitle: string
+  cookiesIntro: string
+  cookiesItems: string[]
+  cookiesNote: string
+  thirdPartyTitle: string
+  thirdPartyIntro: string
+  thirdPartyItems: string[]
+  thirdPartyNote: string
+  retentionTitle: string
+  retentionText: string
+  changesTitle: string
+  changesText: string
+  contactsTitle: string
+  contactsIntro: string
+  emailLabel: string
+  telegramLabel: string
+}
+
+function privacyBundle(i18n: { getResourceBundle: (lng: string, ns: string) => unknown; language: string; resolvedLanguage?: string }): PrivacyContent {
+  const tryLng = (lng: string) => i18n.getResourceBundle(lng, 'privacy') as PrivacyContent | undefined
+  const base = (i18n.resolvedLanguage ?? i18n.language).replace(/-.+$/, '')
+  return tryLng(base) ?? tryLng('ru') ?? tryLng('en')!
+}
 
 export const PrivacyPage = () => {
   const { i18n } = useTranslation()
-  const content = i18n.language.startsWith('en') ? privacyContent.en : privacyContent.ru
+  const content = privacyBundle(i18n)
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-12">

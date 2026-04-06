@@ -2,8 +2,7 @@ import { Mail, MapPin, Phone, Send } from "lucide-react"
 import { useTranslation } from 'react-i18next'
 
 export const ContactInfoPanel = () => {
-  const { t, i18n } = useTranslation('support')
-  const isEn = i18n.language.startsWith('en')
+  const { t } = useTranslation('support')
   return (
     <div className="space-y-6 lg:col-span-1">
       <div className="rounded-2xl glass-card p-6 backdrop-blur-xl">
@@ -45,10 +44,10 @@ export const ContactInfoPanel = () => {
         </div>
         <h3 className="mb-2 text-lg font-bold text-foreground">{t('contact.info.office')}</h3>
         <p className="text-sm text-muted-foreground">
-          {isEn ? 'Belarus, Minsk' : 'Беларусь, Минск'}
+          {t('contact.info.addressLine1')}
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
-          {isEn ? 'Nezavisimosti Ave, 102' : 'пр. Независимости, 102'}
+          {t('contact.info.addressLine2')}
         </p>
       </div>
 

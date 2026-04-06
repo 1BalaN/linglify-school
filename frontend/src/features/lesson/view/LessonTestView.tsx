@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle, RefreshCw, ClipboardCheck, CheckCircle2, CheckSquare, Timer } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Question, QuestionOption, Answer } from '@/shared/types/course'
@@ -61,6 +62,7 @@ export const LessonTestView = ({
   initialScore,
   initialAnswers,
 }: LessonTestViewProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'lessonTaking.test' })
   const passThreshold = getPassThresholdFromContent(content)
   const { timeLimitMinutes, shuffleQuestions, shuffleOptions } = getTestOptionsFromContent(content)
 
@@ -138,9 +140,8 @@ export const LessonTestView = ({
   }, [state.submitted, totalSeconds, passThreshold, computeScore])
 
   function handleSubmit() {
-    // Сохраняем ответы пользователя по вопросам
+    // Persist answers per question; ignore API errors so the UI stays responsive
     Object.entries(state.answers).forEach(([questionId, answer]) => {
-      // Не ждём ответа от сервера, ошибки игнорируем, чтобы не блокировать UI
       submitAnswer({ questionId, answer }).catch(() => {})
     })
 
@@ -185,12 +186,12 @@ export const LessonTestView = ({
           )}
         </div>
         <h3 className="mb-2 text-2xl font-bold text-foreground">
-          {state.passed ? 'Тест пройден!' : 'Не пройден'}
+          {state.passed ? t('passed') : t('failed')}
         </h3>
         <p className="mb-1 text-4xl font-bold text-primary">{state.score}%</p>
-        <p className="mb-6 text-sm text-muted-foreground">Порог прохождения: {passThreshold}%</p>
+        <p className="mb-6 text-sm text-muted-foreground">{t('threshold', { pct: passThreshold })}</p>
 
-        {/* Answer review только когда есть ответы из текущей сессии */}
+        {/* Answer review when this session has answers */}
         {Object.keys(state.answers).length > 0 && (
           <div className="mb-6 space-y-2 text-left">
             {displayQuestions.map((q, i) => {
@@ -233,13 +234,13 @@ export const LessonTestView = ({
                     </span>
                   </div>
                   <p className="mt-1 text-xs">
-                    <span className="font-semibold">Ваш ответ:</span> {userText}
+                    <span className="font-semibold">{t('yourAnswer')}</span> {userText}
                   </p>
-                  {!isCorrect && (
+                  {!isCorrect ? (
                     <p className="mt-0.5 text-xs">
-                      <span className="font-semibold">Правильный ответ:</span> {correctText}
+                      <span className="font-semibold">{t('correctAnswer')}</span> {correctText}
                     </p>
-                  )}
+                  ) : null}
                   {state.passed && !isCorrect && q.explanation && (
                     <p className="mt-2 border-t border-current/20 pt-2 text-xs opacity-90">
                       {q.explanation}
@@ -253,7 +254,7 @@ export const LessonTestView = ({
 
         <Button onClick={handleRetry} variant="outline">
           <RefreshCw className="mr-2 h-4 w-4" />
-          Пройти ещё раз
+          {t('retry')}
         </Button>
       </div>
     )
@@ -263,7 +264,7 @@ export const LessonTestView = ({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-4 py-3 dark:bg-amber-950/20">
         <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
-          {displayQuestions.length} вопросов · порог {passThreshold}%
+          {t('summary', { count: displayQuestions.length, pct: passThreshold })}
         </span>
         <div className="flex items-center gap-3">
           {secondsLeft != null && (
@@ -273,7 +274,10 @@ export const LessonTestView = ({
             </span>
           )}
           <span className="text-sm text-muted-foreground">
-            Отвечено: {Object.keys(state.answers).length} / {displayQuestions.length}
+            {t('answered', {
+              done: Object.keys(state.answers).length,
+              total: displayQuestions.length,
+            })}
           </span>
         </div>
       </div>
@@ -287,7 +291,7 @@ export const LessonTestView = ({
           <div key={q.id} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-4">
               <span className="mb-2 inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                Вопрос {i + 1}
+                {t('questionN', { n: i + 1 })}
               </span>
               <p className="text-base font-medium text-foreground">{q.question}</p>
             </div>
@@ -336,7 +340,7 @@ export const LessonTestView = ({
         disabled={Object.keys(state.answers).length < displayQuestions.length}
       >
         <ClipboardCheck className="mr-2 h-5 w-5" />
-        Отправить ответы
+        {t('submit')}
       </Button>
     </div>
   )

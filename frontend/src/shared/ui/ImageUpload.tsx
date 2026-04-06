@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload, Image as ImageIcon, X, Loader2 } from 'lucide-react'
 import { Button } from './Button'
 
@@ -10,10 +11,13 @@ interface ImageUploadProps {
   label?: string
 }
 
-export const ImageUpload = ({ value, onChange, label = 'Изображение' }: ImageUploadProps) => {
+export const ImageUpload = ({ value, onChange, label }: ImageUploadProps) => {
+  const { t } = useTranslation('platform')
+  const u = (k: string) => t(`sharedUi.upload.image.${k}`)
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const effectiveLabel = label ?? u('defaultLabel')
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -34,13 +38,13 @@ export const ImageUpload = ({ value, onChange, label = 'Изображение' 
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error?.message || `Ошибка ${res.status}`)
+        throw new Error(data?.error?.message || t('sharedUi.upload.image.errorStatus', { status: res.status }))
       }
 
       const data = await res.json()
       onChange(data.data.url)
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Ошибка загрузки изображения')
+      setUploadError(err instanceof Error ? err.message : u('errorGeneric'))
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -54,7 +58,7 @@ export const ImageUpload = ({ value, onChange, label = 'Изображение' 
   return (
     <div className="space-y-2">
       <label className="block text-xs font-medium text-foreground">
-        {label}
+        {effectiveLabel}
       </label>
       <div
         className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/30 p-4 transition-colors hover:border-primary/50 hover:bg-primary/5"
@@ -63,13 +67,13 @@ export const ImageUpload = ({ value, onChange, label = 'Изображение' 
         {uploading ? (
           <>
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-xs text-muted-foreground">Загрузка изображения...</p>
+            <p className="text-xs text-muted-foreground">{u('uploading')}</p>
           </>
         ) : value ? (
           <>
             <ImageIcon className="h-6 w-6 text-emerald-500" />
             <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-              Обложка загружена
+              {u('uploaded')}
             </p>
             <Button
               variant="outline"
@@ -82,14 +86,14 @@ export const ImageUpload = ({ value, onChange, label = 'Изображение' 
               className="text-[11px]"
             >
               <X className="mr-1 h-3 w-3" />
-              Удалить
+              {u('remove')}
             </Button>
           </>
         ) : (
           <>
             <Upload className="h-6 w-6 text-muted-foreground" />
-            <p className="text-xs font-medium text-foreground">Нажмите для загрузки файла</p>
-            <p className="text-[10px] text-muted-foreground">JPEG, PNG, WebP, GIF — до 10 МБ</p>
+            <p className="text-xs font-medium text-foreground">{u('clickUpload')}</p>
+            <p className="text-[10px] text-muted-foreground">{u('formats')}</p>
           </>
         )}
       </div>

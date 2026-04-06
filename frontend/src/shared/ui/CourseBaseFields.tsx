@@ -1,6 +1,7 @@
 import { ChevronDown, AlertCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Input, ImageUpload } from '@/shared/ui'
-import { COURSE_CATEGORIES } from '@/shared/constants/courseCategories'
+import { COURSE_CATEGORY_DEFS } from '@/shared/constants/courseCategories'
 import type { CourseLevel } from '@/shared/types/course'
 
 export interface CourseBaseValues {
@@ -37,15 +38,18 @@ export const CourseBaseFields = ({
   onChange,
   onBlur,
 }: CourseBaseFieldsProps) => {
+  const { t } = useTranslation('platform')
+  const { t: tCourse } = useTranslation('courses')
+  const b = (k: string) => t(`sharedUi.courseBase.${k}`)
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">Название *</label>
+        <label className="text-sm font-medium text-foreground">{b('title')}</label>
         <Input
           value={values.title}
           onChange={e => onChange('title', e.target.value)}
           onBlur={() => onBlur?.('title')}
-          placeholder="Например: Английский язык — уровень A2"
+          placeholder={b('titlePh')}
         />
         {errors.title && (
           <p className="flex items-center gap-1 text-xs text-red-600">
@@ -56,12 +60,12 @@ export const CourseBaseFields = ({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">Краткое описание</label>
+        <label className="text-sm font-medium text-foreground">{b('shortDesc')}</label>
         <Input
           value={values.shortDescription}
           onChange={e => onChange('shortDescription', e.target.value)}
           onBlur={() => onBlur?.('shortDescription')}
-          placeholder="Кратко опишите курс для каталога"
+          placeholder={b('shortDescPh')}
         />
         {errors.shortDescription && (
           <p className="flex items-center gap-1 text-xs text-red-600">
@@ -72,16 +76,16 @@ export const CourseBaseFields = ({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">Полное описание *</label>
+        <label className="text-sm font-medium text-foreground">{b('fullDesc')}</label>
         <textarea
           value={values.description}
           onChange={e => onChange('description', e.target.value)}
           onBlur={() => onBlur?.('description')}
-          placeholder="Подробно опишите содержание курса (минимум 50 символов)"
+          placeholder={b('fullDescPh')}
           className="min-h-[120px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary scroll-soft"
         />
         <p className="text-xs text-muted-foreground">
-          {values.description.length} / 50 символов (минимум)
+          {t('sharedUi.courseBase.charCount', { n: values.description.length })}
         </p>
         {errors.description && (
           <p className="flex items-center gap-1 text-xs text-red-600">
@@ -93,7 +97,7 @@ export const CourseBaseFields = ({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Уровень *</label>
+          <label className="text-sm font-medium text-foreground">{b('level')}</label>
           <div className="relative group">
             <select
               value={values.level}
@@ -111,28 +115,28 @@ export const CourseBaseFields = ({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Язык обучения</label>
+          <label className="text-sm font-medium text-foreground">{b('teachingLanguage')}</label>
           <Input
             value={values.language}
             onChange={e => onChange('language', e.target.value)}
-            placeholder="Английский"
+            placeholder={b('teachingLanguagePh')}
           />
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Категория</label>
+          <label className="text-sm font-medium text-foreground">{b('category')}</label>
           <div className="relative group">
             <select
               value={values.category}
               onChange={e => onChange('category', e.target.value)}
               className="w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 pr-9 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
-              <option value="">Выберите категорию</option>
-              {COURSE_CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat}
+              <option value="">{b('categoryPlaceholder')}</option>
+              {COURSE_CATEGORY_DEFS.map(({ value, labelKey }) => (
+                <option key={value} value={value}>
+                  {tCourse(labelKey)}
                 </option>
               ))}
             </select>
@@ -141,25 +145,27 @@ export const CourseBaseFields = ({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Цена ({currency})</label>
+          <label className="text-sm font-medium text-foreground">
+            {t('sharedUi.courseBase.price', { currency })}
+          </label>
           <Input
             type="number"
             min="0"
             step="0.01"
             value={values.priceInput}
             onChange={e => onChange('priceInput', e.target.value)}
-            placeholder="0 — бесплатный"
+            placeholder={b('pricePh')}
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">Обложка курса</label>
+        <label className="text-sm font-medium text-foreground">{b('coverTitle')}</label>
         <div className="rounded-xl border border-border bg-background/40 p-3 md:p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-start">
             <div className="space-y-1 md:w-1/2">
               <span className="text-[11px] font-medium text-muted-foreground">
-                Ссылка на изображение
+                {b('coverUrlLabel')}
               </span>
               <Input
                 value={values.coverImage}
@@ -167,14 +173,14 @@ export const CourseBaseFields = ({
                 placeholder="https://example.com/cover.jpg"
               />
               <p className="text-[11px] text-muted-foreground">
-                Можно указать прямую ссылку на картинку либо загрузить файл справа.
+                {b('coverUrlHint')}
               </p>
             </div>
             <div className="md:w-1/2">
               <ImageUpload
                 value={values.coverImage}
                 onChange={url => onChange('coverImage', url)}
-                label="Загрузить файл обложки"
+                label={b('coverUploadLabel')}
               />
             </div>
           </div>

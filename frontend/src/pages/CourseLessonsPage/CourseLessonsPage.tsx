@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
@@ -19,6 +20,7 @@ import {
 import { NewLessonForm, CourseMetaEditForm } from '@/features/courses/teacher'
 
 export const CourseLessonsPage = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'courseLessonsTeacher' })
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
@@ -48,7 +50,7 @@ export const CourseLessonsPage = () => {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>
-          <p className="text-muted-foreground">Загрузка...</p>
+          <p className="text-muted-foreground">{t('loading')}</p>
         </div>
       </div>
     )
@@ -59,8 +61,8 @@ export const CourseLessonsPage = () => {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h2 className="mb-2 text-xl font-bold">Курс не найден</h2>
-          <Button onClick={() => navigate('/courses')}>К курсам</Button>
+          <h2 className="mb-2 text-xl font-bold">{t('notFound')}</h2>
+          <Button onClick={() => navigate('/courses')}>{t('toCourses')}</Button>
         </div>
       </div>
     )
@@ -71,9 +73,9 @@ export const CourseLessonsPage = () => {
       <div className="flex min-h-screen items-center justify-center">
         <div className="glass-card max-w-md p-8 text-center">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h2 className="mb-2 text-xl font-bold">Доступ запрещён</h2>
-          <p className="mb-6 text-muted-foreground">Вы можете редактировать только свои курсы</p>
-          <Button onClick={() => navigate(`/courses/${id}`)}>К курсу</Button>
+          <h2 className="mb-2 text-xl font-bold">{t('accessDenied')}</h2>
+          <p className="mb-6 text-muted-foreground">{t('accessDeniedBody')}</p>
+          <Button onClick={() => navigate(`/courses/${id}`)}>{t('toCourse')}</Button>
         </div>
       </div>
     )
@@ -83,11 +85,11 @@ export const CourseLessonsPage = () => {
     if (!deleteLessonModal) return
     try {
       await deleteLesson(deleteLessonModal).unwrap()
-      setFormSuccess('Урок удалён')
+      setFormSuccess(t('lessonDeleted'))
       setDeleteLessonModal(null)
     } catch (error) {
       const err = error as { data?: { message?: string } }
-      setFormError(err?.data?.message || 'Не удалось удалить урок')
+      setFormError(err?.data?.message || t('lessonDeleteError'))
       setDeleteLessonModal(null)
     }
   }
@@ -98,7 +100,7 @@ export const CourseLessonsPage = () => {
       navigate('/admin/courses')
     } catch (error) {
       const err = error as { data?: { message?: string } }
-      setFormError(err?.data?.message || 'Не удалось удалить курс')
+      setFormError(err?.data?.message || t('courseDeleteError'))
     } finally {
       setDeleteCourseModal(false)
     }
@@ -112,17 +114,19 @@ export const CourseLessonsPage = () => {
         <div className="mb-6 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => navigate(`/courses/${id}`)}>
-              <ArrowLeft className="mr-2 h-4 w-4" />К курсу
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t('backCourse')}
             </Button>
             <Button
               variant="outline"
               onClick={() => navigate(`/courses/${id}/analytics`)}
             >
-              Аналитика курса
+              {t('analytics')}
             </Button>
           </div>
           <Button variant="danger" onClick={() => setDeleteCourseModal(true)}>
-            <Trash2 className="mr-2 h-4 w-4" />Удалить курс
+            <Trash2 className="mr-2 h-4 w-4" />
+            {t('deleteCourse')}
           </Button>
         </div>
 
@@ -153,7 +157,7 @@ export const CourseLessonsPage = () => {
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">{course.title}</h1>
                   <p className="text-sm text-muted-foreground">
-                    {course.level} · {course.language} · {lessons.length} уроков
+                    {course.level} · {course.language} · {t('lessonsCount', { n: lessons.length })}
                   </p>
                 </div>
               </div>
@@ -170,20 +174,20 @@ export const CourseLessonsPage = () => {
                   }`}
                 >
                   {course.status === 'PUBLISHED'
-                    ? 'Опубликован'
+                    ? t('published')
                     : course.status === 'PENDING_REVIEW'
-                      ? 'Отправлен на модерацию'
+                      ? t('pendingSubmit')
                       : course.status === 'IN_REVIEW'
-                        ? 'На модерации'
+                        ? t('reviewing')
                         : course.status === 'REJECTED'
-                          ? 'Отклонён'
+                          ? t('rejected')
                           : course.status === 'ARCHIVED'
-                            ? 'Архивирован'
-                            : 'Черновик'}
+                            ? t('archived')
+                            : t('draft')}
                 </span>
                 <Button className='text-xs' variant="outline" size="sm" onClick={() => setIsEditingCourse(true)}>
                   <Settings className="mr-1 h-4 w-4" />
-                  Редактировать курс
+                  {t('editCourse')}
                 </Button>
               </div>
             </div>
@@ -191,7 +195,7 @@ export const CourseLessonsPage = () => {
             {course.lastReviewComment && course.status === 'REJECTED' && (
               <div className="mt-4 rounded-xl bg-amber-50/80 p-3 text-xs text-amber-900 shadow-sm ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-50 dark:ring-amber-900/40">
                 <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                  Комментарий модератора
+                  {t('modComment')}
                 </div>
                 <p className="whitespace-pre-line leading-snug">
                   {course.lastReviewComment}
@@ -213,7 +217,7 @@ export const CourseLessonsPage = () => {
           {!isAddingLesson ? (
             <Button onClick={() => setIsAddingLesson(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Добавить урок
+              {t('addLesson')}
             </Button>
           ) : (
             <NewLessonForm
@@ -241,20 +245,20 @@ export const CourseLessonsPage = () => {
         isOpen={!!deleteLessonModal}
         onClose={() => setDeleteLessonModal(null)}
         onConfirm={handleDeleteLesson}
-        title="Удалить урок?"
-        message="Это действие необратимо. Урок будет удалён навсегда."
-        confirmText="Удалить"
-        cancelText="Отмена"
+        title={t('delLessonTitle')}
+        message={t('delLessonMsg')}
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
         variant="danger"
       />
       <ConfirmModal
         isOpen={deleteCourseModal}
         onClose={() => setDeleteCourseModal(false)}
         onConfirm={handleDeleteCourse}
-        title="Удалить весь курс?"
-        message="Это удалит все уроки, вопросы и прогресс студентов. Действие необратимо!"
-        confirmText="Удалить курс"
-        cancelText="Отмена"
+        title={t('delCourseTitle')}
+        message={t('delCourseMsg')}
+        confirmText={t('delCourseConfirm')}
+        cancelText={t('cancel')}
         variant="danger"
       />
     </div>

@@ -119,7 +119,7 @@ export const RegisterForm = () => {
           {...registerField('firstName')}
           type="text"
           label={t('register.firstNameLabel')}
-          placeholder="Иван"
+          placeholder={t('register.firstNamePlaceholder')}
           error={errors.firstName?.message}
           autoComplete="given-name"
         />
@@ -128,7 +128,7 @@ export const RegisterForm = () => {
           {...registerField('lastName')}
           type="text"
           label={t('register.lastNameLabel')}
-          placeholder="Иванов"
+          placeholder={t('register.lastNamePlaceholder')}
           error={errors.lastName?.message}
           autoComplete="family-name"
         />
@@ -136,8 +136,8 @@ export const RegisterForm = () => {
         <Input
           {...registerField('email')}
           type="email"
-          label="Email"
-          placeholder="your@email.com"
+          label={t('register.emailLabel')}
+          placeholder={t('register.emailPlaceholder')}
           error={errors.email?.message}
           autoComplete="email"
         />

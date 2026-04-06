@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MessageSquare, RefreshCw, Lightbulb } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Question, QuestionOption, Answer } from '@/shared/types/course'
@@ -57,7 +58,7 @@ function buildInitialInteractiveState(
       const ans = initialAnswers[q.id]
       if (!ans) continue
 
-      // Для интерактива сохраняем массив значений по пропускам
+      // Interactive answers: array of values per blank
       if (Array.isArray(ans.answer)) {
         (ans.answer as string[]).forEach((val, idx) => {
           answers[`${q.id}_${idx}`] = String(val ?? '')
@@ -99,6 +100,7 @@ export const LessonInteractiveView = ({
   initialScore,
   initialAnswers,
 }: LessonInteractiveViewProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'lessonTaking.interactive' })
   const initialState = buildInitialInteractiveState(
     questions,
     initialCompleted,
@@ -136,7 +138,7 @@ export const LessonInteractiveView = ({
       results[q.id] = isExerciseCorrect(q, answers, correctByBlank)
     }
 
-    // Сохраняем ответы пользователя по вопросам
+    // Persist answers per question
     questions.forEach(q => {
       const blanksCount = countBlanks(q.question)
       if (blanksCount === 0) return
@@ -206,11 +208,11 @@ export const LessonInteractiveView = ({
     })
 
   if (initialCompleted && !submitted) {
-    // safeguard, но по умолчанию submitted уже true
+    // safeguard; submitted is usually already true here
   }
 
   if (submitted && initialCompleted && Object.keys(cumulativeResults).length === 0) {
-    // Режим просмотра: показываем только итог и кнопку повтора
+    // Review-only: show result and retry
     return (
       <div className="space-y-6">
         <div
@@ -221,11 +223,11 @@ export const LessonInteractiveView = ({
           }`}
         >
           <p className="text-2xl font-bold text-primary">{score}%</p>
-          <p className="text-sm text-muted-foreground">Интерактив уже пройден.</p>
+          <p className="text-sm text-muted-foreground">{t('alreadyDone')}</p>
           <div className="mt-3 flex flex-wrap justify-center gap-2">
             <Button variant="outline" size="sm" onClick={handleRetryAll}>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Пройти заново
+              {t('retry')}
             </Button>
           </div>
         </div>
@@ -245,17 +247,22 @@ export const LessonInteractiveView = ({
         >
           <p className="text-2xl font-bold text-primary">{score}%</p>
           <p className="text-sm text-muted-foreground">
-            {Object.values(cumulativeResults).filter(Boolean).length} из {totalQuestions} верно
+            {t('scoreLine', {
+              correct: Object.values(cumulativeResults).filter(Boolean).length,
+              total: totalQuestions,
+            })}
           </p>
           <div className="mt-3 flex flex-wrap justify-center gap-2">
             {score < 60 && (
               <Button variant="outline" size="sm" onClick={handleRetryWrong}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Повторить только ошибочные ({questions.filter(q => !cumulativeResults[q.id]).length})
+                {t('retryWrongOnly', {
+                  count: questions.filter(q => !cumulativeResults[q.id]).length,
+                })}
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={handleRetryAll}>
-              Пройти заново всё
+              {t('retryAll')}
             </Button>
           </div>
         </div>
@@ -278,7 +285,7 @@ export const LessonInteractiveView = ({
           >
             <div className="mb-3 flex items-center gap-2">
               <span className="rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:text-purple-400">
-                Упражнение {i + 1}
+                {t('exerciseN', { n: i + 1 })}
               </span>
               {q.explanation && !submitted && (
                 <div className="relative">
@@ -290,7 +297,7 @@ export const LessonInteractiveView = ({
                         ? 'bg-amber-200 text-amber-700 dark:bg-amber-900/40'
                         : 'text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/30'
                     }`}
-                    aria-label="Показать подсказку"
+                    aria-label={t('hintAria')}
                   >
                     <Lightbulb className="h-4 w-4" />
                   </button>
@@ -338,9 +345,9 @@ export const LessonInteractiveView = ({
             {submitted && (
               <div className="mt-3 text-sm">
                 {isCorrect ? (
-                  <span className="text-emerald-700 dark:text-emerald-400">✓ Верно!</span>
+                  <span className="text-emerald-700 dark:text-emerald-400">{t('correct')}</span>
                 ) : (
-                  <span className="text-red-600 dark:text-red-400">✗ Неверно</span>
+                  <span className="text-red-600 dark:text-red-400">{t('wrong')}</span>
                 )}
                 {q.explanation && (
                   <p className="mt-1 text-muted-foreground">{q.explanation}</p>
@@ -359,7 +366,7 @@ export const LessonInteractiveView = ({
           disabled={!hasEnoughAnswers}
         >
           <MessageSquare className="mr-2 h-5 w-5" />
-          Проверить ответы
+          {t('check')}
         </Button>
       )}
     </div>

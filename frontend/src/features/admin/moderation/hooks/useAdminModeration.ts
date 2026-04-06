@@ -8,13 +8,20 @@ import type { GetCoursesQuery, Course } from '@/shared/types/course'
 import { CourseStatus } from '@/shared/constants/courseStatus';
 
 
-type Message = { type: 'success' | 'error'; text: string }
+export type ModerationToast = {
+  type: 'success' | 'error'
+  messageKey:
+    | 'toastStatusUpdated'
+    | 'toastStatusError'
+    | 'toastCourseDeleted'
+    | 'toastDeleteError'
+}
 
 export const useAdminModeration = () => {
   const [selectedStatus, setSelectedStatus] =
     useState<CourseStatus | 'ALL'>('ALL')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [message, setMessage] = useState<Message | null>(null)
+  const [message, setMessage] = useState<ModerationToast | null>(null)
 
   const filters: GetCoursesQuery = {
     page: 1,
@@ -57,9 +64,9 @@ export const useAdminModeration = () => {
       setActionLoading(id)
       setMessage(null)
       await updateStatus({ id, status, ...(comment ? { comment } : {}) }).unwrap()
-      setMessage({ type: 'success', text: 'Статус обновлён' })
+      setMessage({ type: 'success', messageKey: 'toastStatusUpdated' })
     } catch {
-      setMessage({ type: 'error', text: 'Ошибка обновления' })
+      setMessage({ type: 'error', messageKey: 'toastStatusError' })
     } finally {
       setActionLoading(null)
     }
@@ -70,9 +77,9 @@ export const useAdminModeration = () => {
       setActionLoading(id)
       setMessage(null)
       await deleteCourse(id).unwrap()
-      setMessage({ type: 'success', text: 'Курс удалён' })
+      setMessage({ type: 'success', messageKey: 'toastCourseDeleted' })
     } catch {
-      setMessage({ type: 'error', text: 'Ошибка удаления' })
+      setMessage({ type: 'error', messageKey: 'toastDeleteError' })
     } finally {
       setActionLoading(null)
     }

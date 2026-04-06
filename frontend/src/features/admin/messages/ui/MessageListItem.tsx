@@ -1,5 +1,6 @@
 import { Mail, CheckCircle } from 'lucide-react'
 import type { ContactMessage } from '@/shared/types/contact'
+import { formatDateShort } from '@/shared/lib/format'
 import { memo } from 'react'
 
 type MessageListItemProps = {
@@ -29,8 +30,6 @@ export const MessageListItem = memo(({ message, selected, onClick }: MessageList
     <p className="text-xs text-muted-foreground truncate mb-1">
       {message.subject}
     </p>
-    <p className="text-xs text-muted-foreground">
-      {new Date(message.createdAt).toLocaleString('ru-RU')}
-    </p>
+    <p className="text-xs text-muted-foreground">{formatDateShort(message.createdAt, true)}</p>
   </button>
 ))

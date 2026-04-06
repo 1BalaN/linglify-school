@@ -28,6 +28,10 @@
     "subtitle": "Update your personal information",
     "firstName": "First name",
     "lastName": "Last name",
+    "placeholders": {
+      "firstName": "John",
+      "lastName": "Smith"
+    },
     "dateOfBirth": "Date of birth",
     "preferredLanguage": "Preferred languages",
     "preferredLanguagePlaceholder": "For example: English, German",

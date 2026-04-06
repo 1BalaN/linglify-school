@@ -4,4 +4,5 @@ export {
   useCreatePayoutRequestMutation,
   useGetAdminRevenueQuery,
   useUpdatePayoutStatusMutation,
+  type TeacherEarnings,
 } from './api/revenueApi'

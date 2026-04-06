@@ -26,8 +26,7 @@ interface ProfileEditProps {
 }
 
 export const ProfileEdit = ({ user }: ProfileEditProps) => {
-  const { t, i18n } = useTranslation('profile')
-  const isEn = i18n.language.startsWith('en')
+  const { t } = useTranslation('profile')
   const dispatch = useDispatch()
   const [updateProfile, { isLoading, error }] = useUpdateProfileMutation()
   const [success, setSuccess] = useState(false)
@@ -92,14 +91,14 @@ export const ProfileEdit = ({ user }: ProfileEditProps) => {
           <Input
             {...register('firstName')}
             label={t('edit.firstName')}
-            placeholder={isEn ? 'John' : 'Иван'}
+            placeholder={t('edit.placeholders.firstName')}
             error={errors.firstName?.message}
           />
 
           <Input
             {...register('lastName')}
             label={t('edit.lastName')}
-            placeholder={isEn ? 'Smith' : 'Иванов'}
+            placeholder={t('edit.placeholders.lastName')}
             error={errors.lastName?.message}
           />
         </div>

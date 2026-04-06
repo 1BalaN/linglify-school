@@ -3,8 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useVerifyEmailMutation } from '@/entities/user'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/shared/ui'
+import { useTranslation } from 'react-i18next'
 
 export const VerifyEmailPage = () => {
+  const { t } = useTranslation('platform')
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [verifyEmail] = useVerifyEmailMutation()
@@ -16,7 +18,7 @@ export const VerifyEmailPage = () => {
 
     if (!token) {
       setStatus('error')
-      setMessage('Отсутствует токен верификации')
+      setMessage(t('authFlow.verify.noToken'))
       return
     }
 
@@ -24,17 +26,18 @@ export const VerifyEmailPage = () => {
       try {
         await verifyEmail({ token }).unwrap()
         setStatus('success')
-        setMessage('Email успешно подтвержден!')
+        setMessage(t('authFlow.verify.successDefault'))
       } catch (error) {
         setStatus('error')
-        const errorMessage = 
-          (error as { data?: { error?: { message?: string } } })?.data?.error?.message || 
-          'Не удалось подтвердить email'
+        const errorMessage =
+          (error as { data?: { error?: { message?: string } } })?.data?.error?.message ||
+          t('authFlow.verify.failDefault')
         setMessage(errorMessage)
       }
     }
 
-    verify()
+    void verify()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per token; avoid re-verify on i18n t reference changes
   }, [searchParams, verifyEmail])
 
   return (
@@ -45,10 +48,10 @@ export const VerifyEmailPage = () => {
             <>
               <Loader2 className="mx-auto mb-4 h-16 w-16 animate-spin text-primary" />
               <h2 className="text-2xl font-bold text-foreground">
-                Подтверждение email
+                {t('authFlow.verify.loadingTitle')}
               </h2>
               <p className="mt-2 text-muted-foreground">
-                Пожалуйста, подождите...
+                {t('authFlow.verify.loadingWait')}
               </p>
             </>
           )}
@@ -57,14 +60,14 @@ export const VerifyEmailPage = () => {
             <>
               <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-600 dark:text-green-400" />
               <h2 className="text-2xl font-bold text-foreground">
-                Email подтвержден!
+                {t('authFlow.verify.successTitle')}
               </h2>
               <p className="mt-2 text-muted-foreground">{message}</p>
               <Button
                 className="mt-6 w-full"
                 onClick={() => navigate('/', { replace: true })}
               >
-                Перейти на главную
+                {t('authFlow.verify.goHome')}
               </Button>
             </>
           )}
@@ -73,7 +76,7 @@ export const VerifyEmailPage = () => {
             <>
               <XCircle className="mx-auto mb-4 h-16 w-16 text-destructive" />
               <h2 className="text-2xl font-bold text-foreground">
-                Ошибка подтверждения
+                {t('authFlow.verify.errorTitle')}
               </h2>
               <p className="mt-2 text-muted-foreground">{message}</p>
               <div className="mt-6 space-y-2">
@@ -81,14 +84,14 @@ export const VerifyEmailPage = () => {
                   className="w-full"
                   onClick={() => navigate('/', { replace: true })}
                 >
-                  Перейти на главную
+                  {t('authFlow.verify.goHome')}
                 </Button>
                 <Button
                   variant="outline"
                   className="w-full"
                   onClick={() => navigate('/login', { replace: true })}
                 >
-                  Войти
+                  {t('authFlow.verify.login')}
                 </Button>
               </div>
             </>

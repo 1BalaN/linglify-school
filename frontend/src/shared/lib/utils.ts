@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import i18n from '@/shared/i18n/config'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -22,7 +23,7 @@ export function parseLanguages(raw: string | null | undefined): string[] {
     .filter(Boolean)
 }
 
-/** Возвращает первый язык из comma-separated строки профиля или fallback. */
-export function firstLanguage(raw: string | null | undefined, fallback = 'Английский'): string {
-  return parseLanguages(raw)[0] ?? fallback
+/** First language from comma-separated profile value, or default teaching language for the active locale. */
+export function firstLanguage(raw: string | null | undefined): string {
+  return parseLanguages(raw)[0] ?? i18n.t('defaults.teachingLanguage', { ns: 'platform' })
 }

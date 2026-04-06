@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Edit, Trash2, } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Review } from '@/shared/types/course'
@@ -20,6 +21,9 @@ export const ReviewCard = ({
   onEdit,
   onDelete,
 }: ReviewCardProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'courseDetail.reviewCard' })
+  const { i18n } = useTranslation('platform')
+  const locale = i18n.language.startsWith('ru') ? 'ru-RU' : 'en-US'
   const isOwner = currentUser?.id === review.userId
   const isAdmin = currentUser?.role === 'ADMIN'
   const isReviewByTeacher = review.userId === teacherId
@@ -28,7 +32,7 @@ export const ReviewCard = ({
   const name =
     review.user?.firstName && review.user?.lastName
       ? `${review.user.firstName} ${review.user.lastName}`
-      : review.user?.firstName || 'Пользователь'
+      : review.user?.firstName || t('userFallback')
 
   return (
     <div
@@ -73,7 +77,7 @@ export const ReviewCard = ({
               <ReviewStarRating rating={review.rating} size="sm" />
             )}
             <span className="text-xs text-muted-foreground">
-              {new Date(review.createdAt).toLocaleDateString('ru-RU', {
+              {new Date(review.createdAt).toLocaleDateString(locale, {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
@@ -95,7 +99,7 @@ export const ReviewCard = ({
                 size="sm"
                 className="h-7 w-7 p-0 hover:bg-primary/10"
                 onClick={onEdit}
-                title="Редактировать"
+                title={t('editAria')}
               >
                 <Edit className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
@@ -105,7 +109,7 @@ export const ReviewCard = ({
               size="sm"
               className="h-7 w-7 p-0 hover:bg-red-50 dark:hover:bg-red-950/30"
               onClick={onDelete}
-              title="Удалить"
+              title={t('deleteAria')}
             >
               <Trash2 className="h-3.5 w-3.5 text-red-500" />
             </Button>
@@ -113,8 +117,7 @@ export const ReviewCard = ({
         )}
       </div>
 
-      {/* Вспомогательный контейнер для будущего inline подтверждения удаления.
-         Само подтверждение рендерится из родителя прямо под этой карточкой. */}
+      {/* Spacer; delete confirmation renders in parent below this card. */}
       <div className="mt-3" />
     </div>
   )

@@ -1,4 +1,14 @@
 {
+  "categoryLabels": {
+    "general": "General course",
+    "business": "Business",
+    "conversational": "Conversational",
+    "grammar": "Grammar",
+    "examPrep": "Exam prep",
+    "travel": "Travel",
+    "academic": "Academic",
+    "technical": "Technical"
+  },
   "catalog": {
     "title": "Course catalog",
     "subtitle": "Choose a language course and start your path to fluent communication",

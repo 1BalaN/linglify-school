@@ -43,5 +43,8 @@
   },
   "common": {
     "or": "Or"
+  },
+  "ui": {
+    "loading": "Loading..."
   }
 }

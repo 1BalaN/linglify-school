@@ -1,6 +1,8 @@
 import type { PlacementQuestionType } from '@/shared/types/placement'
 import { Button, Input } from '@/shared/ui'
 import { ChevronDown, X } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { AdminPlacementQuestion } from '../types'
 import { typeOptions } from '../types'
 
@@ -34,16 +36,48 @@ export const PlacementQuestionsList = ({
   onEdit,
   onDelete,
 }: PlacementQuestionsListProps) => {
+  const { t: tBank } = useTranslation('platform', { keyPrefix: 'admin.placementBank' })
+  const { t: ts } = useTranslation('platform', { keyPrefix: 'placement.inProgress' })
+
+  const typeLabel = useCallback(
+    (type: PlacementQuestionType) => {
+      switch (type) {
+        case 'GRAMMAR':
+          return ts('skillGrammar')
+        case 'VOCAB':
+          return ts('skillLexical')
+        case 'READING':
+          return ts('skillReading')
+        case 'LISTENING':
+          return ts('skillListening')
+        default:
+          return type
+      }
+    },
+    [ts],
+  )
+
+  const typeSelectLabels = useMemo(
+    () => ({
+      ALL: tBank('typeAll'),
+      GRAMMAR: ts('skillGrammar'),
+      VOCAB: ts('skillLexical'),
+      READING: ts('skillReading'),
+      LISTENING: ts('skillListening'),
+    }),
+    [tBank, ts],
+  )
+
   return (
     <div className="glass-card rounded-2xl p-6 backdrop-blur-xl">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 className="text-lg font-semibold text-foreground whitespace-nowrap">
-          Банк вопросов
+          {tBank('title')}
         </h2>
         <div className="flex flex-1 items-center justify-end gap-2 text-xs">
           <div className="relative max-w-[220px] w-full">
             <Input
-              placeholder="Язык (например: Английский)"
+              placeholder={tBank('langFilterPh')}
               value={languageFilter}
               onChange={e => {
                 onLanguageFilterChange(e.target.value)
@@ -51,7 +85,7 @@ export const PlacementQuestionsList = ({
               }}
               className="h-8 w-full pr-7 text-xs"
             />
-            {languageFilter && (
+            {languageFilter ? (
               <button
                 type="button"
                 onClick={() => {
@@ -59,11 +93,11 @@ export const PlacementQuestionsList = ({
                   onPageChange(1)
                 }}
                 className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition"
-                aria-label="Очистить фильтр по языку"
+                aria-label={tBank('clearLangAria')}
               >
                 <X className="h-3 w-3" />
               </button>
-            )}
+            ) : null}
           </div>
           <div className="relative max-w-[180px] w-full">
             <select
@@ -76,7 +110,9 @@ export const PlacementQuestionsList = ({
             >
               {typeOptions.map(opt => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {opt.value === 'ALL'
+                    ? typeSelectLabels.ALL
+                    : typeSelectLabels[opt.value as PlacementQuestionType]}
                 </option>
               ))}
             </select>
@@ -87,11 +123,11 @@ export const PlacementQuestionsList = ({
 
       {isLoading ? (
         <div className="py-8 text-center text-muted-foreground text-sm">
-          Загрузка вопросов...
+          {tBank('loading')}
         </div>
       ) : items.length === 0 ? (
         <div className="py-8 text-center text-muted-foreground text-sm">
-          Вопросы не найдены. Создайте первый вопрос для этого языка и типа.
+          {tBank('empty')}
         </div>
       ) : (
         <div className="space-y-3">
@@ -106,50 +142,32 @@ export const PlacementQuestionsList = ({
                     {q.language}
                   </span>
                   <span className="inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 font-medium text-secondary-foreground">
-                    {q.type === 'GRAMMAR'
-                      ? 'Грамматика'
-                      : q.type === 'VOCAB'
-                        ? 'Лексика'
-                        : q.type === 'READING'
-                          ? 'Чтение'
-                          : 'Аудирование'}
+                    {typeLabel(q.type)}
                   </span>
                   <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-medium">
-                    Сложность: {q.difficulty}
+                    {tBank('difficulty', { n: q.difficulty })}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onEdit(q.id)}
-                  >
-                    Редактировать
+                  <Button size="sm" variant="outline" onClick={() => onEdit(q.id)}>
+                    {tBank('edit')}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onDelete(q.id)}
-                  >
-                    Удалить
+                  <Button size="sm" variant="ghost" onClick={() => onDelete(q.id)}>
+                    {tBank('delete')}
                   </Button>
                 </div>
               </div>
-              <div className="font-medium text-foreground">
-                {q.prompt}
-              </div>
-              {q.context && (
-                <div className="text-xs text-muted-foreground line-clamp-2">
-                  {q.context}
-                </div>
-              )}
+              <div className="font-medium text-foreground">{q.prompt}</div>
+              {q.context ? (
+                <div className="text-xs text-muted-foreground line-clamp-2">{q.context}</div>
+              ) : null}
               <div className="mt-1 text-xs text-muted-foreground">
-                Вариантов: {q.options.length}
+                {tBank('optionsCount', { count: q.options.length })}
               </div>
             </div>
           ))}
 
-          {pagination && pagination.totalPages > 1 && (
+          {pagination && pagination.totalPages > 1 ? (
             <div className="mt-4 flex items-center justify-center gap-2 text-xs">
               <Button
                 size="sm"
@@ -157,10 +175,10 @@ export const PlacementQuestionsList = ({
                 disabled={page <= 1}
                 onClick={() => onPageChange(Math.max(1, page - 1))}
               >
-                Назад
+                {tBank('back')}
               </Button>
               <span className="px-2 py-1 text-muted-foreground">
-                Страница {pagination.page} из {pagination.totalPages}
+                {tBank('pageOf', { page: pagination.page, totalPages: pagination.totalPages })}
               </span>
               <Button
                 size="sm"
@@ -168,13 +186,12 @@ export const PlacementQuestionsList = ({
                 disabled={page >= pagination.totalPages}
                 onClick={() => onPageChange(Math.min(pagination.totalPages, page + 1))}
               >
-                Вперёд
+                {tBank('forward')}
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>
   )
 }
-

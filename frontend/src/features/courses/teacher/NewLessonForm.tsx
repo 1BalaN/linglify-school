@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Clock, Video, ClipboardCheck, MessageSquare, Save, X, BookOpen, MessageCircle } from 'lucide-react'
 import {
   useCreateLessonMutation,
@@ -40,14 +41,6 @@ interface DialogueStepForm {
   prompt: string
   options: { id: string; text: string; isCorrect: boolean }[]
 }
-
-const lessonTypes: { value: FormLessonType; label: string; icon: typeof Video; description: string }[] = [
-  { value: 'VIDEO', label: 'Видео-урок', icon: Video, description: 'Видео + дополнительные материалы' },
-  { value: 'TEST', label: 'Тест', icon: ClipboardCheck, description: 'Вопросы с вариантами ответов' },
-  { value: 'INTERACTIVE', label: 'Интерактив', icon: MessageSquare, description: 'Заполни пропуск / допиши предложение' },
-  { value: 'LEXICAL', label: 'Лексический тренажёр', icon: BookOpen, description: 'Тренировка лексики и перевода' },
-  { value: 'DIALOGUE', label: 'Диалоговый урок', icon: MessageCircle, description: 'Диалог с выбором реплик' },
-]
 
 function uid() {
   return Math.random().toString(36).slice(2)
@@ -99,6 +92,25 @@ export const NewLessonForm = ({
   onSuccess,
   onError,
 }: NewLessonFormProps) => {
+  const { t } = useTranslation('platform')
+  const lessonTypes = useMemo(
+    () =>
+      (
+        [
+          ['VIDEO', Video],
+          ['TEST', ClipboardCheck],
+          ['INTERACTIVE', MessageSquare],
+          ['LEXICAL', BookOpen],
+          ['DIALOGUE', MessageCircle],
+        ] as const
+      ).map(([value, icon]) => ({
+        value,
+        icon,
+        label: t(`lessonBuilder.lessonTypes.${value}.label`),
+        description: t(`lessonBuilder.lessonTypes.${value}.desc`),
+      })),
+    [t],
+  )
   const [createLesson, { isLoading: isCreating }] = useCreateLessonMutation()
   const [createQuestion] = useCreateQuestionMutation()
 
@@ -199,57 +211,57 @@ export const NewLessonForm = ({
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      onError('Введите название урока')
+      onError(t('lessonBuilder.errors.titleRequired'))
       return
     }
     if (lessonType === 'VIDEO' && !videoUrl.trim()) {
-      onError('Введите URL видео')
+      onError(t('lessonBuilder.errors.videoUrlRequired'))
       return
     }
     if (lessonType === 'TEST') {
       const threshold = Number(passThreshold)
       if (!passThreshold || Number.isNaN(threshold) || threshold < 1 || threshold > 100) {
-        onError('Укажите порог прохождения (1–100%)')
+        onError(t('lessonBuilder.errors.thresholdInvalid'))
         return
       }
       if (testQuestions.length === 0) {
-        onError('Добавьте хотя бы один вопрос')
+        onError(t('lessonBuilder.errors.atLeastOneQuestion'))
         return
       }
       for (const q of testQuestions) {
         if (!q.text.trim()) {
-          onError('Заполните текст всех вопросов')
+          onError(t('lessonBuilder.errors.fillAllQuestions'))
           return
         }
         if (!q.options.some(o => o.text.trim())) {
-          onError('Добавьте варианты ответов для всех вопросов')
+          onError(t('lessonBuilder.errors.addOptionsForAll'))
           return
         }
         if (!q.options.some(o => o.isCorrect)) {
-          onError('Отметьте хотя бы один правильный ответ в каждом вопросе')
+          onError(t('lessonBuilder.errors.markCorrectAnswer'))
           return
         }
       }
     }
     if (lessonType === 'INTERACTIVE') {
       if (exercises.length === 0) {
-        onError('Добавьте хотя бы одно упражнение')
+        onError(t('lessonBuilder.errors.atLeastOneExercise'))
         return
       }
       for (const ex of exercises) {
         if (!ex.sentence.trim()) {
-          onError('Заполните предложение для всех упражнений')
+          onError(t('lessonBuilder.errors.fillAllSentences'))
           return
         }
         if (!ex.sentence.includes('___')) {
-          onError('Обозначьте пропуск символами ___ в предложении')
+          onError(t('lessonBuilder.errors.blanksMarker'))
           return
         }
         const requiredBlanks = (ex.sentence.match(/___/g) || []).length
         for (let i = 0; i < requiredBlanks; i++) {
           const b = (ex.blanks || [])[i] ?? ''
           if (!b.split(',').some(s => s.trim())) {
-            onError(`Укажите ответ для пропуска ${i + 1} в упражнении`)
+            onError(t('lessonBuilder.errors.blankAnswerN', { n: i + 1 }))
             return
           }
         }
@@ -257,36 +269,36 @@ export const NewLessonForm = ({
     }
     if (lessonType === 'LEXICAL') {
       if (lexicalItems.length === 0) {
-        onError('Добавьте хотя бы один лексический элемент')
+        onError(t('lessonBuilder.errors.atLeastOneLexical'))
         return
       }
       for (const item of lexicalItems) {
         if (!item.term.trim()) {
-          onError('Заполните слово/фразу для всех элементов')
+          onError(t('lessonBuilder.errors.fillAllTerms'))
           return
         }
-        if (!item.translations.split(',').some(t => t.trim().length > 0)) {
-          onError(`Укажите хотя бы один перевод для "${item.term}"`)
+        if (!item.translations.split(',').some(tx => tx.trim().length > 0)) {
+          onError(t('lessonBuilder.errors.translationForTerm', { term: item.term }))
           return
         }
       }
     }
     if (lessonType === 'DIALOGUE') {
       if (dialogueSteps.length === 0) {
-        onError('Добавьте хотя бы один шаг диалога')
+        onError(t('lessonBuilder.errors.atLeastOneDialogueStep'))
         return
       }
       for (const step of dialogueSteps) {
         if (!step.prompt.trim()) {
-          onError('Заполните текст реплики собеседника для всех шагов')
+          onError(t('lessonBuilder.errors.fillAllDialoguePrompts'))
           return
         }
         if (step.options.length < 2) {
-          onError('В каждом шаге диалога должно быть минимум два варианта ответа')
+          onError(t('lessonBuilder.errors.dialogueMinTwoOptions'))
           return
         }
         if (!step.options.some(o => o.text.trim()) || !step.options.some(o => o.isCorrect && o.text.trim())) {
-          onError('В каждом шаге диалога должен быть хотя бы один непустой правильный вариант')
+          onError(t('lessonBuilder.errors.dialogueCorrectOption'))
           return
         }
       }
@@ -403,25 +415,23 @@ export const NewLessonForm = ({
         }
       }
 
-      onSuccess('Урок успешно создан!')
+      onSuccess(t('lessonBuilder.errors.successCreated'))
       resetLessonForm()
       onClose()
     } catch (error) {
       const err = error as { data?: { message?: string; code?: string } }
       if (err?.data?.code === 'FINAL_TEST_ALREADY_EXISTS') {
-        onError(
-          'Финальный тест для этого курса уже создан. Отредактируйте существующий финальный тест или снимите с него этот статус.',
-        )
+        onError(t('lessonBuilder.errors.finalTestExists'))
         return
       }
-      onError(err?.data?.message || 'Не удалось создать урок')
+      onError(err?.data?.message || t('lessonBuilder.errors.createFailed'))
     }
   }
 
   return (
     <div className="glass-card rounded-md p-6">
       <div className="mb-5 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Новый урок</h3>
+        <h3 className="text-lg font-semibold">{t('lessonBuilder.newLesson.title')}</h3>
         <Button
           variant="ghost"
           size="sm"
@@ -438,26 +448,30 @@ export const NewLessonForm = ({
         {/* Common fields */}
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Название урока *</label>
+            <label className="mb-1 block text-sm font-medium">
+              {t('lessonBuilder.newLesson.lessonTitle')}
+            </label>
             <Input
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Урок 1. Тема урока"
+              placeholder={t('lessonBuilder.newLesson.lessonTitlePh')}
             />
           </div>
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Описание</label>
+            <label className="mb-1 block text-sm font-medium">
+              {t('lessonBuilder.newLesson.description')}
+            </label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Краткое описание урока"
+              placeholder={t('lessonBuilder.newLesson.descriptionPh')}
               className="min-h-[72px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none scroll-soft"
             />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">
               <Clock className="mr-1 inline h-3 w-3" />
-              Длительность (мин)
+              {t('lessonBuilder.newLesson.duration')}
             </label>
             <Input
               type="number"
@@ -467,7 +481,9 @@ export const NewLessonForm = ({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Тип урока</label>
+            <label className="mb-1 block text-sm font-medium">
+              {t('lessonBuilder.newLesson.lessonType')}
+            </label>
             <div className="grid grid-cols-3 gap-2">
               {lessonTypes.map(lt => (
                 <button
@@ -570,7 +586,7 @@ export const NewLessonForm = ({
         <div className="flex gap-2 pt-2">
           <Button onClick={handleSubmit} disabled={isCreating}>
             <Save className="mr-2 h-4 w-4" />
-            {isCreating ? 'Создание...' : 'Создать урок'}
+            {isCreating ? t('lessonBuilder.newLesson.createSaving') : t('lessonBuilder.newLesson.create')}
           </Button>
           <Button
             variant="outline"
@@ -579,7 +595,7 @@ export const NewLessonForm = ({
               onClose()
             }}
           >
-            Отмена
+            {t('lessonBuilder.newLesson.cancel')}
           </Button>
         </div>
       </div>

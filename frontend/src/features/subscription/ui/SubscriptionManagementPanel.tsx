@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Check, Crown, Loader2, CalendarClock, TrendingUp } from 'lucide-react'
 import { Button } from '@/shared/ui'
@@ -10,20 +10,18 @@ import {
   useSyncSubscriptionMutation,
   SubscriptionStatusBadge,
 } from '@/entities/subscription'
-
-const PLAN_FEATURES = [
-  'Публикация неограниченного числа курсов',
-  'Детальная аналитика по курсам и студентам',
-  'Чат со студентами в реальном времени',
-  'Выплата заработанных средств',
-  'Приоритетная поддержка платформы',
-]
+import { Trans, useTranslation } from 'react-i18next'
 
 /**
  * Full subscription management panel: current status card + plan purchase form.
  * Lives in features/ because it combines entity hooks with user-triggered mutations.
  */
 export const SubscriptionManagementPanel = () => {
+  const { t } = useTranslation('platform')
+  const planFeatures = useMemo(
+    () => t('teacherCabinet.subscription.planFeatures', { returnObjects: true }) as string[],
+    [t],
+  )
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [banner, setBanner] = useState<'success' | 'cancelled' | null>(null)
@@ -61,7 +59,7 @@ export const SubscriptionManagementPanel = () => {
   }
 
   const handleCancel = async () => {
-    if (!confirm('Отменить подписку? Она останется активной до конца оплаченного периода.')) return
+    if (!confirm(t('teacherCabinet.subscription.cancelConfirm'))) return
     await cancelSub()
   }
 
@@ -72,7 +70,7 @@ export const SubscriptionManagementPanel = () => {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-20">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        {syncing && <p className="text-sm text-muted-foreground">Обновляем статус подписки…</p>}
+        {syncing && <p className="text-sm text-muted-foreground">{t('teacherCabinet.subscription.syncing')}</p>}
       </div>
     )
   }
@@ -85,31 +83,31 @@ export const SubscriptionManagementPanel = () => {
           <Crown className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h2 className="text-xl font-bold">Подписка преподавателя</h2>
-          <p className="text-sm text-muted-foreground">Публикуйте курсы и получайте доход</p>
+          <h2 className="text-xl font-bold">{t('teacherCabinet.subscription.title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('teacherCabinet.subscription.subtitle')}</p>
         </div>
       </div>
 
       {/* Success / cancelled banners */}
       {banner === 'success' && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
-          ✅ Подписка успешно оформлена! Теперь вы можете публиковать курсы.
+          {t('teacherCabinet.subscription.successBanner')}
         </div>
       )}
       {banner === 'cancelled' && (
         <div className="rounded-xl border border-muted bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-          Оплата отменена. Вы можете попробовать снова в любой момент.
+          {t('teacherCabinet.subscription.cancelBanner')}
         </div>
       )}
 
       {/* Current subscription details */}
       {subscription && (
         <div className="rounded-2xl border border-border bg-card p-5">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Текущая подписка</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('teacherCabinet.subscription.currentLabel')}</p>
           <div className="grid gap-4 sm:grid-cols-3">
             {/* Status */}
             <div>
-              <p className="mb-1 text-xs text-muted-foreground">Статус</p>
+              <p className="mb-1 text-xs text-muted-foreground">{t('teacherCabinet.subscription.statusLabel')}</p>
               <SubscriptionStatusBadge subscription={subscription} showDays={false} />
             </div>
 
@@ -118,9 +116,9 @@ export const SubscriptionManagementPanel = () => {
               <div className="flex items-start gap-2">
                 <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Тариф</p>
+                  <p className="text-xs text-muted-foreground">{t('teacherCabinet.subscription.planLabel')}</p>
                   <p className="text-sm font-semibold">
-                    {subscription.plan === 'MONTHLY' ? 'Месячный' : 'Годовой'}
+                    {subscription.plan === 'MONTHLY' ? t('teacherCabinet.subscription.planMonthly') : t('teacherCabinet.subscription.planAnnual')}
                   </p>
                 </div>
               </div>
@@ -132,13 +130,15 @@ export const SubscriptionManagementPanel = () => {
                 <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <div>
                   <p className="text-xs text-muted-foreground">
-                    {subscription.status === 'TRIAL' ? 'Пробный период до' : 'Следующее списание'}
+                    {subscription.status === 'TRIAL' ? t('teacherCabinet.subscription.trialUntil') : t('teacherCabinet.subscription.nextBilling')}
                   </p>
                   <p className="text-sm font-semibold">
                     {formatDateLong(subscription.currentPeriodEnd ?? subscription.trialEndsAt)}
                   </p>
                   <p className={`text-xs font-medium ${subscription.status === 'TRIAL' ? 'text-amber-500' : 'text-muted-foreground'}`}>
-                    Осталось {daysLeft(subscription.currentPeriodEnd ?? subscription.trialEndsAt)} дн.
+                    {t('teacherCabinet.subscription.daysRemaining', {
+                      days: daysLeft(subscription.currentPeriodEnd ?? subscription.trialEndsAt),
+                    })}
                   </p>
                 </div>
               </div>
@@ -148,7 +148,7 @@ export const SubscriptionManagementPanel = () => {
           {subscription.status === 'ACTIVE' && (
             <div className="mt-4 border-t border-border pt-4">
               <Button variant="outline" size="sm" onClick={handleCancel} isLoading={cancelLoading}>
-                Отменить подписку
+                {t('teacherCabinet.subscription.cancelSub')}
               </Button>
             </div>
           )}
@@ -159,7 +159,7 @@ export const SubscriptionManagementPanel = () => {
       {showPlans && (
         <div className="space-y-4">
           <h3 className="text-sm font-semibold">
-            {isExpiredOrNone ? 'Оформить подписку' : 'Перейти на платный тариф'}
+            {isExpiredOrNone ? t('teacherCabinet.subscription.ctaSubscribe') : t('teacherCabinet.subscription.ctaUpgrade')}
           </h3>
 
           <div className="flex rounded-xl border border-border bg-muted/40 p-1 w-fit">
@@ -173,10 +173,10 @@ export const SubscriptionManagementPanel = () => {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {plan === 'MONTHLY' ? 'Месяц' : 'Год'}
+                {plan === 'MONTHLY' ? t('teacherCabinet.subscription.tabMonth') : t('teacherCabinet.subscription.tabYear')}
                 {plan === 'ANNUAL' && (
                   <span className="ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400">
-                    −33%
+                    {t('teacherCabinet.subscription.discountBadge')}
                   </span>
                 )}
               </button>
@@ -188,18 +188,20 @@ export const SubscriptionManagementPanel = () => {
               <div>
                 <p className="text-3xl font-bold">{selectedPlan === 'MONTHLY' ? '30 BYN' : '240 BYN'}</p>
                 <p className="text-sm text-muted-foreground">
-                  {selectedPlan === 'MONTHLY' ? 'в месяц' : 'в год (20 BYN/мес)'}
+                  {selectedPlan === 'MONTHLY' ? t('teacherCabinet.subscription.pricePerMonth') : t('teacherCabinet.subscription.pricePerYear')}
                 </p>
               </div>
               <Button onClick={handleSubscribe} isLoading={checkoutLoading}>
                 {checkoutLoading
                   ? <Loader2 className="h-4 w-4 animate-spin" />
-                  : `Оформить за ${selectedPlan === 'MONTHLY' ? '30 BYN' : '240 BYN'}`}
+                  : t('teacherCabinet.subscription.checkoutFor', {
+                      price: selectedPlan === 'MONTHLY' ? '30 BYN' : '240 BYN',
+                    })}
               </Button>
             </div>
 
             <ul className="mt-5 space-y-2.5">
-              {PLAN_FEATURES.map(f => (
+              {planFeatures.map(f => (
                 <li key={f} className="flex items-center gap-2.5 text-sm">
                   <Check className="h-4 w-4 shrink-0 text-emerald-500" />
                   {f}
@@ -208,13 +210,16 @@ export const SubscriptionManagementPanel = () => {
             </ul>
 
             <p className="mt-4 text-xs text-muted-foreground">
-              Безопасная оплата через Stripe. Отмените в любой момент.
+              {t('teacherCabinet.subscription.stripeNote')}
             </p>
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Платформа удерживает <strong>25%</strong> комиссии с каждой продажи курса.
-            Оставшиеся <strong>75%</strong> вы получаете через запрос на выплату.
+            <Trans
+              i18nKey="teacherCabinet.subscription.commissionNote"
+              ns="platform"
+              components={{ strong: <strong /> }}
+            />
           </p>
         </div>
       )}

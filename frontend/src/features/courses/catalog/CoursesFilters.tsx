@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { GetCoursesQuery, CourseLevel } from '@/shared/types/course'
-import { COURSE_CATEGORIES } from '@/shared/constants/courseCategories'
+import { COURSE_CATEGORY_DEFS } from '@/shared/constants/courseCategories'
 import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -10,8 +10,6 @@ interface CoursesFiltersProps {
 }
 
 const levels: CourseLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-const categories = [...COURSE_CATEGORIES]
-
 export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
   const { t } = useTranslation('courses')
   const [isExpanded, setIsExpanded] = useState(true)
@@ -193,18 +191,18 @@ export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
               {t('filters.category')}
             </h3>
             <div className="space-y-1">
-              {categories.map(category => (
+              {COURSE_CATEGORY_DEFS.map(({ value, labelKey }) => (
                 <button
-                  key={category}
+                  key={value}
                   type="button"
-                  onClick={() => handleCategoryChange(category)}
+                  onClick={() => handleCategoryChange(value)}
                   className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                    filters.category === category
+                    filters.category === value
                       ? 'bg-primary text-primary-foreground font-medium'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
-                  {category}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>

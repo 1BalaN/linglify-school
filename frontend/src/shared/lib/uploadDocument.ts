@@ -1,3 +1,5 @@
+import i18n from '@/shared/i18n/config'
+
 const API_URL = import.meta.env.VITE_API_URL as string
 
 export interface DocumentUploadResult {
@@ -19,7 +21,11 @@ export async function uploadDocument(file: File): Promise<DocumentUploadResult> 
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))
-    throw new Error(data?.message || `Ошибка загрузки ${res.status}`)
+    const msg =
+      typeof data?.message === 'string' && data.message
+        ? data.message
+        : i18n.t('uploadHttpError', { ns: 'validation', status: res.status })
+    throw new Error(msg)
   }
 
   const data = await res.json()

@@ -47,12 +47,76 @@
       "emailReply24h": "We reply within 24 hours",
       "telegramFast": "Fast communication in messenger",
       "office": "Office",
-      "social": "Social media"
+      "social": "Social media",
+      "addressLine1": "Belarus, Minsk",
+      "addressLine2": "Nezavisimosti Ave, 102"
     }
   },
   "help": {
     "title": "Help center",
     "subtitle": "Everything you need to use the platform effectively",
-    "contactSupport": "Contact support"
+    "contactSupport": "Contact support",
+    "topics": [
+      {
+        "title": "Getting started",
+        "description": "Learn how to create an account, choose a course, and start learning",
+        "items": [
+          "Registration and sign in",
+          "Profile setup",
+          "Choosing a target language",
+          "Your first lesson"
+        ]
+      },
+      {
+        "title": "Interactive lessons",
+        "description": "How to work with video, audio, and text materials",
+        "items": [
+          "Watching video lessons",
+          "Completing exercises",
+          "Pronunciation practice",
+          "Progress tracking"
+        ]
+      },
+      {
+        "title": "Exercises and tests",
+        "description": "Practice and validate your knowledge",
+        "items": [
+          "Exercise types",
+          "Taking tests",
+          "Grading system",
+          "Working on mistakes"
+        ]
+      },
+      {
+        "title": "Community",
+        "description": "Communicate with students and teachers",
+        "items": [
+          "Forums and discussions",
+          "Language partner search",
+          "Group sessions",
+          "Feedback"
+        ]
+      },
+      {
+        "title": "Achievements",
+        "description": "Track your progress and earn rewards",
+        "items": [
+          "Level system",
+          "Badges and rewards",
+          "Learning statistics",
+          "Certificates"
+        ]
+      },
+      {
+        "title": "Account settings",
+        "description": "Manage your profile and preferences",
+        "items": [
+          "Profile data updates",
+          "Security and passwords",
+          "Notifications",
+          "Subscription and payments"
+        ]
+      }
+    ]
   }
 }

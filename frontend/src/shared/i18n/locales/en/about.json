@@ -1,6 +1,61 @@
 {
-  "title": "About platform",
-  "catalogCta": "Go to course catalog",
+  "title": "About the platform",
+  "catalogCta": "Browse course catalog",
   "startLearning": "Start learning",
-  "goToCourses": "Go to courses"
+  "goToCourses": "Go to courses",
+  "hero": {
+    "description": "Linglify is an educational platform for learning foreign languages through structured courses, interactive lessons, and transparent progress tracking. We help students move confidently from first steps to fluent communication.",
+    "chips": ["Video, tests, and interactive practice", "Progress and reviews"]
+  },
+  "bannerAlt": "Online learning on Linglify platform",
+  "learning": {
+    "title": "How learning works",
+    "steps": [
+      "Student registers in the system.",
+      "Can take a placement test to determine language level.",
+      "Chooses a course in the catalog and gets access.",
+      "Completes three lesson types: video, tests, and interactive.",
+      "System calculates lesson and course progress.",
+      "Student leaves reviews, teacher gets feedback."
+    ]
+  },
+  "audience": [
+    {
+      "title": "For students",
+      "description": "Course catalog, “My learning” section, a unified lesson interface, and transparent progress for each course."
+    },
+    {
+      "title": "For teachers",
+      "description": "Convenient dashboard for creating courses and lessons: video format, tests with options, and fill-in interactive tasks."
+    },
+    {
+      "title": "For administrators",
+      "description": "Course moderation, publication status management, review handling, and core platform pages."
+    }
+  ],
+  "lessons": {
+    "title": "Lessons designed for daily learning",
+    "description": "Courses include three activity formats: video, tests, and interactive exercises. Teachers use clear forms to create content, and students get a unified, easy flow."
+  },
+  "formats": [
+    {
+      "title": "Video lessons",
+      "text1": "Short videos with explanations and live speech, supplemented by notes, useful links, and clarifications.",
+      "text2": "Student side uses a single player that supports both direct files and embedded links."
+    },
+    {
+      "title": "Tests",
+      "text1": "Questions with answer options, support for multiple correct answers, and pass threshold in percent.",
+      "text2": "Students see the result without exposing correct answers to preserve learning effect."
+    },
+    {
+      "title": "Interactive",
+      "text1": "Fill-in-the-blank exercises (e.g. “I ___ to school every day”), where a student enters their answer.",
+      "text2": "Answer checking without showing correct variants, with ability to retry."
+    }
+  ],
+  "cta": {
+    "title": "Ready to try the platform from inside?",
+    "description": "Sign up as a student and complete your first lessons. Core course logic is already live — we keep improving design and content."
+  }
 }

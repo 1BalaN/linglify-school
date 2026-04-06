@@ -17,9 +17,9 @@ export type ModerationToast = {
     | 'toastDeleteError'
 }
 
-export const useAdminModeration = () => {
+export const useAdminModeration = (initialStatus: CourseStatus | 'ALL' = 'ALL') => {
   const [selectedStatus, setSelectedStatus] =
-    useState<CourseStatus | 'ALL'>('ALL')
+    useState<CourseStatus | 'ALL'>(initialStatus)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [message, setMessage] = useState<ModerationToast | null>(null)
 

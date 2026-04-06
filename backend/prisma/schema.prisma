@@ -118,6 +118,9 @@ model FAQItem {
   question  String
   answer    String
   category  String
+  questionI18n Json?
+  answerI18n   Json?
+  categoryI18n Json?
   order     Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -221,9 +224,14 @@ model Course {
   title           String
   description     String        @db.Text
   shortDescription String?      @db.Text
+  titleI18n       Json?
+  descriptionI18n Json?
+  shortDescriptionI18n Json?
   level           CourseLevel
   language        String        @default("Английский")
+  languageI18n    Json?
   category        String?
+  categoryI18n    Json?
   
   // Преподаватель
   teacherId       String
@@ -291,12 +299,15 @@ model Lesson {
   // Основная информация
   title       String
   description String?    @db.Text
+  titleI18n   Json?
+  descriptionI18n Json?
   order       Int        // Порядок урока в курсе
   type        LessonType @default(VIDEO)
   isFinalTest Boolean    @default(false)
   
   // Контент
   content     String?    @db.Text // Markdown или HTML контент
+  contentI18n Json?
   videoUrl    String?    // URL видео (YouTube, Vimeo, или собственный)
   duration    Int?       // Продолжительность в секундах
   

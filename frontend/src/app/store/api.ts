@@ -6,6 +6,7 @@ import {
   type FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react'
 import type { ApiResponse } from '@/shared/types/api'
+import i18n from '@/shared/i18n/config'
 
 const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 export const apiBaseUrl = baseUrl
@@ -18,6 +19,8 @@ const baseQuery = fetchBaseQuery({
     if (token) {
       headers.set('authorization', `Bearer ${token}`)
     }
+    const lang = i18n.language?.startsWith('en') ? 'en' : 'ru'
+    headers.set('accept-language', lang)
     return headers
   },
 })

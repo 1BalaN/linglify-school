@@ -5,26 +5,28 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useResetPasswordMutation } from '@/entities/user'
 import { Button, Input } from '@/shared/ui'
 import { Lock, CheckCircle, AlertCircle } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-const resetPasswordSchema = z.object({
-  password: z
-    .string()
-    .min(8, 'Пароль должен быть не менее 8 символов')
-    .max(128, 'Пароль не должен превышать 128 символов')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Пароль должен содержать хотя бы одну заглавную букву, одну строчную букву и одну цифру'
-    ),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Пароли не совпадают',
-  path: ['confirmPassword'],
-})
+const createResetPasswordSchema = (t: (k: string) => string) =>
+  z
+    .object({
+      password: z
+        .string()
+        .min(8, t('authFlow.reset.validation.min8'))
+        .max(128, t('authFlow.reset.validation.max128'))
+        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, t('authFlow.reset.validation.pattern')),
+      confirmPassword: z.string(),
+    })
+    .refine(data => data.password === data.confirmPassword, {
+      message: t('authFlow.reset.validation.mismatch'),
+      path: ['confirmPassword'],
+    })
 
-type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
+type ResetPasswordFormData = z.infer<ReturnType<typeof createResetPasswordSchema>>
 
 export const ResetPasswordPage = () => {
+  const { t } = useTranslation('platform')
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const token = searchParams.get('token')
@@ -32,17 +34,21 @@ export const ResetPasswordPage = () => {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const schema = useMemo(() => createResetPasswordSchema(t), [t])
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
+    resolver: zodResolver(schema),
   })
+
+  const ruleItems = t('authFlow.reset.rules', { returnObjects: true }) as string[]
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     if (!token) {
-      setError('Отсутствует токен восстановления')
+      setError(t('authFlow.reset.missingToken'))
       return
     }
 
@@ -55,7 +61,7 @@ export const ResetPasswordPage = () => {
       }, 3000)
     } catch (err) {
       const errorData = err as { data?: { error?: { message?: string } } }
-      setError(errorData.data?.error?.message || 'Ошибка при сбросе пароля')
+      setError(errorData.data?.error?.message || t('authFlow.reset.errorDefault'))
     }
   }
 
@@ -69,17 +75,17 @@ export const ResetPasswordPage = () => {
                 <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
               </div>
               <h1 className="mb-3 text-2xl font-bold text-foreground">
-                Недействительная ссылка
+                {t('authFlow.reset.invalidTitle')}
               </h1>
               <p className="text-muted-foreground mb-6">
-                Ссылка для восстановления пароля недействительна или устарела.
+                {t('authFlow.reset.invalidBody')}
               </p>
               <Button
                 variant="primary"
                 className="w-full"
                 onClick={() => navigate('/forgot-password')}
               >
-                Запросить новую ссылку
+                {t('authFlow.reset.requestNew')}
               </Button>
             </div>
           </div>
@@ -98,13 +104,13 @@ export const ResetPasswordPage = () => {
                 <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
               <h1 className="mb-3 text-2xl font-bold text-gradient">
-                Пароль успешно изменён!
+                {t('authFlow.reset.doneTitle')}
               </h1>
               <p className="text-muted-foreground mb-6">
-                Теперь вы можете войти с новым паролем
+                {t('authFlow.reset.doneBody')}
               </p>
               <p className="text-sm text-muted-foreground">
-                Перенаправление на страницу входа...
+                {t('authFlow.reset.redirecting')}
               </p>
             </div>
           </div>
@@ -122,10 +128,10 @@ export const ResetPasswordPage = () => {
               <Lock className="h-8 w-8 text-white" />
             </div>
             <h1 className="mb-2 text-3xl font-bold text-gradient">
-              Новый пароль
+              {t('authFlow.reset.title')}
             </h1>
             <p className="text-muted-foreground">
-              Создайте надёжный пароль для вашего аккаунта
+              {t('authFlow.reset.subtitle')}
             </p>
           </div>
 
@@ -139,27 +145,27 @@ export const ResetPasswordPage = () => {
             <Input
               {...register('password')}
               type="password"
-              label="Новый пароль"
-              placeholder="Введите новый пароль"
+              label={t('authFlow.reset.newPassword')}
+              placeholder={t('authFlow.reset.newPasswordPh')}
               error={errors.password?.message}
             />
 
             <Input
               {...register('confirmPassword')}
               type="password"
-              label="Подтвердите пароль"
-              placeholder="Повторите пароль"
+              label={t('authFlow.reset.confirmPassword')}
+              placeholder={t('authFlow.reset.confirmPasswordPh')}
               error={errors.confirmPassword?.message}
             />
 
             <div className="rounded-xl glass p-4">
               <h4 className="mb-2 text-sm font-semibold text-gradient">
-                Требования к паролю:
+                {t('authFlow.reset.rulesTitle')}
               </h4>
               <ul className="space-y-1 text-xs text-muted-foreground">
-                <li>• Минимум 8 символов</li>
-                <li>• Заглавные и строчные буквы</li>
-                <li>• Хотя бы одна цифра</li>
+                {ruleItems.map(rule => (
+                  <li key={rule}>• {rule}</li>
+                ))}
               </ul>
             </div>
 
@@ -169,7 +175,7 @@ export const ResetPasswordPage = () => {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Сохранение...' : 'Сохранить новый пароль'}
+              {isLoading ? t('authFlow.reset.saving') : t('authFlow.reset.saveSubmit')}
             </Button>
           </form>
         </div>

@@ -1,0 +1,50 @@
+{
+  "header": {
+    "nav": {
+      "courses": "Courses",
+      "about": "About",
+      "becomeTeacher": "Become a teacher"
+    },
+    "actions": {
+      "chats": "Chats",
+      "myLearning": "My learning",
+      "myCourses": "My courses",
+      "earnings": "Earnings",
+      "adminPanel": "Admin panel",
+      "login": "Sign in",
+      "register": "Sign up",
+      "logout": "Log out",
+      "toggleTheme": "Toggle theme"
+    }
+  },
+  "footer": {
+    "description": "A modern language-learning platform with interactive courses and a personalized approach.",
+    "columns": {
+      "platform": "Platform",
+      "support": "Support",
+      "legal": "Legal"
+    },
+    "links": {
+      "courses": "Courses",
+      "becomeTeacher": "Become a teacher",
+      "aboutUs": "About us",
+      "help": "Help",
+      "faq": "FAQ",
+      "contacts": "Contacts",
+      "privacy": "Privacy",
+      "terms": "Terms of use"
+    },
+    "copyright": "© {{year}} Linglify. All rights reserved."
+  },
+  "language": {
+    "label": "Language",
+    "ru": "Русский",
+    "en": "English"
+  },
+  "common": {
+    "or": "Or"
+  },
+  "ui": {
+    "loading": "Loading..."
+  }
+}

@@ -11,7 +11,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Синхронизация с inline-скриптом в index.html (избегаем мерцания)
+    // Stay in sync with inline script in index.html (avoid flash)
     if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) {
       return 'dark'
     }

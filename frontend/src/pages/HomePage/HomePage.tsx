@@ -12,8 +12,10 @@ import {
 } from 'lucide-react'
 import MainBanner from '@/assets/images/MainBanner.webp'
 import { useGetCoursesQuery } from '@/entities/course'
+import { useTranslation } from 'react-i18next'
 
 export const HomePage = () => {
+  const { t } = useTranslation('home')
   const { data: popularCoursesResponse, isLoading: isLoadingPopular } = useGetCoursesQuery({
     isPublished: true,
     sortBy: 'enrolledCount',
@@ -33,21 +35,19 @@ export const HomePage = () => {
             <div className="flex flex-col justify-center space-y-8 animate-in fade-in slide-in-from-left duration-700">
               <div className="space-y-4">
                 <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-                  Изучайте языки{' '}
+                  {t('hero.titleStart')}{' '}
                   <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                    легко и эффективно
+                    {t('hero.titleAccent')}
                   </span>
                 </h1>
                 <p className="text-lg text-muted-foreground sm:text-xl">
-                  Linglify — современная платформа для изучения иностранных
-                  языков с интерактивными курсами, персональным подходом и
-                  проверенной методикой.
+                  {t('hero.description')}
                 </p>
               </div>
               <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
                 <Link to="/register">
                   <Button size="lg" className="w-full sm:w-auto">
-                    Начать бесплатно
+                    {t('hero.ctaPrimary')}
                   </Button>
                 </Link>
                 <Link to="/courses">
@@ -56,7 +56,7 @@ export const HomePage = () => {
                     size="lg"
                     className="w-full sm:w-auto"
                   >
-                    Посмотреть курсы
+                    {t('hero.ctaSecondary')}
                   </Button>
                 </Link>
               </div>
@@ -73,9 +73,9 @@ export const HomePage = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    Более 10,000 студентов
+                    {t('hero.studentsCount')}
                   </p>
-                  <p className="text-sm text-muted-foreground">уже учатся с нами</p>
+                  <p className="text-sm text-muted-foreground">{t('hero.studentsSubtitle')}</p>
                 </div>
               </div>
             </div>
@@ -83,7 +83,7 @@ export const HomePage = () => {
               <div className="relative aspect-square overflow-hidden rounded-2xl shadow-2xl">
                 <img
                   src={MainBanner}
-                  alt="Онлайн-обучение иностранным языкам на платформе Linglify"
+                  alt={t('hero.bannerAlt')}
                   className="h-full w-full object-cover"
                   loading="lazy"
                 />
@@ -96,9 +96,9 @@ export const HomePage = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      95% успешности
+                      {t('hero.successRate')}
                     </p>
-                    <p className="text-xs text-muted-foreground">наших студентов</p>
+                    <p className="text-xs text-muted-foreground">{t('hero.successRateSubtitle')}</p>
                   </div>
                 </div>
               </div>
@@ -112,11 +112,10 @@ export const HomePage = () => {
         <div className="container mx-auto max-w-7xl">
           <div className="mb-16 text-center">
             <h2 className="mb-4 text-3xl font-bold text-foreground sm:text-4xl">
-              Почему выбирают Linglify?
+              {t('features.title')}
             </h2>
             <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-              Мы создали платформу, которая делает изучение языков доступным,
-              интересным и результативным.
+              {t('features.description')}
             </p>
           </div>
 
@@ -124,39 +123,33 @@ export const HomePage = () => {
             {[
               {
                 icon: Globe,
-                title: 'Множество языков',
-                description:
-                  'Изучайте английский, испанский, французский, немецкий и многие другие языки.',
+                title: t('features.items.manyLanguages.title'),
+                description: t('features.items.manyLanguages.description'),
               },
               {
                 icon: Zap,
-                title: 'Быстрый прогресс',
-                description:
-                  'Современная методика обучения позволяет достигать результатов в кратчайшие сроки.',
+                title: t('features.items.fastProgress.title'),
+                description: t('features.items.fastProgress.description'),
               },
               {
                 icon: Users,
-                title: 'Живое общение',
-                description:
-                  'Практикуйте язык с носителями и другими студентами в реальном времени.',
+                title: t('features.items.liveCommunication.title'),
+                description: t('features.items.liveCommunication.description'),
               },
               {
                 icon: Award,
-                title: 'Сертификаты',
-                description:
-                  'Получайте официальные сертификаты после завершения курсов.',
+                title: t('features.items.certificates.title'),
+                description: t('features.items.certificates.description'),
               },
               {
                 icon: TrendingUp,
-                title: 'Отслеживание прогресса',
-                description:
-                  'Следите за своими достижениями и улучшайте слабые стороны.',
+                title: t('features.items.progressTracking.title'),
+                description: t('features.items.progressTracking.description'),
               },
               {
                 icon: BookOpen,
-                title: 'Интерактивные уроки',
-                description:
-                  'Увлекательные задания, видео, аудио и игры для эффективного обучения.',
+                title: t('features.items.interactiveLessons.title'),
+                description: t('features.items.interactiveLessons.description'),
               },
             ].map((feature, index) => (
               <div
@@ -181,10 +174,10 @@ export const HomePage = () => {
         <div className="container mx-auto max-w-7xl">
           <div className="mb-16 text-center">
             <h2 className="mb-4 text-3xl font-bold text-foreground sm:text-4xl">
-              Популярные курсы
+              {t('popularCourses.title')}
             </h2>
             <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-              Начните свое обучение с одного из наших популярных курсов
+              {t('popularCourses.description')}
             </p>
           </div>
 
@@ -194,8 +187,7 @@ export const HomePage = () => {
             </div>
           ) : popularCourses.length === 0 ? (
             <p className="text-center text-muted-foreground">
-              Пока нет опубликованных курсов. Как только преподаватели создадут первые курсы,
-              здесь появится список самых популярных.
+              {t('popularCourses.empty')}
             </p>
           ) : (
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -218,7 +210,7 @@ export const HomePage = () => {
                         {course.level}
                       </span>
                       <span className="text-sm text-muted-foreground">
-                        студентов: {course.enrolledCount}
+                        {t('popularCourses.studentsLabel', { count: course.enrolledCount })}
                       </span>
                     </div>
                     <h3 className="mb-2 line-clamp-2 text-xl font-semibold text-foreground">
@@ -230,7 +222,7 @@ export const HomePage = () => {
                     <div className="mt-auto pt-2">
                       <Link to={`/courses/${course.id}`}>
                         <Button variant="outline" className="w-full">
-                          Перейти к курсу
+                          {t('popularCourses.goToCourse')}
                         </Button>
                       </Link>
                     </div>
@@ -242,7 +234,7 @@ export const HomePage = () => {
 
           <div className="mt-12 text-center">
             <Link to="/courses">
-              <Button size="lg">Посмотреть все курсы</Button>
+              <Button size="lg">{t('popularCourses.viewAll')}</Button>
             </Link>
           </div>
         </div>
@@ -252,18 +244,17 @@ export const HomePage = () => {
       <section className="bg-gradient-to-r from-primary to-primary/80 px-4 py-20 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="mb-4 text-3xl font-bold text-primary-foreground sm:text-4xl">
-            Готовы начать свое языковое путешествие?
+            {t('cta.title')}
           </h2>
           <p className="mb-8 text-lg text-primary-foreground/80">
-            Присоединяйтесь к тысячам студентов, которые уже достигли своих
-            целей с Linglify
+            {t('cta.description')}
           </p>
           <Link to="/register">
             <Button
               size="lg"
               className="bg-background hover:bg-background/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
             >
-              Начать бесплатно
+              {t('cta.button')}
             </Button>
           </Link>
         </div>

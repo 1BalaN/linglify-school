@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Shield, TrendingDown, BookOpen, Crown, Users, Archive, MessageSquareWarning, Award } from 'lucide-react'
 import { useGetPlatformSettingsQuery, useUpdatePlatformSettingsMutation } from '@/entities/settings/api/settingsApi'
 import type { PlatformSettings } from '@/shared/types/settings'
@@ -25,6 +26,7 @@ const SectionCard = ({ icon: Icon, title, description, children }: {
 )
 
 export const AdminSettingsPage = () => {
+  const { t } = useTranslation('platform')
   const { data, isLoading } = useGetPlatformSettingsQuery()
   const [updateSettings, { isLoading: isSaving }] = useUpdatePlatformSettingsMutation()
 
@@ -59,7 +61,7 @@ export const AdminSettingsPage = () => {
 
     try {
       await updateSettings(payload).unwrap()
-      setSuccessModal('Настройки платформы успешно сохранены')
+      setSuccessModal(t('admin.settings.saveSuccess'))
     } catch (error) {
       const message =
         typeof error === 'object' &&
@@ -67,7 +69,7 @@ export const AdminSettingsPage = () => {
         'data' in error &&
         (error as { data?: { error?: { message?: string } } }).data?.error?.message
           ? (error as { data?: { error?: { message?: string } } }).data!.error!.message!
-          : 'Не удалось сохранить настройки. Попробуйте позже.'
+          : t('admin.settings.saveError')
       setErrorModal(message)
     }
   }
@@ -75,8 +77,8 @@ export const AdminSettingsPage = () => {
   if (isLoading || !form) {
     return (
       <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-semibold mb-4">Настройки платформы</h1>
-        <p className="text-muted-foreground">Загрузка настроек…</p>
+        <h1 className="text-2xl font-semibold mb-4">{t('admin.settings.title')}</h1>
+        <p className="text-muted-foreground">{t('admin.settings.loading')}</p>
       </div>
     )
   }
@@ -86,41 +88,41 @@ export const AdminSettingsPage = () => {
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold">Настройки платформы</h1>
+        <h1 className="text-2xl font-semibold">{t('admin.settings.title')}</h1>
         <p className="text-sm text-muted-foreground">
-          Управление ключевыми правилами автоматизации: аналитика, placement‑тест, подписки и студенты.
+          {t('admin.settings.intro')}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* ──── АНАЛИТИКА ──── */}
+        {/* Analytics */}
         <SectionCard
           icon={TrendingDown}
-          title="Аналитика проблемных курсов"
-          description="Пороговые значения для блока «Курсы с низким рейтингом» в аналитике."
+          title={t('admin.settings.analyticsTitle')}
+          description={t('admin.settings.analyticsDesc')}
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1">
-              <label className="text-sm font-medium">Порог низкого рейтинга</label>
+              <label className="text-sm font-medium">{t('admin.settings.lowRatingLabel')}</label>
               <Input
                 type="number" step="0.1" min={0} max={5}
                 value={form.lowRatingThreshold ?? 2.5}
                 onChange={e => set('lowRatingThreshold')(Number(e.target.value))}
               />
               <p className="text-xs text-muted-foreground">
-                Курсы с рейтингом ниже или равным этому значению считаются проблемными.
+                {t('admin.settings.lowRatingHelp')}
               </p>
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">Мин. зачислений для учёта рейтинга</label>
+              <label className="text-sm font-medium">{t('admin.settings.minEnrollLabel')}</label>
               <Input
                 type="number" min={0}
                 value={form.minEnrollmentsForRating ?? 5}
                 onChange={e => set('minEnrollmentsForRating')(Number(e.target.value))}
               />
               <p className="text-xs text-muted-foreground">
-                Курсы с меньшим числом студентов не попадают в список проблемных.
+                {t('admin.settings.minEnrollHelp')}
               </p>
             </div>
           </div>
@@ -129,26 +131,26 @@ export const AdminSettingsPage = () => {
         {/* ──── PLACEMENT ──── */}
         <SectionCard
           icon={BookOpen}
-          title="Placement‑тест"
-          description="Базовые параметры адаптивного теста и доступных языков."
+          title={t('admin.settings.placementTitle')}
+          description={t('admin.settings.placementDesc')}
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1">
-              <label className="text-sm font-medium">Количество вопросов по умолчанию</label>
+              <label className="text-sm font-medium">{t('admin.settings.placementQuestionsLabel')}</label>
               <Input
                 type="number" min={1} max={100}
                 value={form.placementDefaultQuestions ?? 25}
                 onChange={e => set('placementDefaultQuestions')(Number(e.target.value))}
               />
               <p className="text-xs text-muted-foreground">
-                Сколько вопросов проходит студент в одной сессии.
+                {t('admin.settings.placementQuestionsHelp')}
               </p>
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">Разрешённые языки (через запятую)</label>
+              <label className="text-sm font-medium">{t('admin.settings.placementLangLabel')}</label>
               <Input
                 type="text"
-                placeholder="Английский, Немецкий, Испанский"
+                placeholder={t('admin.settings.placementLangPlaceholder')}
                 value={languagesValue}
                 onChange={e => {
                   const list = e.target.value.split(',').map(s => s.trim()).filter(Boolean)
@@ -156,60 +158,60 @@ export const AdminSettingsPage = () => {
                 }}
               />
               <p className="text-xs text-muted-foreground">
-                Если список пустой, тест доступен для всех языков.
+                {t('admin.settings.placementLangHelp')}
               </p>
             </div>
           </div>
         </SectionCard>
 
-        {/* ──── ПОДПИСКИ ──── */}
+        {/* Subscriptions */}
         <SectionCard
           icon={Crown}
-          title="Подписки преподавателей"
-          description="Параметры пробного периода при регистрации нового преподавателя."
+          title={t('admin.settings.subsTitle')}
+          description={t('admin.settings.subsDesc')}
         >
           <div className="md:w-1/2 space-y-1">
-            <label className="text-sm font-medium">Длительность пробного периода (дней)</label>
+            <label className="text-sm font-medium">{t('admin.settings.trialDaysLabel')}</label>
             <Input
               type="number" min={1} max={365}
               value={form.trialSubscriptionDays ?? 30}
               onChange={e => set('trialSubscriptionDays')(Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Новые преподаватели получают этот период бесплатно. После — требуется платная подписка.
+              {t('admin.settings.trialDaysHelp')}
             </p>
           </div>
         </SectionCard>
 
-        {/* ──── СТУДЕНТЫ ──── */}
+        {/* Students */}
         <SectionCard
           icon={Users}
-          title="Ограничения для студентов"
-          description="Правила зачисления и активности студентов."
+          title={t('admin.settings.studentsTitle')}
+          description={t('admin.settings.studentsDesc')}
         >
           <div className="md:w-1/2 space-y-1">
-            <label className="text-sm font-medium">Макс. курсов на студента</label>
+            <label className="text-sm font-medium">{t('admin.settings.maxCoursesLabel')}</label>
             <Input
               type="number" min={0}
               value={form.maxCoursesPerStudent ?? 0}
               onChange={e => set('maxCoursesPerStudent')(Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              0 — без ограничений. При достижении лимита студент не сможет записаться на новый курс.
+              {t('admin.settings.maxCoursesHelp')}
             </p>
           </div>
         </SectionCard>
 
-        {/* ──── АВТОМАТИЗАЦИЯ ──── */}
+        {/* Automation */}
         <SectionCard
           icon={Archive}
-          title="Автоматизация курсов"
-          description="Правила для автоматических действий по курсам."
+          title={t('admin.settings.autoTitle')}
+          description={t('admin.settings.autoDesc')}
         >
           <div className="space-y-4">
             <div className="md:w-1/2 space-y-1">
               <label className="text-sm font-medium">
-                Авто-архивация после N дней неактивности
+                {t('admin.settings.archiveLabel')}
               </label>
               <Input
                 type="number" min={0}
@@ -217,7 +219,7 @@ export const AdminSettingsPage = () => {
                 onChange={e => set('autoArchiveDaysAfterInactivity')(Number(e.target.value))}
               />
               <p className="text-xs text-muted-foreground">
-                0 — отключено. Если у курса нет прогресса студентов дольше N дней — он уходит в архив.
+                {t('admin.settings.archiveHelp')}
               </p>
             </div>
 
@@ -229,30 +231,30 @@ export const AdminSettingsPage = () => {
                 onChange={e => set('reviewModerationEnabled')(e.target.checked)}
               />
               <div>
-                <div className="font-medium text-sm">Ручная модерация отзывов</div>
+                <div className="font-medium text-sm">{t('admin.settings.reviewModTitle')}</div>
                 <p className="text-sm text-muted-foreground">
-                  Если включено, новые отзывы студентов видны публично только после одобрения администратором.
+                  {t('admin.settings.reviewModHelp')}
                 </p>
               </div>
             </label>
           </div>
         </SectionCard>
 
-        {/* ──── СЕРТИФИКАТЫ (глобально) ──── */}
+        {/* Certificates (global) */}
         <SectionCard
           icon={Award}
-          title="Сертификаты"
-          description="Глобальные параметры выданных сертификатов. Политика требований (финальный тест, прогресс) задаётся индивидуально в настройках каждого курса."
+          title={t('admin.settings.certsTitle')}
+          description={t('admin.settings.certsDesc')}
         >
           <div className="md:w-1/2 space-y-1">
-            <label className="text-sm font-medium">Срок действия сертификата (месяцев)</label>
+            <label className="text-sm font-medium">{t('admin.settings.certMonthsLabel')}</label>
             <Input
               type="number" min={0}
               value={form.certificateValidityMonths ?? 0}
               onChange={e => set('certificateValidityMonths')(Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              0 — бессрочно. Используется для отображения даты истечения в PDF и профиле студента.
+              {t('admin.settings.certMonthsHelp')}
             </p>
           </div>
 
@@ -260,41 +262,51 @@ export const AdminSettingsPage = () => {
             <div className="flex items-start gap-2">
               <Shield className="mt-0.5 h-4 w-4 shrink-0" />
               <span>
-                Требовать финальный тест и минимальный прогресс для выдачи сертификата —
-                теперь настраивается <strong>отдельно для каждого курса</strong> в форме создания/редактирования.
-                В PDF-сертификате всегда отображается результат финального теста (если он был пройден).
+                <Trans
+                  i18nKey="admin.settings.certNotice"
+                  ns="platform"
+                  components={{ 1: <strong className="text-foreground" /> }}
+                />
               </span>
             </div>
           </div>
         </SectionCard>
 
-        {/* ──── МОДЕРАЦИЯ ОТЗЫВОВ (INFO) ──── */}
+        {/* Review moderation (info) */}
         <SectionCard
           icon={MessageSquareWarning}
-          title="Информация о разделении ответственности"
+          title={t('admin.settings.responsibilityTitle')}
           description=""
         >
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-primary">•</span>
               <span>
-                <strong className="text-foreground">Сертификаты курса</strong> —
-                «Требовать финальный тест» и «Минимальный прогресс» задаются при создании или редактировании
-                курса (вкладка «Сертификат»).
+                <Trans
+                  i18nKey="admin.settings.responsibilityCertCourse"
+                  ns="platform"
+                  components={{ 0: <strong className="text-foreground" /> }}
+                />
               </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-primary">•</span>
               <span>
-                <strong className="text-foreground">Срок действия сертификата</strong> —
-                глобальный параметр выше. PDF всегда содержит результат финального теста студента.
+                <Trans
+                  i18nKey="admin.settings.responsibilityCertExpiry"
+                  ns="platform"
+                  components={{ 0: <strong className="text-foreground" /> }}
+                />
               </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-primary">•</span>
               <span>
-                <strong className="text-foreground">Пробный период</strong> —
-                выдаётся автоматически при регистрации нового преподавателя; длительность выше.
+                <Trans
+                  i18nKey="admin.settings.responsibilityTrial"
+                  ns="platform"
+                  components={{ 0: <strong className="text-foreground" /> }}
+                />
               </span>
             </li>
           </ul>
@@ -302,7 +314,7 @@ export const AdminSettingsPage = () => {
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isSaving} className="min-w-[180px]">
-            {isSaving ? 'Сохранение…' : 'Сохранить настройки'}
+            {isSaving ? t('admin.settings.saving') : t('admin.settings.save')}
           </Button>
         </div>
       </form>
@@ -310,14 +322,14 @@ export const AdminSettingsPage = () => {
       <AlertModal
         isOpen={!!errorModal}
         onClose={() => setErrorModal(null)}
-        title="Ошибка"
+        title={t('admin.settings.modalError')}
         message={errorModal || ''}
         variant="error"
       />
       <AlertModal
         isOpen={!!successModal}
         onClose={() => setSuccessModal(null)}
-        title="Успешно"
+        title={t('admin.settings.modalSuccess')}
         message={successModal || ''}
         variant="success"
       />

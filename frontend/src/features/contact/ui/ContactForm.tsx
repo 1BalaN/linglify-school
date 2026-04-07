@@ -5,18 +5,21 @@ import { AlertCircle, CheckCircle, Send } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { useTranslation } from 'react-i18next'
 
-const contactSchema = z.object({
-  name: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
-  email: z.string().email('Введите корректный email'),
-  subject: z.string().min(5, 'Тема должна содержать минимум 5 символов'),
-  message: z.string().min(10, 'Сообщение должно содержать минимум 10 символов'),
-})
+const createContactSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().min(2, t('contact.validation.nameMin')),
+    email: z.string().email(t('contact.validation.invalidEmail')),
+    subject: z.string().min(5, t('contact.validation.subjectMin')),
+    message: z.string().min(10, t('contact.validation.messageMin')),
+  })
 
-type ContactFormData = z.infer<typeof contactSchema>
+type ContactFormData = z.infer<ReturnType<typeof createContactSchema>>
 
 // ContactForm.tsx
 export const ContactForm = () => {
+  const { t } = useTranslation('support')
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [sendMessage, { isLoading, error }] = useSendContactMessageMutation()
 
@@ -26,7 +29,7 @@ export const ContactForm = () => {
     formState: { errors },
     reset,
   } = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema),
+    resolver: zodResolver(createContactSchema(t)),
   })
 
   const onSubmit = async (data: ContactFormData) => {
@@ -43,14 +46,14 @@ export const ContactForm = () => {
   return (
     <div className="rounded-2xl glass-card p-8 backdrop-blur-xl">
       <h2 className="mb-6 text-2xl font-bold text-foreground">
-        Отправить сообщение
+        {t('contact.formTitle')}
       </h2>
 
       {isSubmitted && (
         <div className="mb-6 flex items-center gap-3 rounded-xl bg-green-500/10 border border-green-500/20 p-4 text-green-600 dark:text-green-400">
           <CheckCircle className="h-5 w-5" />
           <p className="text-sm">
-            Спасибо! Ваше сообщение отправлено. Мы свяжемся с вами в ближайшее время.
+            {t('contact.success')}
           </p>
         </div>
       )}
@@ -61,7 +64,7 @@ export const ContactForm = () => {
           <p className="text-sm">
             { 'data' in error
               ? (error.data as { error: { message: string } }).error.message
-              : 'Произошла ошибка при отправке сообщения. Попробуйте позже.'
+              : t('contact.error')
             }
           </p>
         </div>
@@ -71,33 +74,33 @@ export const ContactForm = () => {
         <div className="grid gap-6 md:grid-cols-2">
           <Input
             {...register('name')}
-            label="Ваше имя"
-            placeholder="Иван Иванов"
+            label={t('contact.fields.name')}
+            placeholder={t('contact.placeholders.name')}
             error={errors.name?.message}
           />
           <Input
             {...register('email')}
             type="email"
-            label="Email"
-            placeholder="your@email.com"
+            label={t('contact.fields.email')}
+            placeholder={t('contact.placeholders.email')}
             error={errors.email?.message}
           />
         </div>
         <Input
           {...register('subject')}
-          label="Тема сообщения"
-          placeholder="Вопрос по подписке"
+          label={t('contact.fields.subject')}
+          placeholder={t('contact.placeholders.subject')}
           error={errors.subject?.message}
         />
         <div>
           <label className="mb-2 block text-sm font-medium text-foreground">
-            Сообщение
+            {t('contact.fields.message')}
           </label>
           <textarea
             {...register('message')}
             rows={6}
             className="w-full rounded-xl border-2 border-input bg-background/50 px-4 py-3 text-foreground transition-all duration-300 placeholder:text-muted-foreground hover:border-primary/50 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            placeholder="Расскажите подробнее о вашем вопросе..."
+            placeholder={t('contact.placeholders.message')}
           />
           {errors.message && (
             <p className="mt-1 text-sm text-destructive">
@@ -112,15 +115,15 @@ export const ContactForm = () => {
           disabled={isLoading}
         >
           <Send className="mr-2 h-4 w-4" />
-          {isLoading ? 'Отправка...' : 'Отправить сообщение'}
+          {isLoading ? t('contact.actions.sending') : t('contact.actions.send')}
         </Button>
       </form>
 
       <div className="mt-8 rounded-xl glass p-4">
         <p className="text-sm text-muted-foreground">
-          <strong className="text-foreground">Время работы поддержки:</strong> Пн-Пт, 9:00-18:00 (UTC+3)
+          <strong className="text-foreground">{t('contact.schedule.title')}</strong> {t('contact.schedule.hours')}
           <br />
-          В нерабочее время ответ может занять до 48 часов.
+          {t('contact.schedule.note')}
         </p>
       </div>
     </div>

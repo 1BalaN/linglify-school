@@ -36,7 +36,8 @@ export const connectSocket = (): Socket | null => {
   })
 
   socket.on('connect', () => {
-    console.log('🔌 Socket connected:', socket?.id)
+    console.log('🔌 Socket connected')
+    // console.log('🔌 Socket connected:', socket?.id)
   })
 
   socket.on('disconnect', (reason) => {

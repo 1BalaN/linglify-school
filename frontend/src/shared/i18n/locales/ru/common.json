@@ -1,0 +1,50 @@
+{
+  "header": {
+    "nav": {
+      "courses": "Курсы",
+      "about": "О платформе",
+      "becomeTeacher": "Стать преподавателем"
+    },
+    "actions": {
+      "chats": "Чаты",
+      "myLearning": "Моё обучение",
+      "myCourses": "Мои курсы",
+      "earnings": "Заработок",
+      "adminPanel": "Админ-панель",
+      "login": "Войти",
+      "register": "Регистрация",
+      "logout": "Выйти",
+      "toggleTheme": "Переключить тему"
+    }
+  },
+  "footer": {
+    "description": "Современная платформа для изучения языков с интерактивными курсами и персональным подходом.",
+    "columns": {
+      "platform": "Платформа",
+      "support": "Поддержка",
+      "legal": "Правовая информация"
+    },
+    "links": {
+      "courses": "Курсы",
+      "becomeTeacher": "Стать преподавателем",
+      "aboutUs": "О нас",
+      "help": "Помощь",
+      "faq": "FAQ",
+      "contacts": "Контакты",
+      "privacy": "Конфиденциальность",
+      "terms": "Условия использования"
+    },
+    "copyright": "© {{year}} Linglify. Все права защищены."
+  },
+  "language": {
+    "label": "Язык",
+    "ru": "Русский",
+    "en": "English"
+  },
+  "common": {
+    "or": "Или"
+  },
+  "ui": {
+    "loading": "Загрузка..."
+  }
+}

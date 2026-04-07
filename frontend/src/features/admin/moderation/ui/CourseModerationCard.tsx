@@ -1,11 +1,7 @@
 import { memo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/ui'
-import {
-  Eye,
-  XCircle,
-  FileCheck,
-  Trash2,
-} from 'lucide-react'
+import { Eye, XCircle, FileCheck, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Course } from '@/shared/types/course'
 import { CourseStatus, statusConfig } from '@/shared/constants/courseStatus'
@@ -19,6 +15,8 @@ type CourseModerationCardProps = {
 
 export const CourseModerationCard = memo(
   ({ course, loading, onStatusChange, onDelete }: CourseModerationCardProps) => {
+    const { t } = useTranslation('platform', { keyPrefix: 'admin.moderation.card' })
+    const { t: ts } = useTranslation('platform', { keyPrefix: 'admin.courseStatusShort' })
     const navigate = useNavigate()
     const [rejectReason, setRejectReason] = useState('')
     const [showRejectInput, setShowRejectInput] = useState(false)
@@ -31,48 +29,38 @@ export const CourseModerationCard = memo(
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="mb-2 flex items-center gap-3 flex-wrap">
-              <h3 className="text-lg font-semibold text-foreground">
-                {course.title}
-              </h3>
+              <h3 className="text-lg font-semibold text-foreground">{course.title}</h3>
 
               <span
                 className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium bg-${statusInfo.color}-500/10 text-${statusInfo.color}-600`}
               >
                 <StatusIcon className="h-3 w-3 gap-1" />
-                {statusInfo.label}
+                {ts(statusInfo.labelKey)}
               </span>
             </div>
 
-            {course.shortDescription && (
-              <p className="mb-3 text-sm text-muted-foreground line-clamp-2">
-                {course.shortDescription}
-              </p>
-            )}
+            {course.shortDescription ? (
+              <p className="mb-3 text-sm text-muted-foreground line-clamp-2">{course.shortDescription}</p>
+            ) : null}
 
-            {course.lastReviewComment && course.status === 'REJECTED' && (
+            {course.lastReviewComment && course.status === 'REJECTED' ? (
               <div className="mt-3 rounded-xl bg-amber-50/80 p-3 text-xs text-amber-900 shadow-sm ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-50 dark:ring-amber-900/40">
                 <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                   <XCircle className="h-3 w-3" />
-                  Комментарий модератора
+                  {t('modComment')}
                 </div>
-                <div className="whitespace-pre-line leading-snug">
-                  {course.lastReviewComment}
-                </div>
+                <div className="whitespace-pre-line leading-snug">{course.lastReviewComment}</div>
               </div>
-            )}
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => navigate(`/courses/${course.id}`)}
-            >
+            <Button size="sm" variant="outline" onClick={() => navigate(`/courses/${course.id}`)}>
               <Eye className="mr-1 h-3 w-3" />
-              Просмотр
+              {t('preview')}
             </Button>
 
-            {course.status === 'PENDING_REVIEW' && (
+            {course.status === 'PENDING_REVIEW' ? (
               <>
                 <Button
                   size="sm"
@@ -80,7 +68,7 @@ export const CourseModerationCard = memo(
                   disabled={loading}
                 >
                   <Eye className="mr-1 h-3 w-3" />
-                  Начать проверку
+                  {t('startReview')}
                 </Button>
 
                 <Button
@@ -90,12 +78,12 @@ export const CourseModerationCard = memo(
                   disabled={loading}
                 >
                   <XCircle className="mr-1 h-3 w-3" />
-                  Отклонить
+                  {t('reject')}
                 </Button>
               </>
-            )}
+            ) : null}
 
-            {course.status === 'IN_REVIEW' && (
+            {course.status === 'IN_REVIEW' ? (
               <>
                 <Button
                   size="sm"
@@ -103,7 +91,7 @@ export const CourseModerationCard = memo(
                   disabled={loading}
                 >
                   <FileCheck className="mr-1 h-3 w-3" />
-                  Опубликовать
+                  {t('publish')}
                 </Button>
 
                 <Button
@@ -113,12 +101,12 @@ export const CourseModerationCard = memo(
                   disabled={loading}
                 >
                   <XCircle className="mr-1 h-3 w-3" />
-                  Отклонить
+                  {t('reject')}
                 </Button>
               </>
-            )}
+            ) : null}
 
-            {course.status === 'PUBLISHED' && (
+            {course.status === 'PUBLISHED' ? (
               <Button
                 size="sm"
                 variant="outline"
@@ -126,43 +114,39 @@ export const CourseModerationCard = memo(
                 disabled={loading}
               >
                 <XCircle className="mr-1 h-3 w-3" />
-                Архивировать
+                {t('archive')}
               </Button>
-            )}
+            ) : null}
 
-            {course.status === 'REJECTED' && (
+            {course.status === 'REJECTED' ? (
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() =>
-                  onStatusChange(course.id, 'PENDING_REVIEW')
-                }
+                onClick={() => onStatusChange(course.id, 'PENDING_REVIEW')}
                 disabled={loading}
               >
-                Вернуть на проверку
+                {t('returnToReview')}
               </Button>
-            )}
+            ) : null}
 
-            {course.status === 'ARCHIVED' && (
+            {course.status === 'ARCHIVED' ? (
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => onStatusChange(course.id, 'DRAFT')}
                 disabled={loading}
               >
-                Вернуть в черновики
+                {t('returnToDraft')}
               </Button>
-            )}
+            ) : null}
 
-            {showRejectInput && (
+            {showRejectInput ? (
               <div className="mt-2 space-y-2 rounded-lg border border-red-200/60 bg-red-50/50 p-2 text-xs text-red-800 dark:border-red-900/60 dark:bg-red-950/40">
-                <label className="text-[11px] font-semibold">
-                  Причина отклонения
-                </label>
+                <label className="text-[11px] font-semibold">{t('rejectReason')}</label>
                 <textarea
                   value={rejectReason}
                   onChange={e => setRejectReason(e.target.value)}
-                  placeholder="Кратко опишите, что нужно доработать в курсе"
+                  placeholder={t('rejectReasonPh')}
                   disabled={loading}
                   className="h-16 w-full resize-none rounded-md border border-red-200 bg-white/80 px-2 py-1 text-xs text-foreground shadow-sm outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 dark:bg-red-950/60"
                 />
@@ -176,7 +160,7 @@ export const CourseModerationCard = memo(
                     }}
                     disabled={loading}
                   >
-                    Отмена
+                    {t('cancel')}
                   </Button>
                   <Button
                     size="sm"
@@ -188,20 +172,15 @@ export const CourseModerationCard = memo(
                     }}
                   >
                     <XCircle className="mr-1 h-3 w-3" />
-                    Отклонить
+                    {t('rejectConfirm')}
                   </Button>
                 </div>
               </div>
-            )}
+            ) : null}
 
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onDelete(course.id)}
-              disabled={loading}
-            >
+            <Button size="sm" variant="ghost" onClick={() => onDelete(course.id)} disabled={loading}>
               <Trash2 className="mr-1 h-3 w-3" />
-              Удалить
+              {t('delete')}
             </Button>
           </div>
         </div>

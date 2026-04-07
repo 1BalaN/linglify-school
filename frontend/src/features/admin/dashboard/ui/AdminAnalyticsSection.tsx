@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ResponsiveContainer,
   LineChart,
@@ -27,6 +28,9 @@ interface TimeseriesPoint {
 }
 
 export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSectionProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.dashboard.analyticsSection' })
+  const { i18n } = useTranslation('platform')
+  const locale = i18n.language.startsWith('ru') ? 'ru-RU' : 'en-US'
   const chartData: TimeseriesPoint[] = useMemo(() => {
     if (!timeseries) return []
 
@@ -83,10 +87,8 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
     <div className="mt-10 space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-foreground">Аналитика платформы</h2>
-          <p className="text-sm text-muted-foreground">
-            Динамика регистраций, прохождения курсов и placement‑тестов
-          </p>
+          <h2 className="text-xl font-bold text-foreground">{t('title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -94,7 +96,7 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
         <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr),minmax(0,2fr)]">
           <div className="rounded-2xl glass-card p-4 backdrop-blur-xl">
             <h3 className="mb-3 text-sm font-semibold text-foreground">
-              Регистрации и зачисления за {timeseries.periodDays} дней
+              {t('chartRegsTitle', { days: timeseries.periodDays })}
             </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -103,7 +105,7 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
                   <XAxis
                     dataKey="date"
                     tickFormatter={value =>
-                      new Date(value).toLocaleDateString('ru-RU', {
+                      new Date(value).toLocaleDateString(locale, {
                         day: '2-digit',
                         month: '2-digit',
                       })
@@ -112,13 +114,13 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
                   />
                   <YAxis
                     tick={{ fontSize: 11 }}
-                    tickFormatter={value => (typeof value === 'number' ? value.toLocaleString('ru-RU') : value)}
+                    tickFormatter={value => (typeof value === 'number' ? value.toLocaleString(locale) : value)}
                     allowDecimals={false}
                   />
                   <Tooltip
                     contentStyle={{ color: '#000000' }}
                     labelFormatter={value =>
-                      new Date(value as string).toLocaleDateString('ru-RU', {
+                      new Date(value as string).toLocaleDateString(locale, {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -129,7 +131,7 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
                   <Line
                     type="monotone"
                     dataKey="registrations"
-                    name="Регистрации"
+                    name={t('seriesRegs')}
                     stroke="#0ea5e9"
                     strokeWidth={2}
                     dot={false}
@@ -138,7 +140,7 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
                   <Line
                     type="monotone"
                     dataKey="enrollNew"
-                    name="Новые зачисления"
+                    name={t('seriesEnroll')}
                     stroke="#22c55e"
                     strokeWidth={2}
                     dot={false}
@@ -147,7 +149,7 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
                   <Line
                     type="monotone"
                     dataKey="enrollCompleted"
-                    name="Завершённые курсы"
+                    name={t('seriesCompleted')}
                     stroke="#8b5cf6"
                     strokeWidth={2}
                     dot={false}
@@ -160,7 +162,7 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
 
           <div className="rounded-2xl glass-card p-4 backdrop-blur-xl">
             <h3 className="mb-3 text-sm font-semibold text-foreground">
-              Placement‑сессии за {timeseries.periodDays} дней
+              {t('chartPlacementTitle', { days: timeseries.periodDays })}
             </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -169,7 +171,7 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
                   <XAxis
                     dataKey="date"
                     tickFormatter={value =>
-                      new Date(value).toLocaleDateString('ru-RU', {
+                      new Date(value).toLocaleDateString(locale, {
                         day: '2-digit',
                         month: '2-digit',
                       })
@@ -178,13 +180,13 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
                   />
                   <YAxis
                     tick={{ fontSize: 11 }}
-                    tickFormatter={value => (typeof value === 'number' ? value.toLocaleString('ru-RU') : value)}
+                    tickFormatter={value => (typeof value === 'number' ? value.toLocaleString(locale) : value)}
                     allowDecimals={false}
                   />
                   <Tooltip
                     contentStyle={{ color: '#000000' }}
                     labelFormatter={value =>
-                      new Date(value as string).toLocaleDateString('ru-RU', {
+                      new Date(value as string).toLocaleDateString(locale, {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -193,7 +195,7 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
                   />
                   <Bar
                     dataKey="placementCompleted"
-                    name="Завершённые сессии"
+                    name={t('seriesPlacementDone')}
                     fill="#06b6d4"
                     radius={[4, 4, 0, 0]}
                   />
@@ -207,15 +209,15 @@ export const AdminAnalyticsSection = ({ overview, timeseries }: AdminAnalyticsSe
       {overview && placementTable.length > 0 && (
         <div className="rounded-2xl glass-card p-4 backdrop-blur-xl">
           <h3 className="mb-3 text-sm font-semibold text-foreground">
-            Распределение уровней по языкам (placement‑тест)
+            {t('levelsTitle')}
           </h3>
           <div className="scroll-soft max-h-60 overflow-y-auto">
             <table className="min-w-full text-left text-xs">
               <thead className="sticky top-0 bg-background/80 backdrop-blur border-b border-border/60">
                 <tr>
-                  <th className="px-3 py-2 font-medium text-muted-foreground">Язык</th>
-                  <th className="px-3 py-2 font-medium text-muted-foreground">Всего сессий</th>
-                  <th className="px-3 py-2 font-medium text-muted-foreground">Уровни</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">{t('colLanguage')}</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">{t('colSessions')}</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">{t('colLevels')}</th>
                 </tr>
               </thead>
               <tbody>

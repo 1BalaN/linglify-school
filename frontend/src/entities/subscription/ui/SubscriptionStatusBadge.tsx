@@ -1,4 +1,5 @@
 import { Check, Zap, AlertTriangle, Crown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { daysLeft } from '@/shared/lib'
 import type { TeacherSubscription } from '@/shared/types/user'
 
@@ -13,17 +14,25 @@ interface Props {
  * Placed in the entities layer because it only renders entity data — no mutations.
  */
 export const SubscriptionStatusBadge = ({ subscription, showDays = true }: Props) => {
+  const { t, i18n } = useTranslation('platform')
   const { status, trialEndsAt, currentPeriodEnd } = subscription
+  const locale = i18n.language?.startsWith('en') ? 'en-US' : 'ru-RU'
+  const dateFmt = (iso: string) => new Date(iso).toLocaleDateString(locale)
 
   if (status === 'ACTIVE') {
     const days = showDays ? daysLeft(currentPeriodEnd) : null
     return (
       <span
-        title={currentPeriodEnd ? `До: ${new Date(currentPeriodEnd).toLocaleDateString('ru-RU')}` : undefined}
+        title={
+          currentPeriodEnd
+            ? t('subscriptionBadge.until', { date: dateFmt(currentPeriodEnd) })
+            : undefined
+        }
         className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400"
       >
         <Crown className="h-3 w-3" />
-        Подписка активна{days !== null ? ` · ${days} дн.` : ''}
+        {t('subscriptionBadge.active')}
+        {days !== null ? t('subscriptionBadge.daysShort', { days }) : ''}
       </span>
     )
   }
@@ -32,11 +41,16 @@ export const SubscriptionStatusBadge = ({ subscription, showDays = true }: Props
     const days = showDays ? daysLeft(trialEndsAt) : null
     return (
       <span
-        title={trialEndsAt ? `Пробный период до: ${new Date(trialEndsAt).toLocaleDateString('ru-RU')}` : undefined}
-        className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
+        title={
+          trialEndsAt
+            ? t('subscriptionBadge.trialUntil', { date: dateFmt(trialEndsAt) })
+            : undefined
+        }
+        className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:bg-emerald-950/50 dark:text-amber-400"
       >
         <Zap className="h-3 w-3" />
-        Пробный период{days !== null ? ` · ${days} дн.` : ''}
+        {t('subscriptionBadge.trial')}
+        {days !== null ? t('subscriptionBadge.daysShort', { days }) : ''}
       </span>
     )
   }
@@ -45,7 +59,7 @@ export const SubscriptionStatusBadge = ({ subscription, showDays = true }: Props
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive">
         <AlertTriangle className="h-3 w-3" />
-        Подписка истекла
+        {t('subscriptionBadge.expired')}
       </span>
     )
   }
@@ -53,7 +67,7 @@ export const SubscriptionStatusBadge = ({ subscription, showDays = true }: Props
   if (status === 'CANCELLED') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground">
-        Подписка отменена
+        {t('subscriptionBadge.cancelled')}
       </span>
     )
   }

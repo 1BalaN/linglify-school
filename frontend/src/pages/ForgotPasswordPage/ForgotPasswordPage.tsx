@@ -6,14 +6,17 @@ import { useForgotPasswordMutation } from '@/entities/user'
 import { Button, Input } from '@/shared/ui'
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Введите корректный email'),
-})
+const createForgotSchema = (t: (k: string) => string) =>
+  z.object({
+    email: z.string().email(t('authFlow.forgot.validation.email')),
+  })
 
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
+type ForgotPasswordFormData = z.infer<ReturnType<typeof createForgotSchema>>
 
 export const ForgotPasswordPage = () => {
+  const { t } = useTranslation('platform')
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation()
   const [success, setSuccess] = useState(false)
 
@@ -22,7 +25,7 @@ export const ForgotPasswordPage = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
+    resolver: zodResolver(createForgotSchema(t)),
   })
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
@@ -44,17 +47,17 @@ export const ForgotPasswordPage = () => {
                 <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
               <h1 className="mb-3 text-2xl font-bold text-gradient">
-                Проверьте почту
+                {t('authFlow.forgot.successTitle')}
               </h1>
               <p className="text-muted-foreground mb-6">
-                Если указанный email зарегистрирован в системе, на него отправлена ссылка для восстановления пароля.
+                {t('authFlow.forgot.successBody')}
               </p>
               <p className="text-sm text-muted-foreground mb-6">
-                Не получили письмо? Проверьте папку "Спам"
+                {t('authFlow.forgot.successSpam')}
               </p>
               <Link to="/login">
                 <Button variant="primary" className="w-full">
-                  Вернуться к входу
+                  {t('authFlow.forgot.backToLogin')}
                 </Button>
               </Link>
             </div>
@@ -66,10 +69,10 @@ export const ForgotPasswordPage = () => {
                 <Mail className="h-8 w-8 text-white" />
               </div>
               <h1 className="mb-2 text-3xl font-bold text-gradient">
-                Забыли пароль?
+                {t('authFlow.forgot.title')}
               </h1>
               <p className="text-muted-foreground">
-                Введите email, и мы отправим вам ссылку для восстановления
+                {t('authFlow.forgot.subtitle')}
               </p>
             </div>
 
@@ -77,8 +80,8 @@ export const ForgotPasswordPage = () => {
               <Input
                 {...register('email')}
                 type="email"
-                label="Email"
-                placeholder="your@email.com"
+                label={t('authFlow.forgot.emailLabel')}
+                placeholder={t('authFlow.forgot.emailPlaceholder')}
                 error={errors.email?.message}
               />
 
@@ -88,7 +91,7 @@ export const ForgotPasswordPage = () => {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? 'Отправка...' : 'Отправить ссылку'}
+                {isLoading ? t('authFlow.forgot.sending') : t('authFlow.forgot.submit')}
               </Button>
             </form>
 
@@ -98,7 +101,7 @@ export const ForgotPasswordPage = () => {
                 className="inline-flex items-center text-sm text-primary hover:text-primary/80 transition-colors"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Вернуться к входу
+                {t('authFlow.forgot.backToLogin')}
               </Link>
             </div>
           </div>

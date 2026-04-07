@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MessageCircle, User } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Question, QuestionOption, Answer } from '@/shared/types/course'
@@ -73,6 +74,7 @@ export const LessonDialogueView = ({
   initialScore,
   initialAnswers,
 }: LessonDialogueViewProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'lessonTaking.dialogue' })
   const steps = questions
     .filter(q => q.type === 'SINGLE_CHOICE')
     .sort((a, b) => a.order - b.order)
@@ -102,7 +104,7 @@ export const LessonDialogueView = ({
     const correctOpt = options.find(o => o.isCorrect)
     const isCorrect = !!correctOpt && correctOpt.id === optionId
 
-    // Сохраняем ответ пользователя
+    // Persist selected answer
     submitAnswer({ questionId: step.id, answer: optionId }).catch(() => {})
 
     const nextResults: DialogueStepResult[] = [
@@ -151,42 +153,48 @@ export const LessonDialogueView = ({
   if (noSteps) {
     return (
       <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
-        Диалог ещё не настроен
+        {t('notConfigured')}
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Статус / прогресс */}
+      {/* Progress */}
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-sky-50 px-4 py-3 text-xs text-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
         <span>
-          Реплика {Math.min(currentIndex + 1, steps.length)} из {steps.length}
+          {t('lineProgress', {
+            current: Math.min(currentIndex + 1, steps.length),
+            total: steps.length,
+          })}
         </span>
         <span>
-          Верных: <span className="font-semibold">{correctCount}</span>
+          {t('correctLine')} <span className="font-semibold">{correctCount}</span>
         </span>
       </div>
 
-      {/* Итог после завершения */}
+      {/* Summary after completion */}
       {finished && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center dark:border-emerald-900/30 dark:bg-emerald-950/20">
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-            Диалог завершён
+            {t('finished')}
           </p>
           <p className="mt-1 text-3xl font-bold text-primary">{score}%</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Верных реплик: {results.filter(r => r.isCorrect).length} из {steps.length}
+            {t('scoreLine', {
+              correct: results.filter(r => r.isCorrect).length,
+              total: steps.length,
+            })}
           </p>
           <div className="mt-3 flex flex-wrap justify-center gap-2">
             <Button variant="ghost" size="sm" onClick={handleRetryAll}>
-              Пройти диалог заново
+              {t('retry')}
             </Button>
           </div>
         </div>
       )}
 
-      {/* История диалога */}
+      {/* Dialogue history */}
       <div
         ref={historyRef}
         className="space-y-3 rounded-2xl border border-border bg-card/60 p-4 max-h-[420px] overflow-y-auto scroll-soft"
@@ -201,7 +209,7 @@ export const LessonDialogueView = ({
 
           return (
             <div key={step.id} className="space-y-2 rounded-2xl border border-border bg-card p-4">
-              {/* Собеседник */}
+              {/* Partner line */}
               <div className="flex items-start gap-2">
                 <div className="mt-1 flex h-7 w-7 items-center justify-center rounded-full bg-muted">
                   <MessageCircle className="h-4 w-4 text-muted-foreground" />
@@ -213,7 +221,7 @@ export const LessonDialogueView = ({
                 </div>
               </div>
 
-              {/* Ответ ученика */}
+              {/* Student reply */}
               {res && (
                 <div className="flex items-start justify-end gap-2">
                   <div className="flex-1 text-right">
@@ -228,7 +236,7 @@ export const LessonDialogueView = ({
                     </div>
                     {!res.isCorrect && correctOption && (
                       <div className="mt-1 text-xs text-muted-foreground">
-                        Правильный вариант: <span className="font-medium">{correctOption.text}</span>
+                        {t('correctWas')} <span className="font-medium">{correctOption.text}</span>
                       </div>
                     )}
                   </div>
@@ -242,7 +250,7 @@ export const LessonDialogueView = ({
         })}
       </div>
 
-      {/* Активный шаг */}
+      {/* Active step */}
       {currentStep && !finished && (
         <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
           <div className="flex items-start gap-2">
@@ -252,7 +260,7 @@ export const LessonDialogueView = ({
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">{currentStep.question}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Выберите, что вы ответите в этой ситуации.
+                {t('pickReply')}
               </p>
             </div>
           </div>

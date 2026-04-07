@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { PlacementQuestion } from '@/shared/types/placement'
 import { Button } from '@/shared/ui'
 import { Loader2, Volume2 } from 'lucide-react'
@@ -23,6 +24,15 @@ export const PlacementInProgressStep = ({
   onSelectOption,
   onSubmit,
 }: PlacementInProgressStepProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'placement.inProgress' })
+
+  const skillLabel = (type: string) => {
+    if (type === 'GRAMMAR') return t('skillGrammar')
+    if (type === 'VOCAB') return t('skillLexical')
+    if (type === 'READING') return t('skillReading')
+    return t('skillListening')
+  }
+
   const progressPercent =
     !maxQuestions || !questionIndex
       ? 0
@@ -32,7 +42,7 @@ export const PlacementInProgressStep = ({
     <div className="glass-card rounded-2xl p-6 backdrop-blur-xl space-y-6">
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground">
-          Вопрос {questionIndex} из {maxQuestions}
+          {t('questionOf', { current: questionIndex, total: maxQuestions })}
         </div>
         <div className="h-2 w-40 overflow-hidden rounded-full bg-muted">
           <div
@@ -44,13 +54,7 @@ export const PlacementInProgressStep = ({
 
       <div className="space-y-3">
         <div className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          {question.type === 'GRAMMAR'
-            ? 'Грамматика'
-            : question.type === 'VOCAB'
-              ? 'Лексика'
-              : question.type === 'READING'
-                ? 'Чтение'
-                : 'Аудирование'}
+          {skillLabel(question.type)}
         </div>
 
         {question.context && (
@@ -96,10 +100,7 @@ export const PlacementInProgressStep = ({
         ))}
       </div>
 
-      <p className="text-[11px] text-muted-foreground">
-        Выберите один вариант ответа. Назад вернуться нельзя, поэтому
-        отвечайте внимательно.
-      </p>
+      <p className="text-[11px] text-muted-foreground">{t('singleChoiceHint')}</p>
 
       <div className="flex justify-end">
         <Button
@@ -109,7 +110,7 @@ export const PlacementInProgressStep = ({
           {submitting && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
-          {questionIndex === maxQuestions ? 'Завершить тест' : 'Далее'}
+          {questionIndex === maxQuestions ? t('finish') : t('next')}
         </Button>
       </div>
     </div>

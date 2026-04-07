@@ -1,6 +1,18 @@
-import { CheckCircle, Clock, Lock, MessageSquare, Play, Video, ClipboardCheck, BookOpen, MessageCircle } from 'lucide-react'
+import {
+  CheckCircle,
+  Clock,
+  Lock,
+  MessageSquare,
+  Play,
+  Video,
+  ClipboardCheck,
+  BookOpen,
+  MessageCircle,
+} from 'lucide-react'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/ui'
-import type { Lesson } from '@/shared/types/course'
+import type { Lesson, LessonType } from '@/shared/types/course'
 
 interface StudentLessonItemProps {
   lesson: Lesson
@@ -8,34 +20,36 @@ interface StudentLessonItemProps {
   onOpen: () => void
 }
 
+const typeIcons: Record<LessonType, typeof Video> = {
+  VIDEO: Video,
+  TEST: ClipboardCheck,
+  INTERACTIVE: MessageSquare,
+  LEXICAL: BookOpen,
+  DIALOGUE: MessageCircle,
+}
+
 export const StudentLessonItem = ({ lesson, isAccessible, onOpen }: StudentLessonItemProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'student.myCourses' })
+  const { t: tLt } = useTranslation('platform', { keyPrefix: 'lessonBuilder.lessonTypes' })
+  const { t: tTime } = useTranslation('platform', { keyPrefix: 'timeDisplay' })
+
   const isCompleted = lesson.progress?.isCompleted
 
-  const durationLabel = lesson.duration
-    ? `${Math.floor(lesson.duration / 60)} мин`
-    : null
+  const durationLabel = useMemo(() => {
+    if (!lesson.duration) return null
+    const mins = Math.floor(lesson.duration / 60)
+    return tTime('minutes', { n: mins })
+  }, [lesson.duration, tTime])
 
-  const TypeIcon =
-    lesson.type === 'VIDEO'
-      ? Video
-      : lesson.type === 'TEST'
-        ? ClipboardCheck
-        : lesson.type === 'INTERACTIVE'
-          ? MessageSquare
-          : lesson.type === 'LEXICAL'
-            ? BookOpen
-            : MessageCircle
-
-  const typeLabel =
-    lesson.type === 'VIDEO'
-      ? 'Видео'
-      : lesson.type === 'TEST'
-        ? 'Тест'
-        : lesson.type === 'INTERACTIVE'
-          ? 'Интерактив'
-          : lesson.type === 'LEXICAL'
-            ? 'Лексический тренажёр'
-            : 'Диалог'
+  const TypeIcon = typeIcons[lesson.type]
+  const lessonTypeLabel: Record<LessonType, string> = {
+    VIDEO: tLt('VIDEO.label'),
+    TEST: tLt('TEST.label'),
+    INTERACTIVE: tLt('INTERACTIVE.label'),
+    LEXICAL: tLt('LEXICAL.label'),
+    DIALOGUE: tLt('DIALOGUE.label'),
+  }
+  const typeLabel = lessonTypeLabel[lesson.type]
 
   return (
     <div
@@ -70,44 +84,42 @@ export const StudentLessonItem = ({ lesson, isAccessible, onOpen }: StudentLesso
           <div className="flex-1">
             <div className="mb-1 flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">
-                Урок {lesson.order}
+                {t('lessonOrder', { order: lesson.order })}
               </span>
-              {lesson.type && (
+              {lesson.type ? (
                 <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                   <TypeIcon className="h-2.5 w-2.5" />
                   {typeLabel}
                 </span>
-              )}
-              {lesson.isFinalTest && (
+              ) : null}
+              {lesson.isFinalTest ? (
                 <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">
-                  Финальный тест
+                  {t('finalTest')}
                 </span>
-              )}
+              ) : null}
             </div>
             <h3 className="mb-2 font-semibold text-foreground">{lesson.title}</h3>
-            {lesson.description && (
-              <p className="mb-2 line-clamp-2 text-sm text-muted-foreground">
-                {lesson.description}
-              </p>
-            )}
-            {durationLabel && (
+            {lesson.description ? (
+              <p className="mb-2 line-clamp-2 text-sm text-muted-foreground">{lesson.description}</p>
+            ) : null}
+            {durationLabel ? (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
                 <span>{durationLabel}</span>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 
         <div>
           {isAccessible ? (
             <Button onClick={onOpen} size="sm">
-              {isCompleted ? 'Повторить' : 'Начать'}
+              {isCompleted ? t('repeat') : t('start')}
             </Button>
           ) : (
             <Button size="sm" disabled>
               <Lock className="mr-1 h-3 w-3" />
-              Закрыто
+              {t('locked')}
             </Button>
           )}
         </div>
@@ -115,4 +127,3 @@ export const StudentLessonItem = ({ lesson, isAccessible, onOpen }: StudentLesso
     </div>
   )
 }
-

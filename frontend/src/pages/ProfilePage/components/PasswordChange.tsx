@@ -7,27 +7,28 @@ import { useState } from 'react'
 import { CheckCircle, Lock, Info } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/app/store'
+import { useTranslation } from 'react-i18next'
 
-const passwordSchema = z
-  .object({
-    currentPassword: z.string().min(6, 'Минимум 6 символов').optional(),
-    newPassword: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
-    confirmPassword: z.string(),
-  })
-  .refine(data => data.newPassword === data.confirmPassword, {
-    message: 'Пароли не совпадают',
-    path: ['confirmPassword'],
-  })
+const createPasswordSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      currentPassword: z.string().min(6, t('password.validation.min6')).optional(),
+      newPassword: z.string().min(6, t('password.validation.newMin6')),
+      confirmPassword: z.string(),
+    })
+    .refine(data => data.newPassword === data.confirmPassword, {
+      message: t('password.validation.mismatch'),
+      path: ['confirmPassword'],
+    })
 
-type PasswordFormData = z.infer<typeof passwordSchema>
+type PasswordFormData = z.infer<ReturnType<typeof createPasswordSchema>>
 
 export const PasswordChange = () => {
+  const { t } = useTranslation('profile')
   const { user } = useSelector((state: RootState) => state.auth)
   const [changePassword, { isLoading, error }] = useChangePasswordMutation()
   const [success, setSuccess] = useState(false)
-  
-  // Определяем, есть ли у пользователя пароль
-  const hasPassword = user?.hasPassword ?? true // По умолчанию считаем, что пароль есть
+  const hasPassword = user?.hasPassword ?? true
 
   const {
     register,
@@ -35,7 +36,7 @@ export const PasswordChange = () => {
     reset,
     formState: { errors },
   } = useForm<PasswordFormData>({
-    resolver: zodResolver(passwordSchema),
+    resolver: zodResolver(createPasswordSchema(t)),
   })
 
   const onSubmit = async (data: PasswordFormData) => {
@@ -61,12 +62,12 @@ export const PasswordChange = () => {
         </div>
         <div>
           <h3 className="text-2xl font-bold text-gradient">
-            {!hasPassword ? 'Установить пароль' : 'Изменить пароль'}
+            {!hasPassword ? t('password.setTitle') : t('password.changeTitle')}
           </h3>
           <p className="text-muted-foreground mt-1">
             {!hasPassword
-              ? 'Установите пароль для входа через email'
-              : 'Обновите свой пароль для повышения безопасности'}
+              ? t('password.setSubtitle')
+              : t('password.changeSubtitle')}
           </p>
         </div>
       </div>
@@ -76,10 +77,14 @@ export const PasswordChange = () => {
           <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-800 dark:text-blue-200">
             <p className="font-medium mb-1">
-              Аккаунт зарегистрирован через {user.oauthProvider === 'GOOGLE' ? 'Google' : user.oauthProvider}
+              {t('password.oauthTitle', {
+                provider: user.oauthProvider === 'GOOGLE' ? 'Google' : user.oauthProvider,
+              })}
             </p>
             <p>
-              Вы можете установить пароль для входа через email, но продолжите использовать {user.oauthProvider === 'GOOGLE' ? 'Google' : 'OAuth'} для быстрого входа.
+              {t('password.oauthBody', {
+                provider: user.oauthProvider === 'GOOGLE' ? 'Google' : 'OAuth',
+              })}
             </p>
           </div>
         </div>
@@ -90,7 +95,7 @@ export const PasswordChange = () => {
           <Input
             {...register('currentPassword')}
             type="password"
-            label="Текущий пароль"
+            label={t('password.currentPassword')}
             placeholder="••••••••"
             error={errors.currentPassword?.message}
             autoComplete="current-password"
@@ -100,17 +105,17 @@ export const PasswordChange = () => {
         <Input
           {...register('newPassword')}
           type="password"
-          label="Новый пароль"
+          label={t('password.newPassword')}
           placeholder="••••••••"
           error={errors.newPassword?.message}
           autoComplete="new-password"
-          helperText="Минимум 6 символов"
+          helperText={t('password.minHint')}
         />
 
         <Input
           {...register('confirmPassword')}
           type="password"
-          label="Подтвердите новый пароль"
+          label={t('password.confirmPassword')}
           placeholder="••••••••"
           error={errors.confirmPassword?.message}
           autoComplete="new-password"
@@ -120,43 +125,33 @@ export const PasswordChange = () => {
           <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
             {'data' in error
               ? (error.data as { error: { message: string } }).error.message
-              : 'Произошла ошибка при смене пароля'}
+              : t('password.error')}
           </div>
         )}
 
         {success && (
           <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400">
             <CheckCircle className="h-4 w-4" />
-            Пароль успешно изменен!
+            {t('password.success')}
           </div>
         )}
 
         <Button type="submit" className="w-full" isLoading={isLoading}>
-          Изменить пароль
+          {t('password.submit')}
         </Button>
       </form>
 
       <div className="rounded-xl glass p-5">
         <h4 className="mb-3 text-sm font-semibold text-gradient">
-          Рекомендации по безопасности
+          {t('password.securityTips')}
         </h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
-          <li className="flex items-center space-x-2">
-            <span className="text-primary">✓</span>
-            <span>Используйте минимум 8 символов</span>
-          </li>
-          <li className="flex items-center space-x-2">
-            <span className="text-primary">✓</span>
-            <span>Включайте заглавные и строчные буквы</span>
-          </li>
-          <li className="flex items-center space-x-2">
-            <span className="text-primary">✓</span>
-            <span>Добавьте цифры и специальные символы</span>
-          </li>
-          <li className="flex items-center space-x-2">
-            <span className="text-primary">✓</span>
-            <span>Не используйте очевидные пароли</span>
-          </li>
+          {(t('password.tips', { returnObjects: true }) as string[]).map(tip => (
+            <li key={tip} className="flex items-center space-x-2">
+              <span className="text-primary">✓</span>
+              <span>{tip}</span>
+            </li>
+          ))}
         </ul>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Save, X } from 'lucide-react'
 import { Button, CourseBaseFields, CourseCertificateFields } from '@/shared/ui'
 import type { CourseBaseValues } from '@/shared/ui/CourseBaseFields'
@@ -35,6 +36,7 @@ export const CourseMetaEditForm = ({
   onUpdated,
   onError,
 }: CourseMetaEditFormProps) => {
+  const { t } = useTranslation('platform')
   const [updateCourse, { isLoading }] = useUpdateCourseMutation()
 
   const [values, setValues] = useState<CourseBaseValues>({
@@ -63,7 +65,7 @@ export const CourseMetaEditForm = ({
 
   const handleSave = async () => {
     if (!values.title.trim()) {
-      onError('Введите название курса')
+      onError(t('lessonBuilder.errors.courseTitleRequired'))
       return
     }
 
@@ -72,7 +74,7 @@ export const CourseMetaEditForm = ({
       : 0
 
     if (Number.isNaN(normalizedPrice) || normalizedPrice < 0) {
-      onError('Введите корректную цену')
+      onError(t('lessonBuilder.errors.priceInvalid'))
       return
     }
 
@@ -93,18 +95,18 @@ export const CourseMetaEditForm = ({
         },
       }).unwrap()
 
-      onUpdated('Курс обновлён!')
+      onUpdated(t('lessonBuilder.errors.courseUpdated'))
       onClose()
     } catch (error) {
       const err = error as { data?: { message?: string } }
-      onError(err?.data?.message || 'Не удалось обновить курс')
+      onError(err?.data?.message || t('lessonBuilder.errors.courseUpdateFailed'))
     }
   }
 
   return (
     <div className="mb-6 glass-card rounded-md p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Редактирование курса</h2>
+        <h2 className="text-lg font-semibold">{t('lessonBuilder.courseMeta.title')}</h2>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -125,10 +127,10 @@ export const CourseMetaEditForm = ({
       <div className="flex gap-2">
         <Button onClick={handleSave} disabled={isLoading}>
           <Save className="mr-2 h-4 w-4" />
-          {isLoading ? 'Сохранение…' : 'Сохранить'}
+          {isLoading ? t('lessonBuilder.courseMeta.saving') : t('lessonBuilder.courseMeta.save')}
         </Button>
         <Button variant="outline" onClick={onClose}>
-          Отмена
+          {t('lessonBuilder.courseMeta.cancel')}
         </Button>
       </div>
     </div>

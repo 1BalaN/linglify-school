@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Button, Input } from '@/shared/ui'
 import type { AdminUserListItem } from '@/shared/types/userAdmin'
 
@@ -26,6 +27,9 @@ export const AdminUsersTable = ({
   onSelectUser,
   onExportCsv,
 }: AdminUsersTableProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.usersTable' })
+  const { i18n } = useTranslation('platform')
+  const locale = i18n.language.startsWith('ru') ? 'ru-RU' : 'en-US'
   const now = new Date()
 
   return (
@@ -36,7 +40,7 @@ export const AdminUsersTable = ({
             <Input
               value={search}
               onChange={e => onSearchChange(e.target.value)}
-              placeholder="Поиск по email или имени..."
+              placeholder={t('searchPh')}
               className="pr-9"
             />
             {search && (
@@ -57,10 +61,10 @@ export const AdminUsersTable = ({
               onChange={e => onRoleFilterChange(e.target.value || null)}
               className="h-9 appearance-none rounded-lg border border-input bg-background px-3 pr-8 text-sm"
             >
-              <option value="">Все роли</option>
-              <option value="STUDENT">Студенты</option>
-              <option value="TEACHER">Преподаватели</option>
-              <option value="ADMIN">Администраторы</option>
+              <option value="">{t('allRoles')}</option>
+              <option value="STUDENT">{t('roleStudents')}</option>
+              <option value="TEACHER">{t('roleTeachers')}</option>
+              <option value="ADMIN">{t('roleAdmins')}</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-muted-foreground">
               <span className="inline-block rotate-90 text-xs">›</span>
@@ -69,11 +73,11 @@ export const AdminUsersTable = ({
 
           <div className="flex flex-wrap gap-1">
             {[
-              { id: null, label: 'Все' },
-              { id: 'NEW', label: 'Новые' },
-              { id: 'ACTIVE', label: 'Активные' },
-              { id: 'RISK', label: 'Рисковые' },
-              { id: 'GRAD', label: 'Выпускники' },
+              { id: null, label: t('filterAll') },
+              { id: 'NEW', label: t('filterNew') },
+              { id: 'ACTIVE', label: t('filterActive') },
+              { id: 'RISK', label: t('filterRisk') },
+              { id: 'GRAD', label: t('filterGrad') },
             ].map(item => (
               <Button
                 key={item.id ?? 'all'}
@@ -86,7 +90,7 @@ export const AdminUsersTable = ({
             ))}
           </div>
           <Button size="sm" variant="outline" onClick={onExportCsv}>
-            Экспорт CSV
+            {t('exportCsv')}
           </Button>
         </div>
       </div>
@@ -95,35 +99,35 @@ export const AdminUsersTable = ({
         <table className="min-w-full divide-y divide-border text-sm">
           <thead className="bg-muted/60">
             <tr>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Пользователь</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Роль</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Статус</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Сегмент</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Курсы</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Сертификаты</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Последняя активность</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t('colUser')}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t('colRole')}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t('colStatus')}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t('colSegment')}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t('colCourses')}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t('colCerts')}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t('colActivity')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading ? (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
-                  Загрузка пользователей...
+                  {t('loading')}
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
-                  Пользователи не найдены.
+                  {t('empty')}
                 </td>
               </tr>
             ) : (
               users.map(user => {
                 const segmentLabelMap: Record<string, string> = {
-                  NEW: 'Новый',
-                  ACTIVE: 'Активный',
-                  RISK: 'Рисковый',
-                  GRAD: 'Выпускник',
+                  NEW: t('segmentNEWL'),
+                  ACTIVE: t('segmentAKTIV'),
+                  RISK: t('segmentRISK'),
+                  GRAD: t('segmentGRAD'),
                 }
 
                 const segmentColorMap: Record<string, string> = {
@@ -190,7 +194,7 @@ export const AdminUsersTable = ({
                           : 'bg-red-500/10 text-red-600 dark:text-red-400'
                       }`}
                     >
-                      {user.isActive ? 'Активен' : 'Заморожен'}
+                      {user.isActive ? t('active') : t('frozen')}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -200,14 +204,10 @@ export const AdminUsersTable = ({
                       >
                         {segmentLabelMap[user.segment]}
                         <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-1 hidden w-56 -translate-x-1/2 rounded-md border border-border bg-popover px-2 py-1.5 text-[10px] leading-snug text-muted-foreground shadow-md group-hover:block">
-                          {user.segment === 'NEW' &&
-                            'Новые студенты: зарегистрированы < 7 дней назад и ещё не записаны ни на один курс.'}
-                          {user.segment === 'ACTIVE' &&
-                            'Активные: недавно заходили на платформу и имеют хотя бы один курс в работе.'}
-                          {user.segment === 'RISK' &&
-                            'Рисковые: есть незавершённые курсы и не было активности больше заданного порога.'}
-                          {user.segment === 'GRAD' &&
-                            'Выпускники: уже получили хотя бы один сертификат по курсу.'}
+                          {user.segment === 'NEW' && t('segHintNEW')}
+                          {user.segment === 'ACTIVE' && t('segHintACTIVE')}
+                          {user.segment === 'RISK' && t('segHintRISK')}
+                          {user.segment === 'GRAD' && t('segHintGRAD')}
                         </span>
                       </span>
                     ) : (
@@ -219,14 +219,14 @@ export const AdminUsersTable = ({
                   <td className="px-4 py-3 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       {user.lastActivity
-                        ? new Date(user.lastActivity).toLocaleDateString('ru-RU')
-                        : 'нет данных'}
+                        ? new Date(user.lastActivity).toLocaleDateString(locale)
+                        : t('noActivityData')}
                       {isStale && (
                         <span
                           className="ml-1 inline-flex items-center rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
-                          title="Пользователь давно не проявлял активность на платформе"
+                          title={t('staleTitle')}
                         >
-                          больше 30 дней
+                          {t('staleBadge')}
                         </span>
                       )}
                     </div>

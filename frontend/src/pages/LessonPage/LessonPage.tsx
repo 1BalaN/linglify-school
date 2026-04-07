@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
@@ -39,6 +40,7 @@ function buildAttachmentUrl(url: string, name?: string | null): string {
 }
 
 export const LessonPage = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'lessonFlow' })
   const { lessonId } = useParams<{ lessonId: string }>()
   const navigate = useNavigate()
   const { user } = useSelector((state: RootState) => state.auth)
@@ -83,8 +85,8 @@ export const LessonPage = () => {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h2 className="mb-2 text-xl font-bold">Урок не найден</h2>
-          <Button onClick={() => navigate(-1)}>Назад</Button>
+          <h2 className="mb-2 text-xl font-bold">{t('notFound')}</h2>
+          <Button onClick={() => navigate(-1)}>{t('back')}</Button>
         </div>
       </div>
     )
@@ -95,13 +97,9 @@ export const LessonPage = () => {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="glass-card max-w-md p-8 text-center">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-amber-500" />
-          <h2 className="mb-2 text-xl font-bold">Нет доступа к уроку</h2>
-          <p className="mb-6 text-muted-foreground">
-            Для доступа к этому уроку необходимо записаться на курс
-          </p>
-          <Button onClick={() => navigate(`/courses/${lesson?.courseId}`)}>
-            Перейти к курсу
-          </Button>
+          <h2 className="mb-2 text-xl font-bold">{t('noAccess')}</h2>
+          <p className="mb-6 text-muted-foreground">{t('noAccessBody')}</p>
+          <Button onClick={() => navigate(`/courses/${lesson?.courseId}`)}>{t('toCourse')}</Button>
         </div>
       </div>
     )
@@ -142,7 +140,7 @@ export const LessonPage = () => {
               <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-foreground">
                   <FileText className="h-4 w-4" />
-                  Методички и файлы
+                  {t('attachments')}
                 </h3>
                 <ul className="space-y-2">
                   {lesson.attachments.map((att, i) => (
@@ -161,13 +159,13 @@ export const LessonPage = () => {
                             rel="noopener noreferrer"
                             className="break-all text-primary underline hover:no-underline"
                           >
-                            {att.name || 'Файл'}
+                            {att.name || t('fileFallback')}
                           </a>
                         )
                       })()}
                       {att.size ? (
                         <span className="text-xs text-muted-foreground">
-                          {(att.size / (1024 * 1024)).toFixed(1)} МБ
+                          {t('mb', { n: (att.size / (1024 * 1024)).toFixed(1) })}
                         </span>
                       ) : null}
                     </li>
@@ -177,7 +175,7 @@ export const LessonPage = () => {
             )}
             {additionalText && (
               <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
-                <h3 className="mb-3 text-base font-semibold text-foreground">Дополнительные материалы</h3>
+                <h3 className="mb-3 text-base font-semibold text-foreground">{t('extraMaterials')}</h3>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
                   {additionalText}
                 </p>
@@ -187,7 +185,7 @@ export const LessonPage = () => {
               <div className="mt-8 flex justify-center">
                 <Button size="lg" onClick={() => handleComplete()} disabled={isCompleting}>
                   <CheckCircle className="mr-2 h-5 w-5" />
-                  {isCompleting ? 'Сохранение...' : 'Отметить как завершённый'}
+                  {isCompleting ? t('saving') : t('markComplete')}
                 </Button>
               </div>
             )}
@@ -213,7 +211,7 @@ export const LessonPage = () => {
             ) : (
               <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                 <ClipboardCheck className="mx-auto mb-3 h-10 w-10 opacity-40" />
-                <p>Вопросы ещё не добавлены</p>
+                <p>{t('testEmpty')}</p>
               </div>
             )}
           </>
@@ -237,7 +235,7 @@ export const LessonPage = () => {
             ) : (
               <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                 <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
-                <p>Упражнения ещё не добавлены</p>
+                <p>{t('interactiveEmpty')}</p>
               </div>
             )}
           </>
@@ -260,7 +258,7 @@ export const LessonPage = () => {
             ) : (
               <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                 <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
-                <p>Слова для тренажёра ещё не добавлены</p>
+                <p>{t('lexicalEmpty')}</p>
               </div>
             )}
           </>
@@ -284,12 +282,12 @@ export const LessonPage = () => {
             ) : (
               <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
                 <MessageSquare className="mx-auto mb-3 h-10 w-10 opacity-40" />
-                <p>Диалоговые шаги ещё не добавлены</p>
+                <p>{t('dialogueEmpty')}</p>
               </div>
             )}
           </>
         )}
-        {/* Навигация: предыдущий / следующий урок */}
+        {/* Prev / next lesson navigation */}
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
           <div className="flex items-center gap-2">
             {prevLesson && prevLesson.hasAccess ? (
@@ -298,7 +296,7 @@ export const LessonPage = () => {
                 className="inline-flex h-10 items-center justify-center rounded-xl border-2 border-primary/20 bg-background px-4 font-semibold transition-all hover:scale-105 hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <ChevronLeft className="mr-1 h-4 w-4" />
-                Предыдущий урок
+                {t('prevLesson')}
               </Link>
             ) : (
               <span className="text-sm text-muted-foreground" />
@@ -310,12 +308,12 @@ export const LessonPage = () => {
                 to={`/lessons/${nextLesson.id}`}
                 className="inline-flex h-10 items-center justify-center rounded-xl border-2 border-primary/20 bg-background px-4 font-semibold transition-all hover:scale-105 hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                Следующий урок
+                {t('nextLesson')}
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             ) : (
               <Button variant="outline" onClick={() => navigate(`/courses/${lesson.courseId}/learn`)}>
-                К списку уроков
+                {t('toLessonList')}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             )}

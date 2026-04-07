@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload, Link as LinkIcon, X, Video, Loader2 } from 'lucide-react'
 import { Button } from './Button'
 import { Input } from './Input'
@@ -13,8 +14,11 @@ interface VideoUploadProps {
   required?: boolean
 }
 
-export const VideoUpload = ({ value, onChange, label = 'Видео', required = false }: VideoUploadProps) => {
+export const VideoUpload = ({ value, onChange, label, required = false }: VideoUploadProps) => {
+  const { t } = useTranslation('platform')
+  const u = (k: string) => t(`sharedUi.upload.video.${k}`)
   const fileRef = useRef<HTMLInputElement>(null)
+  const effectiveLabel = label ?? u('defaultLabel')
   const [mode, setMode] = useState<'url' | 'upload'>('url')
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -44,12 +48,12 @@ export const VideoUpload = ({ value, onChange, label = 'Видео', required = 
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.message || `Ошибка ${res.status}`)
+        throw new Error(data?.message || t('sharedUi.upload.video.errorStatus', { status: res.status }))
       }
       const data = await res.json()
       onChange(data.data.url)
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Ошибка загрузки')
+      setUploadError(err instanceof Error ? err.message : u('errorGeneric'))
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -65,16 +69,16 @@ export const VideoUpload = ({ value, onChange, label = 'Видео', required = 
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <label className="block text-sm font-medium">
-          {label}{required && <span className="ml-1 text-red-500">*</span>}
+          {effectiveLabel}{required && <span className="ml-1 text-red-500">*</span>}
         </label>
         <div className="flex rounded-lg border border-border text-xs overflow-hidden">
           <button type="button" onClick={() => setMode('url')}
             className={`px-3 py-1 transition-colors ${mode === 'url' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:bg-accent'}`}>
-            <LinkIcon className="inline mr-1 h-3 w-3" />Ссылка
+            <LinkIcon className="inline mr-1 h-3 w-3" />{u('modeUrl')}
           </button>
           <button type="button" onClick={() => setMode('upload')}
             className={`px-3 py-1 transition-colors ${mode === 'upload' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:bg-accent'}`}>
-            <Upload className="inline mr-1 h-3 w-3" />Файл
+            <Upload className="inline mr-1 h-3 w-3" />{u('modeFile')}
           </button>
         </div>
       </div>
@@ -87,7 +91,7 @@ export const VideoUpload = ({ value, onChange, label = 'Видео', required = 
               <Input
                 value={urlInput}
                 onChange={e => handleUrlChange(e.target.value)}
-                placeholder="https://youtube.com/watch?v=... или https://vimeo.com/..."
+                placeholder={u('urlPh')}
                 className="pl-9"
               />
             </div>
@@ -107,21 +111,21 @@ export const VideoUpload = ({ value, onChange, label = 'Видео', required = 
             {uploading ? (
               <>
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Загрузка видео...</p>
+                <p className="text-sm text-muted-foreground">{u('uploading')}</p>
               </>
             ) : value && isDirectVideo(value) ? (
               <>
                 <Video className="h-8 w-8 text-emerald-500" />
-                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Видео загружено</p>
+                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">{u('uploaded')}</p>
                 <Button variant="outline" size="sm" type="button" onClick={e => { e.stopPropagation(); clear() }}>
-                  <X className="mr-1 h-3 w-3" />Удалить
+                  <X className="mr-1 h-3 w-3" />{u('remove')}
                 </Button>
               </>
             ) : (
               <>
                 <Upload className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium text-foreground">Нажмите для загрузки</p>
-                <p className="text-xs text-muted-foreground">MP4, WebM, MOV — до 500 МБ</p>
+                <p className="text-sm font-medium text-foreground">{u('clickUpload')}</p>
+                <p className="text-xs text-muted-foreground">{u('formats')}</p>
               </>
             )}
           </div>
@@ -132,13 +136,6 @@ export const VideoUpload = ({ value, onChange, label = 'Видео', required = 
           )}
         </div>
       )}
-
-      {/* {value && (
-        <div className="rounded-lg border border-border bg-card/50 p-2 text-xs text-muted-foreground truncate">
-          <Video className="inline mr-1 h-3 w-3" />
-          {value}
-        </div>
-      )} */}
     </div>
   )
 }

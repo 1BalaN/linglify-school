@@ -1,6 +1,6 @@
+import { useTranslation } from 'react-i18next'
 import { CourseStatus, statusConfig } from '@/shared/constants/courseStatus'
 import { Button } from '@/shared/ui'
-
 
 type Props = {
   value: CourseStatus | 'ALL'
@@ -9,6 +9,8 @@ type Props = {
 }
 
 export const CoursesFilters = ({ value, stats, onChange }: Props) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.courseFilters' })
+  const { t: ts } = useTranslation('platform', { keyPrefix: 'admin.courseStatusShort' })
   return (
     <div className="mb-6 glass-card p-4 rounded-lg">
       <div className="flex flex-wrap gap-2">
@@ -17,10 +19,10 @@ export const CoursesFilters = ({ value, stats, onChange }: Props) => {
           size="sm"
           onClick={() => onChange('ALL')}
         >
-          Все ({stats.ALL})
+          {t('all', { count: stats.ALL })}
         </Button>
 
-        {(Object.entries(statusConfig) as [CourseStatus, typeof statusConfig[CourseStatus]][]).map(
+        {(Object.entries(statusConfig) as [CourseStatus, (typeof statusConfig)[CourseStatus]][]).map(
           ([status, config]) => {
             const Icon = config.icon
             return (
@@ -31,7 +33,7 @@ export const CoursesFilters = ({ value, stats, onChange }: Props) => {
                 onClick={() => onChange(status)}
               >
                 <Icon className="mr-1 h-3 w-3" />
-                {config.label} ({stats[status]})
+                {ts(config.labelKey)} ({stats[status]})
               </Button>
             )
           }

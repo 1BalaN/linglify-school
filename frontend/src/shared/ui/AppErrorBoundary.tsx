@@ -1,6 +1,7 @@
 import React from 'react'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 import { Button } from '@/shared/ui'
+import i18n from '@/shared/i18n/config'
 
 interface AppErrorBoundaryState {
   hasError: boolean
@@ -41,14 +42,13 @@ export class AppErrorBoundary extends React.Component<
               <AlertTriangle className="h-7 w-7 text-destructive" />
             </div>
             <h1 className="mb-2 text-2xl font-semibold text-foreground">
-              Что-то пошло не так
+              {i18n.t('errors.boundary.title', { ns: 'platform' })}
             </h1>
             <p className="mb-4 text-sm text-muted-foreground">
-              Произошла непредвиденная ошибка при отображении интерфейса. Мы уже записали её в
-              журналы. Попробуйте обновить страницу или вернитесь на главную.
+              {i18n.t('errors.boundary.description', { ns: 'platform' })}
             </p>
             <p className="mb-6 text-[11px] text-muted-foreground/80">
-              Ваш прогресс и данные курсов хранятся на сервере и не теряются из‑за этой ошибки.
+              {i18n.t('errors.boundary.note', { ns: 'platform' })}
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button
@@ -56,7 +56,7 @@ export class AppErrorBoundary extends React.Component<
                 className="flex-1 inline-flex items-center justify-center gap-2"
               >
                 <RefreshCw className="h-4 w-4" />
-                Обновить
+                {i18n.t('errors.boundary.reload', { ns: 'platform' })}
               </Button>
               <Button
                 variant="outline"
@@ -64,7 +64,7 @@ export class AppErrorBoundary extends React.Component<
                 className="flex-1 inline-flex items-center justify-center gap-2"
               >
                 <Home className="h-4 w-4" />
-                На главную
+                {i18n.t('errors.boundary.home', { ns: 'platform' })}
               </Button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import { useTranslation } from 'react-i18next'
 import { isDirectVideo, toEmbedUrl } from '@/shared/lib/video'
 
 interface VideoPlayerProps {
@@ -7,6 +8,7 @@ interface VideoPlayerProps {
 }
 
 export const VideoPlayer: FC<VideoPlayerProps> = ({ videoUrl, title }) => {
+  const { t } = useTranslation('platform')
   const direct = isDirectVideo(videoUrl)
   const src = direct ? videoUrl : toEmbedUrl(videoUrl)
 
@@ -18,7 +20,7 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({ videoUrl, title }) => {
           className="w-full max-h-[60vh]"
           src={src}
         >
-          Ваш браузер не поддерживает воспроизведение видео.
+          {t('sharedUi.videoPlayer.noVideo')}
         </video>
       </div>
     )

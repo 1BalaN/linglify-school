@@ -1,16 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DollarSign, TrendingUp, Users, ShoppingBag, Loader2, CreditCard, Crown } from 'lucide-react'
 import { Button } from '@/shared/ui'
-import { formatMoney } from '@/shared/lib'
+import { formatDateLong, formatDateShort, formatMoney } from '@/shared/lib'
 import { useGetAdminRevenueQuery, useUpdatePayoutStatusMutation } from '@/entities/revenue'
 import type { PayoutStatus } from '@/shared/types/user'
 
-const STATUS_LABEL: Record<PayoutStatus, string> = {
-  PENDING:    'Ожидает',
-  PROCESSING: 'В обработке',
-  COMPLETED:  'Выплачено',
-  REJECTED:   'Отклонено',
-}
 const STATUS_COLOR: Record<PayoutStatus, string> = {
   PENDING:    'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
   PROCESSING: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400',
@@ -19,6 +14,7 @@ const STATUS_COLOR: Record<PayoutStatus, string> = {
 }
 
 export const AdminRevenuePage = () => {
+  const { t } = useTranslation('platform')
   const { data, isLoading } = useGetAdminRevenueQuery()
   const [updatePayout] = useUpdatePayoutStatusMutation()
   const [activeTab, setActiveTab] = useState<'overview' | 'payouts' | 'sales'>('overview')
@@ -31,6 +27,56 @@ export const AdminRevenuePage = () => {
     try { await updatePayout({ id, status, adminNote }) } finally { setProcessingId(null) }
   }
 
+  const sub = revenue?.summary
+  const stats = useMemo(
+    () => [
+      {
+        label: t('admin.revenue.netProfit'),
+        value: formatMoney(sub?.totalPlatformIncome ?? 0),
+        sub: t('admin.revenue.netProfitSub'),
+        icon: TrendingUp,
+        color: 'text-emerald-500',
+        highlight: true,
+      },
+      {
+        label: t('admin.revenue.subscriptions'),
+        value: formatMoney(sub?.subscriptionRevenue ?? 0),
+        sub: t('admin.revenue.subscriptionsSub', {
+          monthly: sub?.subscriptionByPlan.MONTHLY ?? 0,
+          annual: sub?.subscriptionByPlan.ANNUAL ?? 0,
+        }),
+        icon: Crown,
+        color: 'text-amber-500',
+        highlight: false,
+      },
+      {
+        label: t('admin.revenue.salesFee'),
+        value: formatMoney(sub?.totalPlatformFee ?? 0),
+        sub: t('admin.revenue.salesFeeSub', { count: sub?.totalSales ?? 0 }),
+        icon: ShoppingBag,
+        color: 'text-primary',
+        highlight: false,
+      },
+      {
+        label: t('admin.revenue.paidTeachers'),
+        value: formatMoney(sub?.totalTeacherPayout ?? 0),
+        sub: t('admin.revenue.paidTeachersSub', { count: sub?.teacherCount ?? 0 }),
+        icon: Users,
+        color: 'text-blue-500',
+        highlight: false,
+      },
+      {
+        label: t('admin.revenue.turnover'),
+        value: formatMoney(sub?.totalRevenue ?? 0),
+        sub: t('admin.revenue.turnoverSub'),
+        icon: DollarSign,
+        color: 'text-muted-foreground',
+        highlight: false,
+      },
+    ],
+    [t, sub?.totalPlatformIncome, sub?.subscriptionRevenue, sub?.subscriptionByPlan, sub?.totalPlatformFee, sub?.totalSales, sub?.totalTeacherPayout, sub?.teacherCount, sub?.totalRevenue],
+  )
+
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -39,60 +85,16 @@ export const AdminRevenuePage = () => {
     )
   }
 
-  const sub = revenue?.summary
-  const stats = [
-    {
-      label: 'Чистая прибыль',
-      value: formatMoney(sub?.totalPlatformIncome ?? 0),
-      sub: 'подписки + комиссия 25%',
-      icon: TrendingUp,
-      color: 'text-emerald-500',
-      highlight: true,
-    },
-    {
-      label: 'Подписки преподавателей',
-      value: formatMoney(sub?.subscriptionRevenue ?? 0),
-      sub: `${sub?.subscriptionByPlan.MONTHLY ?? 0} мес. · ${sub?.subscriptionByPlan.ANNUAL ?? 0} год.`,
-      icon: Crown,
-      color: 'text-amber-500',
-      highlight: false,
-    },
-    {
-      label: 'Комиссия с продаж (25%)',
-      value: formatMoney(sub?.totalPlatformFee ?? 0),
-      sub: `${sub?.totalSales ?? 0} продаж курсов`,
-      icon: ShoppingBag,
-      color: 'text-primary',
-      highlight: false,
-    },
-    {
-      label: 'Выплачено преподавателям',
-      value: formatMoney(sub?.totalTeacherPayout ?? 0),
-      sub: `75% · ${sub?.teacherCount ?? 0} преп.`,
-      icon: Users,
-      color: 'text-blue-500',
-      highlight: false,
-    },
-    {
-      label: 'Оборот курсов',
-      value: formatMoney(sub?.totalRevenue ?? 0),
-      sub: 'общая сумма покупок',
-      icon: DollarSign,
-      color: 'text-muted-foreground',
-      highlight: false,
-    },
-  ]
-
   const pendingPayouts = revenue?.payouts.filter(p => p.status === 'PENDING' || p.status === 'PROCESSING') ?? []
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-6xl px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Выручка платформы</h1>
+          <h1 className="text-2xl font-bold">{t('admin.revenue.title')}</h1>
           {pendingPayouts.length > 0 && (
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">
-              {pendingPayouts.length} заявок на выплату
+              {t('admin.revenue.pendingBadge', { count: pendingPayouts.length })}
             </span>
           )}
         </div>
@@ -115,8 +117,8 @@ export const AdminRevenuePage = () => {
                   <p className="mt-1 text-sm text-emerald-600/70 dark:text-emerald-400/70">{s.sub}</p>
                 </div>
                 <div className="hidden sm:flex flex-col items-end gap-1 text-xs text-emerald-600/60 dark:text-emerald-400/60">
-                  <span>Подписки: {formatMoney(sub?.subscriptionRevenue ?? 0)}</span>
-                  <span>Комиссия 25%: {formatMoney(sub?.totalPlatformFee ?? 0)}</span>
+                  <span>{t('admin.revenue.subsLine', { amount: formatMoney(sub?.subscriptionRevenue ?? 0) })}</span>
+                  <span>{t('admin.revenue.feeLine', { amount: formatMoney(sub?.totalPlatformFee ?? 0) })}</span>
                 </div>
               </div>
             </div>
@@ -144,7 +146,11 @@ export const AdminRevenuePage = () => {
                 activeTab === tab ? 'bg-card shadow text-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {tab === 'overview' ? 'По преподавателям' : tab === 'payouts' ? `Выплаты${pendingPayouts.length ? ` (${pendingPayouts.length})` : ''}` : 'История продаж'}
+              {tab === 'overview'
+                ? t('admin.revenue.tabTeachers')
+                : tab === 'payouts'
+                  ? t('admin.revenue.tabPayouts') + (pendingPayouts.length ? ` (${pendingPayouts.length})` : '')
+                  : t('admin.revenue.tabSales')}
             </button>
           ))}
         </div>
@@ -155,11 +161,11 @@ export const AdminRevenuePage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">Преподаватель</th>
-                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">Продаж</th>
-                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">Выручка</th>
-                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">Платформа (25%)</th>
-                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">Преп. (75%)</th>
+                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">{t('admin.revenue.thTeacher')}</th>
+                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">{t('admin.revenue.thSales')}</th>
+                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">{t('admin.revenue.thRevenue')}</th>
+                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">{t('admin.revenue.thPlatform')}</th>
+                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">{t('admin.revenue.thTeacherCut')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -176,7 +182,7 @@ export const AdminRevenuePage = () => {
                   </tr>
                 ))}
                 {(revenue?.byTeacher.length ?? 0) === 0 && (
-                  <tr><td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">Продаж пока нет</td></tr>
+                  <tr><td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">{t('admin.revenue.noSales')}</td></tr>
                 )}
               </tbody>
             </table>
@@ -194,7 +200,7 @@ export const AdminRevenuePage = () => {
                     <p className="mt-0.5 text-sm text-muted-foreground">
                       {p.teacher.firstName} {p.teacher.lastName} · {p.teacher.email}
                     </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{formatDateLong(p.createdAt)}</p>
                     {p.payoutDetails && (
                       <p className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5 text-xs font-medium">
                         <CreditCard className="h-3.5 w-3.5 shrink-0 text-primary" />
@@ -205,22 +211,22 @@ export const AdminRevenuePage = () => {
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${STATUS_COLOR[p.status]}`}>
-                      {STATUS_LABEL[p.status]}
+                      {t(`payoutStatus.admin.${p.status}` as const)}
                     </span>
                     {(p.status === 'PENDING' || p.status === 'PROCESSING') && (
                       <>
                         <Button size="sm" onClick={() => handlePayoutAction(p.id, 'COMPLETED')} isLoading={processingId === p.id} className="text-xs">
-                          ✓ Выплачено
+                          {t('admin.revenue.markPaid')}
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => {
-                          const note = prompt('Причина отклонения (необязательно):') ?? undefined
+                          const note = prompt(t('admin.revenue.rejectPrompt')) ?? undefined
                           void handlePayoutAction(p.id, 'REJECTED', note)
                         }} isLoading={processingId === p.id} className="text-xs">
-                          Отклонить
+                          {t('admin.revenue.reject')}
                         </Button>
                         {p.status === 'PENDING' && (
                           <Button size="sm" variant="outline" onClick={() => handlePayoutAction(p.id, 'PROCESSING')} isLoading={processingId === p.id} className="text-xs">
-                            В обработку
+                            {t('admin.revenue.toProcessing')}
                           </Button>
                         )}
                       </>
@@ -231,7 +237,7 @@ export const AdminRevenuePage = () => {
             ))}
             {(revenue?.payouts.length ?? 0) === 0 && (
               <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
-                Заявок на выплату нет
+                {t('admin.revenue.noPayoutRequests')}
               </div>
             )}
           </div>
@@ -243,11 +249,11 @@ export const AdminRevenuePage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">Курс</th>
-                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">Преподаватель</th>
-                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">Сумма</th>
-                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">Платформа</th>
-                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">Дата</th>
+                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">{t('admin.revenue.thCourse')}</th>
+                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">{t('admin.revenue.thTeacher')}</th>
+                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">{t('admin.revenue.thAmount')}</th>
+                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">{t('admin.revenue.thPlatform')}</th>
+                  <th className="px-5 py-3 text-right font-medium text-muted-foreground">{t('admin.revenue.thDate')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -261,17 +267,17 @@ export const AdminRevenuePage = () => {
                     </td>
                     <td className="px-5 py-3 text-right font-medium">{formatMoney(r.amount)}</td>
                     <td className="px-5 py-3 text-right text-emerald-600 dark:text-emerald-400">{formatMoney(r.platformFee)}</td>
-                    <td className="px-5 py-3 text-right text-muted-foreground">{new Date(r.createdAt).toLocaleDateString('ru-RU')}</td>
+                    <td className="px-5 py-3 text-right text-muted-foreground">{formatDateShort(r.createdAt)}</td>
                   </tr>
                 ))}
                 {(revenue?.revenueHistory.length ?? 0) === 0 && (
-                  <tr><td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">Продаж пока нет</td></tr>
+                  <tr><td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">{t('admin.revenue.noSales')}</td></tr>
                 )}
               </tbody>
             </table>
             {(revenue?.revenueHistory.length ?? 0) > 50 && (
               <div className="border-t border-border px-5 py-3 text-center text-xs text-muted-foreground">
-                Показаны последние 50 из {revenue!.revenueHistory.length}
+                {t('admin.revenue.shownLast', { total: revenue!.revenueHistory.length })}
               </div>
             )}
           </div>

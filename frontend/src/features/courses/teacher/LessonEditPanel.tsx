@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useGetLessonByIdQuery,
   useUpdateLessonMutation,
@@ -116,6 +117,8 @@ export const LessonEditPanel = ({
   onSuccess,
   onError,
 }: LessonEditPanelProps) => {
+  const { t: te } = useTranslation('platform', { keyPrefix: 'lessonBuilder.errors' })
+  const { t: tu } = useTranslation('platform', { keyPrefix: 'lessonBuilder.editLesson' })
   const { data, isLoading } = useGetLessonByIdQuery(lessonId)
   const lesson = data?.data
 
@@ -336,7 +339,7 @@ export const LessonEditPanel = ({
   const handleSave = async () => {
     if (!lesson) return
     if (!title.trim()) {
-      onError('Введите название урока')
+      onError(te('titleRequired'))
       return
     }
 
@@ -347,20 +350,20 @@ export const LessonEditPanel = ({
         : undefined
     } else if (lesson.type === 'TEST') {
       if (!passThreshold || Number.isNaN(Number(passThreshold))) {
-        onError('Укажите порог прохождения')
+        onError(te('thresholdRequired'))
         return
       }
       for (const q of testQuestions) {
         if (!q.text.trim()) {
-          onError('Заполните текст всех вопросов')
+          onError(te('fillAllQuestions'))
           return
         }
         if (q.options.some(o => !o.text.trim())) {
-          onError('Заполните все варианты ответов')
+          onError(te('fillAllOptions'))
           return
         }
         if (!q.options.some(o => o.isCorrect)) {
-          onError('Отметьте хотя бы один правильный ответ в каждом вопросе')
+          onError(te('markCorrectAnswer'))
           return
         }
       }
@@ -375,11 +378,11 @@ export const LessonEditPanel = ({
     } else if (lesson.type === 'INTERACTIVE') {
       for (const ex of exercises) {
         if (!ex.sentence.trim()) {
-          onError('Заполните текст всех упражнений')
+          onError(te('fillAllExerciseText'))
           return
         }
         if (!ex.sentence.includes('___')) {
-          onError(`Упражнение "${ex.sentence.slice(0, 20)}..." не содержит пропуск ___`)
+          onError(te('exerciseNoBlank', { snippet: `${ex.sentence.slice(0, 20)}` }))
           return
         }
         const requiredBlanks = (ex.sentence.match(/___/g) || []).length
@@ -387,7 +390,12 @@ export const LessonEditPanel = ({
         for (let i = 0; i < requiredBlanks; i++) {
           const hasAnswer = (blanks[i] || '').split(',').some(s => s.trim())
           if (!hasAnswer) {
-            onError(`Укажите ответ для пропуска ${i + 1} в упражнении "${ex.sentence.slice(0, 20)}..."`)
+            onError(
+              te('blankAnswerExercise', {
+                n: i + 1,
+                snippet: `${ex.sentence.slice(0, 20)}`,
+              }),
+            )
             return
           }
         }
@@ -395,35 +403,35 @@ export const LessonEditPanel = ({
     } else if (lesson.type === 'LEXICAL') {
       for (const item of lexicalItems) {
         if (!item.term.trim()) {
-          onError('Заполните слово/фразу для всех элементов')
+          onError(te('fillAllTerms'))
           return
         }
         const hasTranslation = item.translations
           .split(',')
           .some(t => t.trim().length > 0)
         if (!hasTranslation) {
-          onError(`Укажите хотя бы один перевод для "${item.term}"`)
+          onError(te('translationForTerm', { term: item.term }))
           return
         }
       }
     } else if (lesson.type === 'DIALOGUE') {
       if (dialogueSteps.length === 0) {
-        onError('Добавьте хотя бы один шаг диалога')
+        onError(te('atLeastOneDialogueStep'))
         return
       }
       for (const step of dialogueSteps) {
         if (!step.prompt.trim()) {
-          onError('Заполните текст реплики собеседника для всех шагов')
+          onError(te('fillAllDialoguePrompts'))
           return
         }
         if (step.options.length < 2) {
-          onError('В каждом шаге диалога должно быть минимум два варианта ответа')
+          onError(te('dialogueMinTwoOptions'))
           return
         }
         const hasText = step.options.some(o => o.text.trim())
         const hasCorrect = step.options.some(o => o.isCorrect && o.text.trim())
         if (!hasText || !hasCorrect) {
-          onError('В каждом шаге диалога должен быть хотя бы один непустой правильный вариант')
+          onError(te('dialogueCorrectOption'))
           return
         }
       }
@@ -617,16 +625,14 @@ export const LessonEditPanel = ({
         }
       }
 
-      onSuccess('Урок обновлён!')
+      onSuccess(te('successUpdated'))
     } catch (e) {
       const err = e as { data?: { message?: string; code?: string } }
       if (err?.data?.code === 'FINAL_TEST_ALREADY_EXISTS') {
-        onError(
-          'Финальный тест для этого курса уже создан. Отредактируйте существующий финальный тест или снимите с него этот статус.'
-        )
+        onError(te('finalTestExists'))
         return
       }
-      onError(err?.data?.message || 'Не удалось сохранить урок')
+      onError(err?.data?.message || te('saveFailed'))
     }
   }
 
@@ -641,7 +647,7 @@ export const LessonEditPanel = ({
   return (
     <div className="glass-card p-6 rounded-md">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Редактирование урока</h3>
+        <h3 className="text-lg font-semibold">{tu('title')}</h3>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -650,15 +656,15 @@ export const LessonEditPanel = ({
       <div className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Название урока *</label>
+            <label className="mb-1 block text-sm font-medium">{tu('lessonTitle')}</label>
             <Input
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Название урока"
+              placeholder={tu('lessonTitlePh')}
             />
           </div>
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Описание</label>
+            <label className="mb-1 block text-sm font-medium">{tu('description')}</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
@@ -666,7 +672,7 @@ export const LessonEditPanel = ({
             />
           </div>
           <div>
-            <label className="mb-3.5 block text-sm font-medium">Длительность (мин)</label>
+            <label className="mb-3.5 block text-sm font-medium">{tu('duration')}</label>
             <Input
               type="number"
               value={duration}
@@ -675,8 +681,7 @@ export const LessonEditPanel = ({
             />
           </div>
           <div>
-            {/* <label className="mb-1 block text-sm font-medium">Видео</label> */}
-            <VideoUpload value={videoUrl} onChange={setVideoUrl} label="Видео урока" />
+            <VideoUpload value={videoUrl} onChange={setVideoUrl} label={tu('videoLabel')} />
           </div>
         </div>
 
@@ -685,18 +690,18 @@ export const LessonEditPanel = ({
             <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
               <div className="flex items-center gap-2 text-sm font-medium text-primary">
                 <Video className="h-4 w-4" />
-                <span>Дополнительные материалы</span>
+                <span>{tu('additional')}</span>
               </div>
               <textarea
                 value={additionalInfo}
                 onChange={e => setAdditionalInfo(e.target.value)}
-                placeholder="Полезные ссылки, заметки, описание урока..."
+                placeholder={tu('additionalPh')}
                 className="min-h-[100px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
               />
             </div>
             <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-primary">Методички и файлы</span>
+                <span className="text-sm font-medium text-primary">{tu('attachmentsTitle')}</span>
                 <Button
                   type="button"
                   variant="outline"
@@ -704,11 +709,11 @@ export const LessonEditPanel = ({
                   onClick={() => setAttachments(a => [...a, { name: '', url: '', size: 0 }])}
                 >
                   <Plus className="mr-1 h-3 w-3" />
-                  Добавить файл
+                  {tu('addFile')}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Загрузите файл с устройства или укажите ссылку. PDF, DOC, DOCX, TXT, ODT — до 25 МБ.
+                {tu('filesHint')}
               </p>
               {attachments.map((att, idx) => (
                 <AttachmentRow
@@ -782,16 +787,16 @@ export const LessonEditPanel = ({
         <div className="mt-4 flex gap-2">
           <Button onClick={handleSave} disabled={isSaving}>
             <Save className="mr-2 h-4 w-4" />
-            {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
+            {isSaving ? tu('saveSaving') : tu('save')}
           </Button>
           <Button variant="outline" onClick={onClose}>
-            Отмена
+            {tu('cancel')}
           </Button>
         </div>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <AlertCircle className="h-3.5 w-3.5" />
-          <span>Изменения сразу сохраняются для всех студентов курса.</span>
+          <span>{tu('noteStudents')}</span>
         </div>
       </div>
     </div>

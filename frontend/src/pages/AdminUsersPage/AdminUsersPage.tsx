@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useGetUsersAdminQuery,
   useGetUserOverviewQuery,
@@ -9,6 +10,8 @@ import { Modal, Button } from '@/shared/ui'
 import type { AdminUserListItem } from '@/shared/types/userAdmin'
 
 export const AdminUsersPage = () => {
+  const { t, i18n } = useTranslation('platform', { keyPrefix: 'admin.usersPage' })
+  const locale = i18n.language.startsWith('ru') ? 'ru-RU' : 'en-US'
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<string | null>(null)
   const [segment, setSegment] = useState<string | null>(null)
@@ -26,7 +29,7 @@ export const AdminUsersPage = () => {
   const { data: overviewData } = useGetUserOverviewQuery(selectedUser?.id ?? '', {
     skip: !selectedUser,
   })
-  // Глобальная статистика — всегда по всей базе, не зависит от фильтров таблицы
+  // Overview stats are global (not scoped to the table filters).
   const { data: statsData } = useGetUserStatsQuery()
 
   const users = data?.data.data ?? []
@@ -47,29 +50,27 @@ export const AdminUsersPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <div className="border-b border-border bg-background/60 backdrop-blur">
         <div className="container mx-auto max-w-7xl px-4 py-6">
-          <h1 className="text-2xl font-bold text-foreground">Пользователи платформы</h1>
-          <p className="text-sm text-muted-foreground">
-            Управление ролями, статусами и мониторинг вовлечённости студентов и преподавателей.
-          </p>
+          <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6 grid gap-4 md:grid-cols-4">
           <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">Всего пользователей</p>
+            <p className="text-xs text-muted-foreground">{t('statTotal')}</p>
             <p className="mt-1 text-2xl font-semibold text-foreground">{totalUsers}</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">Студенты</p>
+            <p className="text-xs text-muted-foreground">{t('statStudents')}</p>
             <p className="mt-1 text-2xl font-semibold text-foreground">{studentsCount}</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">Преподаватели</p>
+            <p className="text-xs text-muted-foreground">{t('statTeachers')}</p>
             <p className="mt-1 text-2xl font-semibold text-foreground">{teachersCount}</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">Заморожены</p>
+            <p className="text-xs text-muted-foreground">{t('statFrozen')}</p>
             <p className="mt-1 text-2xl font-semibold text-foreground">{inactiveCount}</p>
           </div>
         </div>
@@ -117,10 +118,10 @@ export const AdminUsersPage = () => {
                 const now = new Date()
                 const rows = users.map(u => {
                   const segmentLabelMap: Record<string, string> = {
-                    NEW: 'Новый',
-                    ACTIVE: 'Активный',
-                    RISK: 'Рисковый',
-                    GRAD: 'Выпускник',
+                    NEW: t('segmentNEW'),
+                    ACTIVE: t('segmentACTIVE'),
+                    RISK: t('segmentRISK'),
+                    GRAD: t('segmentGRAD'),
                   }
                   const createdAt = new Date(u.createdAt)
                   const lastActivity = u.lastActivity ? new Date(u.lastActivity) : null
@@ -169,8 +170,11 @@ export const AdminUsersPage = () => {
             {pagination && pagination.totalPages > 1 && (
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span>
-                  Страница {pagination.page} из {pagination.totalPages} (всего {pagination.total.toLocaleString('ru-RU')}{' '}
-                  пользователей)
+                  {t('pageOf', {
+                    page: pagination.page,
+                    totalPages: pagination.totalPages,
+                    total: pagination.total.toLocaleString(locale),
+                  })}
                 </span>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
@@ -180,7 +184,7 @@ export const AdminUsersPage = () => {
                       disabled={pagination.page <= 1}
                       onClick={() => handlePageChange(pagination.page - 1)}
                     >
-                      Назад
+                      {t('back')}
                     </Button>
                     <span className="px-2 text-[11px] text-muted-foreground">
                       {pagination.page}/{pagination.totalPages}
@@ -191,7 +195,7 @@ export const AdminUsersPage = () => {
                       disabled={pagination.page >= pagination.totalPages}
                       onClick={() => handlePageChange(pagination.page + 1)}
                     >
-                      Вперёд
+                      {t('forward')}
                     </Button>
                   </div>
                 </div>
@@ -204,7 +208,7 @@ export const AdminUsersPage = () => {
       <Modal
         isOpen={!!selectedUser}
         onClose={() => setSelectedUser(null)}
-        title="Детали пользователя"
+        title={t('userDetailsTitle')}
         size="lg"
       >
         <AdminUserDetails

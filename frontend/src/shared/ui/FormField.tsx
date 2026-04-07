@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
 interface FormFieldProps {
@@ -20,6 +21,7 @@ export const FormField = ({
   children,
   className = '',
 }: FormFieldProps) => {
+  const { t } = useTranslation('platform')
   return (
     <div className={`space-y-2 ${className}`}>
       <label className="block text-sm font-medium text-foreground">
@@ -40,7 +42,7 @@ export const FormField = ({
       {success && !error && (
         <p className="text-xs text-emerald-600 flex items-center gap-1">
           <CheckCircle2 className="h-3 w-3" />
-          Корректно
+          {t('sharedUi.formField.valid')}
         </p>
       )}
       

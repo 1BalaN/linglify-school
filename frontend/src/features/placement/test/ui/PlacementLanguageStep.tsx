@@ -1,4 +1,5 @@
 import type React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Input } from '@/shared/ui'
 import { Loader2 } from 'lucide-react'
 
@@ -17,6 +18,8 @@ export const PlacementLanguageStep = ({
   onStart,
   onBackToCourses,
 }: PlacementLanguageStepProps) => {
+  const { t } = useTranslation('platform')
+  const ls = (k: string) => t(`placement.languageStep.${k}`)
   return (
     <form
       onSubmit={onStart}
@@ -24,21 +27,21 @@ export const PlacementLanguageStep = ({
     >
       <div>
         <label className="mb-1 block text-sm font-medium text-foreground">
-          Целевой язык
+          {ls('targetLanguage')}
         </label>
         <Input
           value={language}
           onChange={e => onLanguageChange(e.target.value)}
-          placeholder="Например: Английский"
+          placeholder={ls('placeholder')}
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          Укажите язык, по которому вы хотите пройти тест.
+          {ls('hint')}
         </p>
       </div>
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>Примерная длительность: 15–25 минут</span>
-        <span>Количество вопросов: 25</span>
+        <span>{ls('duration')}</span>
+        <span>{ls('questionCount')}</span>
       </div>
 
       <div className="flex items-center justify-between">
@@ -47,13 +50,13 @@ export const PlacementLanguageStep = ({
           variant="outline"
           onClick={onBackToCourses}
         >
-          Назад к курсам
+          {ls('backToCourses')}
         </Button>
         <Button type="submit" disabled={isStarting || !language.trim()}>
           {isStarting && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
-          Начать тест
+          {ls('start')}
         </Button>
       </div>
     </form>

@@ -1,0 +1,57 @@
+{
+  "hero": {
+    "titleStart": "Learn languages",
+    "titleAccent": "easily and effectively",
+    "description": "Linglify is a modern platform for learning foreign languages with interactive courses, a personalized approach, and a proven methodology.",
+    "ctaPrimary": "Start for free",
+    "ctaSecondary": "View courses",
+    "studentsCount": "Over 10,000 students",
+    "studentsSubtitle": "are already learning with us",
+    "bannerAlt": "Online foreign language learning on Linglify",
+    "successRate": "95% success rate",
+    "successRateSubtitle": "of our students"
+  },
+  "features": {
+    "title": "Why choose Linglify?",
+    "description": "We built a platform that makes language learning accessible, engaging, and effective.",
+    "items": {
+      "manyLanguages": {
+        "title": "Many languages",
+        "description": "Learn English, Spanish, French, German, and many other languages."
+      },
+      "fastProgress": {
+        "title": "Fast progress",
+        "description": "Our modern teaching methodology helps you achieve results in the shortest time."
+      },
+      "liveCommunication": {
+        "title": "Live communication",
+        "description": "Practice with native speakers and other students in real time."
+      },
+      "certificates": {
+        "title": "Certificates",
+        "description": "Receive official certificates after completing courses."
+      },
+      "progressTracking": {
+        "title": "Progress tracking",
+        "description": "Track your achievements and improve weak areas."
+      },
+      "interactiveLessons": {
+        "title": "Interactive lessons",
+        "description": "Engaging exercises, videos, audio, and games for effective learning."
+      }
+    }
+  },
+  "popularCourses": {
+    "title": "Popular courses",
+    "description": "Start your learning with one of our popular courses",
+    "empty": "There are no published courses yet. As soon as teachers create the first courses, the most popular ones will appear here.",
+    "studentsLabel": "students: {{count}}",
+    "goToCourse": "Go to course",
+    "viewAll": "View all courses"
+  },
+  "cta": {
+    "title": "Ready to start your language journey?",
+    "description": "Join thousands of students who have already reached their goals with Linglify",
+    "button": "Start for free"
+  }
+}

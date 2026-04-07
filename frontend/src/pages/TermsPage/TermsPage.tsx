@@ -1,6 +1,59 @@
 import { FileText, AlertCircle, CheckCircle, XCircle, Scale } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+
+interface TermsSections {
+  s1Title: string
+  s1Text: string
+  s2Title: string
+  s2ReqTitle: string
+  s2ReqItems: string[]
+  s2OauthTitle: string
+  s2OauthText: string
+  s3Title: string
+  s3LicenseTitle: string
+  s3LicenseText: string
+  s3ForbiddenTitle: string
+  s3ForbiddenIntro: string
+  s3ForbiddenItems: string[]
+  s4Title: string
+  s4TariffTitle: string
+  s4TariffText: string
+  s4RenewTitle: string
+  s4RenewText: string
+  s4RefundTitle: string
+  s4RefundText: string
+  s4PriceTitle: string
+  s4PriceText: string
+  s5Title: string
+  s5Text: string
+  s5UserTitle: string
+  s5UserText: string
+  s6Title: string
+  s6Intro: string
+  s6Items: string[]
+  s6Note: string
+  s7Title: string
+  s7Text: string
+  s8Title: string
+  s8Intro: string
+  s8Items: string[]
+  s8Note: string
+  s9Title: string
+  s9Text: string
+  s10Title: string
+  s10Text: string
+  s10Note: string
+  s11Title: string
+  s11Intro: string
+  emailLabel: string
+  telegramLabel: string
+  final: string
+}
 
 export const TermsPage = () => {
+  const { t } = useTranslation('terms')
+  const sections = t('sections', { returnObjects: true }) as TermsSections
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-12">
       <div className="container mx-auto max-w-4xl px-4">
@@ -9,10 +62,10 @@ export const TermsPage = () => {
             <Scale className="h-8 w-8 text-white" />
           </div>
           <h1 className="mb-4 text-4xl font-bold text-gradient">
-            Условия использования
+            {t('title')}
           </h1>
           <p className="text-muted-foreground">
-            Последнее обновление: 15 февраля 2026
+            {t('updatedAt')}
           </p>
         </div>
 
@@ -23,14 +76,11 @@ export const TermsPage = () => {
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                1. Принятие условий
+                {sections.s1Title}
               </h2>
             </div>
             <p className="text-muted-foreground leading-relaxed">
-              Настоящие Условия использования (далее — «Условия») регулируют ваш доступ и использование 
-              образовательной платформы Linglify (далее — «Платформа», «Сервис»). Регистрируясь на Платформе 
-              или используя её, вы соглашаетесь соблюдать эти Условия. Если вы не согласны с какими-либо 
-              положениями, пожалуйста, не используйте Платформу.
+              {sections.s1Text}
             </p>
           </div>
 
@@ -40,22 +90,19 @@ export const TermsPage = () => {
                 <CheckCircle className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                2. Создание учётной записи
+                {sections.s2Title}
               </h2>
             </div>
             <div className="space-y-3 text-muted-foreground">
-              <p><strong className="text-foreground">2.1. Требования к регистрации</strong></p>
+              <p><strong className="text-foreground">{sections.s2ReqTitle}</strong></p>
               <ul className="ml-6 list-disc space-y-1">
-                <li>Вы должны быть не моложе 14 лет</li>
-                <li>Предоставленная информация должна быть достоверной и актуальной</li>
-                <li>Вы несёте ответственность за сохранность пароля</li>
-                <li>Запрещено создавать несколько аккаунтов для одного лица</li>
-                <li>Запрещено передавать доступ к аккаунту третьим лицам</li>
+                {sections.s2ReqItems.map(item => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
-              <p className="mt-4"><strong className="text-foreground">2.2. Аутентификация через Google</strong></p>
+              <p className="mt-4"><strong className="text-foreground">{sections.s2OauthTitle}</strong></p>
               <p>
-                При использовании OAuth авторизации через Google вы соглашаетесь с передачей базовой 
-                информации профиля (имя, email, фото) в соответствии с нашей Политикой конфиденциальности.
+                {sections.s2OauthText}
               </p>
             </div>
           </div>
@@ -66,26 +113,20 @@ export const TermsPage = () => {
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                3. Использование Платформы
+                {sections.s3Title}
               </h2>
             </div>
             <div className="space-y-3 text-muted-foreground">
-              <p><strong className="text-foreground">3.1. Лицензия</strong></p>
+              <p><strong className="text-foreground">{sections.s3LicenseTitle}</strong></p>
               <p>
-                Мы предоставляем вам ограниченную, неисключительную, непередаваемую лицензию на доступ 
-                и использование Платформы в личных некоммерческих целях для изучения языков.
+                {sections.s3LicenseText}
               </p>
-              <p className="mt-4"><strong className="text-foreground">3.2. Запрещённые действия</strong></p>
-              <p>При использовании Платформы вы НЕ имеете права:</p>
+              <p className="mt-4"><strong className="text-foreground">{sections.s3ForbiddenTitle}</strong></p>
+              <p>{sections.s3ForbiddenIntro}</p>
               <ul className="ml-6 list-disc space-y-1">
-                <li>Копировать, распространять или модифицировать контент курсов</li>
-                <li>Использовать автоматизированные средства для сбора данных (парсинг, скрейпинг)</li>
-                <li>Загружать вредоносный код или вирусы</li>
-                <li>Взламывать или пытаться получить несанкционированный доступ</li>
-                <li>Использовать Платформу для незаконных целей</li>
-                <li>Продавать или перепродавать доступ к курсам</li>
-                <li>Размещать оскорбительный, дискриминационный контент</li>
-                <li>Выдавать себя за другое лицо или организацию</li>
+                {sections.s3ForbiddenItems.map(item => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
             </div>
           </div>
@@ -96,30 +137,18 @@ export const TermsPage = () => {
                 <AlertCircle className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                4. Подписка и платежи
+                {sections.s4Title}
               </h2>
             </div>
             <div className="space-y-3 text-muted-foreground">
-              <p><strong className="text-foreground">4.1. Тарифы</strong></p>
-              <p>
-                Платформа предлагает бесплатный базовый доступ и Premium подписку с расширенными возможностями. 
-                Актуальные цены указаны на странице тарифов.
-              </p>
-              <p className="mt-4"><strong className="text-foreground">4.2. Автоматическое продление</strong></p>
-              <p>
-                Premium подписка автоматически продлевается в конце каждого периода, если не отменена заранее. 
-                Вы можете отменить подписку в любой момент в настройках профиля.
-              </p>
-              <p className="mt-4"><strong className="text-foreground">4.3. Возврат средств</strong></p>
-              <p>
-                Возврат возможен в течение 14 дней с момента оплаты, если вы не использовали Premium функции. 
-                Для запроса возврата свяжитесь с поддержкой.
-              </p>
-              <p className="mt-4"><strong className="text-foreground">4.4. Изменение цен</strong></p>
-              <p>
-                Мы оставляем за собой право изменять цены на подписку. Действующие подписчики будут 
-                уведомлены за 30 дней до изменения стоимости.
-              </p>
+              <p><strong className="text-foreground">{sections.s4TariffTitle}</strong></p>
+              <p>{sections.s4TariffText}</p>
+              <p className="mt-4"><strong className="text-foreground">{sections.s4RenewTitle}</strong></p>
+              <p>{sections.s4RenewText}</p>
+              <p className="mt-4"><strong className="text-foreground">{sections.s4RefundTitle}</strong></p>
+              <p>{sections.s4RefundText}</p>
+              <p className="mt-4"><strong className="text-foreground">{sections.s4PriceTitle}</strong></p>
+              <p>{sections.s4PriceText}</p>
             </div>
           </div>
 
@@ -129,18 +158,16 @@ export const TermsPage = () => {
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                5. Интеллектуальная собственность
+                {sections.s5Title}
               </h2>
             </div>
             <div className="space-y-3 text-muted-foreground">
               <p>
-                Все материалы на Платформе (тексты, видео, аудио, изображения, программный код, дизайн) 
-                защищены законами об авторском праве и являются собственностью Linglify или наших партнёров.
+                {sections.s5Text}
               </p>
-              <p className="mt-4"><strong className="text-foreground">Пользовательский контент</strong></p>
+              <p className="mt-4"><strong className="text-foreground">{sections.s5UserTitle}</strong></p>
               <p>
-                Загружая контент на Платформу (например, фото профиля), вы предоставляете нам 
-                неисключительную лицензию на использование этого контента для работы Сервиса.
+                {sections.s5UserText}
               </p>
             </div>
           </div>
@@ -151,22 +178,20 @@ export const TermsPage = () => {
                 <XCircle className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                6. Отказ от гарантий
+                {sections.s6Title}
               </h2>
             </div>
             <div className="space-y-3 text-muted-foreground">
               <p>
-                Платформа предоставляется «как есть» без каких-либо гарантий. Мы не гарантируем:
+                {sections.s6Intro}
               </p>
               <ul className="ml-6 list-disc space-y-1">
-                <li>Непрерывную и бесперебойную работу Сервиса</li>
-                <li>Отсутствие ошибок или уязвимостей</li>
-                <li>Достижение конкретных образовательных результатов</li>
-                <li>Совместимость со всеми устройствами и браузерами</li>
+                {sections.s6Items.map(item => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
               <p className="mt-4">
-                Мы прилагаем все усилия для обеспечения качества и безопасности Платформы, но не можем 
-                гарантировать отсутствие технических сбоев.
+                {sections.s6Note}
               </p>
             </div>
           </div>
@@ -177,13 +202,11 @@ export const TermsPage = () => {
                 <AlertCircle className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                7. Ограничение ответственности
+                {sections.s7Title}
               </h2>
             </div>
             <p className="text-muted-foreground">
-              Linglify не несёт ответственности за любые прямые, косвенные, случайные или специальные 
-              убытки, возникшие в результате использования или невозможности использования Платформы, 
-              включая (но не ограничиваясь) потерю данных, упущенную выгоду или прерывание деятельности.
+              {sections.s7Text}
             </p>
           </div>
 
@@ -193,70 +216,63 @@ export const TermsPage = () => {
                 <XCircle className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                8. Приостановка и удаление аккаунта
+                {sections.s8Title}
               </h2>
             </div>
             <div className="space-y-3 text-muted-foreground">
               <p>
-                Мы оставляем за собой право приостановить или удалить ваш аккаунт без предварительного 
-                уведомления в случае:
+                {sections.s8Intro}
               </p>
               <ul className="ml-6 list-disc space-y-1">
-                <li>Нарушения настоящих Условий</li>
-                <li>Неоплаты подписки</li>
-                <li>Неактивности в течение 2 лет</li>
-                <li>Подозрения в мошеннических действиях</li>
-                <li>По требованию правоохранительных органов</li>
+                {sections.s8Items.map(item => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
               <p className="mt-4">
-                Вы можете самостоятельно удалить аккаунт в любое время через настройки профиля.
+                {sections.s8Note}
               </p>
             </div>
           </div>
 
           <div className="rounded-2xl glass-card p-8 backdrop-blur-xl">
             <h2 className="mb-4 text-2xl font-bold text-foreground">
-              9. Изменение Условий
+              {sections.s9Title}
             </h2>
             <p className="text-muted-foreground">
-              Мы можем изменять эти Условия использования. О существенных изменениях мы уведомим вас 
-              по электронной почте за 14 дней. Продолжение использования Платформы после вступления 
-              изменений в силу означает ваше согласие с новыми условиями.
+              {sections.s9Text}
             </p>
           </div>
 
           <div className="rounded-2xl glass-card p-8 backdrop-blur-xl">
             <h2 className="mb-4 text-2xl font-bold text-foreground">
-              10. Применимое право и разрешение споров
+              {sections.s10Title}
             </h2>
             <div className="space-y-3 text-muted-foreground">
               <p>
-                Настоящие Условия регулируются законодательством Республики Беларусь. Все споры, 
-                возникающие из использования Платформы, подлежат разрешению в судебном порядке по 
-                месту нахождения Linglify.
+                {sections.s10Text}
               </p>
               <p className="mt-4">
-                Перед обращением в суд стороны обязуются провести переговоры для мирного урегулирования спора.
+                {sections.s10Note}
               </p>
             </div>
           </div>
 
           <div className="rounded-2xl glass-card p-8 backdrop-blur-xl">
             <h2 className="mb-4 text-2xl font-bold text-foreground">
-              11. Контактная информация
+              {sections.s11Title}
             </h2>
             <p className="mb-4 text-muted-foreground">
-              По всем вопросам, связанным с настоящими Условиями, вы можете связаться с нами:
+              {sections.s11Intro}
             </p>
             <div className="space-y-2 text-muted-foreground">
               <p>
-                <strong className="text-foreground">Email:</strong>{' '}
+                <strong className="text-foreground">{sections.emailLabel}</strong>{' '}
                 <a href="mailto:gormachdv@gmail.com" className="text-primary hover:underline">
                   gormachdv@gmail.com
                 </a>
               </p>
               <p>
-                <strong className="text-foreground">Telegram:</strong>{' '}
+                <strong className="text-foreground">{sections.telegramLabel}</strong>{' '}
                 <a href="https://t.me/iBa1aNCe" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                   @iBa1aNCe
                 </a>
@@ -266,8 +282,7 @@ export const TermsPage = () => {
 
           <div className="rounded-xl glass p-6 border-2 border-primary/20">
             <p className="text-center text-sm text-muted-foreground">
-              Используя Платформу Linglify, вы подтверждаете, что прочитали, поняли и согласны 
-              соблюдать настоящие Условия использования.
+              {sections.final}
             </p>
           </div>
         </div>

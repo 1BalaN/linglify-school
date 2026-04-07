@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import type { RootState } from '@/app/store'
@@ -21,6 +22,7 @@ import {
 } from '@/features/admin/placement'
 
 export const AdminPlacementPage = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.placementAdmin' })
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
 
@@ -59,8 +61,8 @@ export const AdminPlacementPage = () => {
       <div className="flex min-h-screen items-center justify-center rounded-2xl glass-card p-8 backdrop-blur-xl">
         <div className="glass-card p-8 text-center">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h2 className="mb-2 text-xl font-bold">Доступ запрещён</h2>
-          <Button onClick={() => navigate('/')}>На главную</Button>
+          <h2 className="mb-2 text-xl font-bold">{t('accessTitle')}</h2>
+          <Button onClick={() => navigate('/')}>{t('home')}</Button>
         </div>
       </div>
     )
@@ -126,20 +128,20 @@ export const AdminPlacementPage = () => {
     const errors: typeof fieldErrors = {}
 
     if (!form.language.trim()) {
-      errors.language = 'Укажите язык для этого вопроса'
+      errors.language = t('validationLang')
     }
 
     if (!form.prompt.trim() || form.prompt.trim().length < 10) {
-      errors.prompt = 'Текст вопроса должен быть не короче 10 символов'
+      errors.prompt = t('validationPrompt')
     }
 
     if (!Number.isFinite(form.difficulty) || form.difficulty < 1 || form.difficulty > 6) {
-      errors.difficulty = 'Сложность должна быть числом от 1 до 6'
+      errors.difficulty = t('validationDifficulty')
     }
 
     const filledOptions = form.options.filter(o => o.trim())
     if (filledOptions.length < 2) {
-      errors.options = 'Добавьте как минимум два непустых варианта ответа'
+      errors.options = t('validationOptions')
     }
 
     if (Object.keys(errors).length > 0) {
@@ -161,7 +163,7 @@ export const AdminPlacementPage = () => {
           correctOptionIndex: form.correctOptionIndex,
           explanation: form.explanation.trim() || undefined,
         }).unwrap()
-        setSuccessModal('Вопрос обновлён')
+        setSuccessModal(t('savedUpdate'))
       } else {
         await createQuestion({
           language: form.language.trim(),
@@ -174,7 +176,7 @@ export const AdminPlacementPage = () => {
           correctOptionIndex: form.correctOptionIndex,
           explanation: form.explanation.trim() || undefined,
         }).unwrap()
-        setSuccessModal('Вопрос создан')
+        setSuccessModal(t('savedCreate'))
       }
       resetForm()
       // Scroll the form into view and briefly show a saved banner
@@ -183,7 +185,7 @@ export const AdminPlacementPage = () => {
       formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     } catch (err) {
       const e = err as { data?: { error?: { message?: string } } }
-      setErrorModal(e?.data?.error?.message || 'Ошибка при сохранении вопроса')
+      setErrorModal(e?.data?.error?.message || t('saveError'))
     }
   }
 
@@ -191,9 +193,9 @@ export const AdminPlacementPage = () => {
     if (!deleteId) return
     try {
       await deleteQuestion(deleteId).unwrap()
-      setSuccessModal('Вопрос удалён')
+      setSuccessModal(t('deleted'))
     } catch {
-      setErrorModal('Ошибка при удалении вопроса')
+      setErrorModal(t('deleteError'))
     } finally {
       setDeleteId(null)
     }
@@ -208,16 +210,12 @@ export const AdminPlacementPage = () => {
               <BookOpen className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gradient">
-                Placement-тест: вопросы
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Управление банком вопросов для определения уровня студентов
-              </p>
+              <h1 className="text-3xl font-bold text-gradient">{t('pageTitle')}</h1>
+              <p className="text-sm text-muted-foreground">{t('pageSubtitle')}</p>
             </div>
           </div>
           <Button variant="outline" onClick={() => navigate('/admin/dashboard')}>
-            Назад в админку
+            {t('backAdmin')}
           </Button>
         </div>
 
@@ -228,7 +226,7 @@ export const AdminPlacementPage = () => {
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                Вопрос сохранён. Форма готова к новому вопросу.
+                {t('formReady')}
               </div>
             )}
           <PlacementQuestionForm
@@ -280,17 +278,17 @@ export const AdminPlacementPage = () => {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={handleConfirmDelete}
-        title="Удалить вопрос?"
-        message="Это действие необратимо. Вопрос будет удалён из банка placement-теста."
-        confirmText="Удалить"
-        cancelText="Отмена"
+        title={t('deleteTitle')}
+        message={t('deleteMsg')}
+        confirmText={t('deleteConfirm')}
+        cancelText={t('cancel')}
         variant="danger"
       />
 
       <AlertModal
         isOpen={!!errorModal}
         onClose={() => setErrorModal(null)}
-        title="Ошибка"
+        title={t('modalError')}
         message={errorModal || ''}
         variant="error"
       />
@@ -298,7 +296,7 @@ export const AdminPlacementPage = () => {
       <AlertModal
         isOpen={!!successModal}
         onClose={() => setSuccessModal(null)}
-        title="Успешно"
+        title={t('modalOk')}
         message={successModal || ''}
         variant="success"
       />

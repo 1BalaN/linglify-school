@@ -1,6 +1,8 @@
 import { Mail, MapPin, Phone, Send } from "lucide-react"
+import { useTranslation } from 'react-i18next'
 
 export const ContactInfoPanel = () => {
+  const { t } = useTranslation('support')
   return (
     <div className="space-y-6 lg:col-span-1">
       <div className="rounded-2xl glass-card p-6 backdrop-blur-xl">
@@ -14,9 +16,7 @@ export const ContactInfoPanel = () => {
         >
           gormachdv@gmail.com
         </a>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Отвечаем в течение 24 часов
-        </p>
+        <p className="mt-2 text-xs text-muted-foreground">{t('contact.info.emailReply24h')}</p>
       </div>
       <div className="rounded-2xl glass-card p-6 backdrop-blur-xl">
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 shadow-lg shadow-blue-500/30">
@@ -34,7 +34,7 @@ export const ContactInfoPanel = () => {
                 @iBa1aNCe
         </a>
         <p className="mt-2 text-xs text-muted-foreground">
-          Быстрая связь в мессенджере
+          {t('contact.info.telegramFast')}
         </p>
       </div>
 
@@ -42,18 +42,18 @@ export const ContactInfoPanel = () => {
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-600 to-emerald-600 shadow-lg shadow-green-500/30">
           <MapPin className="h-6 w-6 text-white" />
         </div>
-        <h3 className="mb-2 text-lg font-bold text-foreground">Офис</h3>
+        <h3 className="mb-2 text-lg font-bold text-foreground">{t('contact.info.office')}</h3>
         <p className="text-sm text-muted-foreground">
-          Беларусь, Минск
+          {t('contact.info.addressLine1')}
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
-          пр. Независимости, 102
+          {t('contact.info.addressLine2')}
         </p>
       </div>
 
       <div className="rounded-2xl glass-card p-6 backdrop-blur-xl">
         <h3 className="mb-3 text-lg font-bold text-foreground">
-          Социальные сети
+          {t('contact.info.social')}
         </h3>
         <div className="flex space-x-4">
           <a

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { GraduationCap } from 'lucide-react'
 
 interface MyCoursesHeaderProps {
@@ -5,10 +6,8 @@ interface MyCoursesHeaderProps {
 }
 
 export const MyCoursesHeader = ({ total }: MyCoursesHeaderProps) => {
-  const countLabel =
-    total > 0
-      ? `${total} ${total === 1 ? 'курс' : total < 5 ? 'курса' : 'курсов'}`
-      : 'Вы пока не записаны ни на один курс'
+  const { t } = useTranslation('platform', { keyPrefix: 'student.myCourses' })
+  const countLabel = t('enrolledSummary', { count: total })
 
   return (
     <div className="mb-10 flex items-center gap-4">
@@ -16,10 +15,9 @@ export const MyCoursesHeader = ({ total }: MyCoursesHeaderProps) => {
         <GraduationCap className="h-8 w-8 text-white" />
       </div>
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Моё обучение</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('headerTitle')}</h1>
         <p className="mt-0.5 text-muted-foreground">{countLabel}</p>
       </div>
     </div>
   )
 }
-

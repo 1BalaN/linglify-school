@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/app/store'
 import { Button } from '@/shared/ui'
@@ -6,6 +7,7 @@ import { Mail, X, AlertCircle } from 'lucide-react'
 import { useResendVerificationMutation } from '@/entities/user'
 
 export const EmailVerificationBanner = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'emailVerification' })
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth)
   const [isVisible, setIsVisible] = useState(true)
   const [resendEmail] = useResendVerificationMutation()
@@ -36,9 +38,7 @@ export const EmailVerificationBanner = () => {
           <AlertCircle className="h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
           <div className="flex-1">
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-              {isSuccess
-                ? 'Письмо с подтверждением отправлено! Проверьте свою почту.'
-                : 'Пожалуйста, подтвердите ваш email адрес для полного доступа к платформе.'}
+              {isSuccess ? t('sentToast') : t('confirmPrompt')}
             </p>
           </div>
         </div>
@@ -52,13 +52,13 @@ export const EmailVerificationBanner = () => {
               className="text-yellow-800 hover:bg-yellow-100 dark:text-yellow-200 dark:hover:bg-yellow-900/40"
             >
               <Mail className="mr-2 h-4 w-4" />
-              Отправить повторно
+              {t('resend')}
             </Button>
           )}
           <button
             onClick={() => setIsVisible(false)}
             className="rounded-lg p-1 text-yellow-600 transition-colors hover:bg-yellow-100 dark:text-yellow-400 dark:hover:bg-yellow-900/40"
-            aria-label="Закрыть"
+            aria-label={t('closeAria')}
           >
             <X className="h-4 w-4" />
           </button>

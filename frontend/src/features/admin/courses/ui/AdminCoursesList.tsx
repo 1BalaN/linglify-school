@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useUpdateCourseStatusMutation } from '@/entities/course'
 import { statusConfig } from '@/shared/constants/courseStatus'
 import type { Course } from '@/shared/types/course'
@@ -24,6 +25,8 @@ export const AdminCoursesList = ({
   pagination,
   onPageChange,
 }: AdminCoursesListProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.teacherCourseList' })
+  const { t: ts } = useTranslation('platform', { keyPrefix: 'admin.courseStatusShort' })
   const [updateCourseStatus] = useUpdateCourseStatusMutation()
   const [statusError, setStatusError] = useState<string | null>(null)
   const [statusInfo, setStatusInfo] = useState<string | null>(null)
@@ -31,11 +34,11 @@ export const AdminCoursesList = ({
   const mapModerationError = (code?: string, message?: string): string => {
     switch (code) {
       case 'COURSE_NOT_READY_FOR_REVIEW':
-        return 'Курс ещё не готов к модерации. Заполните название, полное описание и добавьте хотя бы один урок.'
+        return t('notReady')
       case 'INVALID_STATUS_TRANSITION':
-        return 'Этот курс сейчас нельзя отправить на модерацию. Проверьте его статус — возможно, он уже на проверке или опубликован.'
+        return t('cannotSubmit')
       default:
-        return message || 'Не удалось отправить курс на модерацию. Попробуйте позже.'
+        return message || t('submitFailed')
     }
   }
   const handleSendToModeration = async (courseId: string) => {
@@ -43,7 +46,7 @@ export const AdminCoursesList = ({
       setStatusError(null)
       setStatusInfo(null)
       await updateCourseStatus({ id: courseId, status: 'PENDING_REVIEW' }).unwrap()
-      setStatusInfo('Курс отправлен на модерацию и появится в разделе модерации у администратора.')
+      setStatusInfo(t('submittedInfo'))
     } catch (error) {
       const err = error as { data?: { error?: { code?: string; message?: string } } }
       const code = err?.data?.error?.code
@@ -55,12 +58,12 @@ export const AdminCoursesList = ({
   return (
     <div className="rounded-2xl glass-card p-6 backdrop-blur-xl">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground">Ваши курсы</h2>
-        {pagination && (
+        <h2 className="text-xl font-semibold text-foreground">{t('title')}</h2>
+        {pagination ? (
           <span className="text-xs text-muted-foreground">
-            Показано {courses.length} из {pagination.total} курсов
+            {t('shown', { shown: courses.length, total: pagination.total })}
           </span>
-        )}
+        ) : null}
       </div>
 
       {statusError && (
@@ -92,16 +95,14 @@ export const AdminCoursesList = ({
       )}
 
       {isCoursesLoading ? (
-        <div className="py-8 text-center text-muted-foreground">Загрузка...</div>
+        <div className="py-8 text-center text-muted-foreground">{t('loading')}</div>
       ) : courses.length === 0 ? (
-        <div className="py-8 text-center text-muted-foreground">
-          Курсов пока нет. Создайте первый курс.
-        </div>
+        <div className="py-8 text-center text-muted-foreground">{t('empty')}</div>
       ) : (
         <>
           <div className="space-y-3">
             {courses.map(course => {
-              const { icon: StatusIcon, label, color } = statusConfig[course.status]
+              const { icon: StatusIcon, color, labelKey } = statusConfig[course.status]
               return (
                 <Link
                   key={course.id}
@@ -113,36 +114,36 @@ export const AdminCoursesList = ({
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                         {course.level}
                       </span>
-                      <span className={`inline-flex items-center gap-1 rounded-full bg-${color}-500/10 px-2 py-0.5 text-xs font-medium text-${color}-600`}>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full bg-${color}-500/10 px-2 py-0.5 text-xs font-medium text-${color}-600`}
+                      >
                         <StatusIcon className="h-3 w-3" />
-                        {label}
+                        {ts(labelKey)}
                       </span>
                     </div>
-                    <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
-                      {course.title}
-                    </h3>
-                    {course.shortDescription && (
+                    <h3 className="line-clamp-2 text-sm font-semibold text-foreground">{course.title}</h3>
+                    {course.shortDescription ? (
                       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                         {course.shortDescription}
                       </p>
-                    )}
+                    ) : null}
                     {(course.status === 'DRAFT' || course.status === 'REJECTED') && (
                       <Button
                         size="sm"
                         className="mt-2"
                         onClick={e => {
                           e.preventDefault()
-                          handleSendToModeration(course.id)
+                          void handleSendToModeration(course.id)
                         }}
                       >
-                        Отправить на модерацию
+                        {t('submitModeration')}
                       </Button>
                     )}
                   </div>
                   <div className="ml-4 flex flex-col items-end justify-between gap-2">
                     <div className="text-right text-xs text-muted-foreground">
-                      <div>{course.lessonsCount} уроков</div>
-                      <div>{course.enrolledCount} студентов</div>
+                      <div>{t('metaLessons', { count: course.lessonsCount })}</div>
+                      <div>{t('metaStudents', { count: course.enrolledCount })}</div>
                     </div>
                   </div>
                 </Link>
@@ -150,7 +151,7 @@ export const AdminCoursesList = ({
             })}
           </div>
 
-          {pagination && pagination.totalPages > 1 && (
+          {pagination && pagination.totalPages > 1 ? (
             <div className="mt-4 flex items-center justify-center gap-2 text-xs">
               <Button
                 size="sm"
@@ -158,10 +159,10 @@ export const AdminCoursesList = ({
                 disabled={pagination.page <= 1}
                 onClick={() => onPageChange?.(pagination.page - 1)}
               >
-                Назад
+                {t('back')}
               </Button>
               <span className="px-2 py-1 text-muted-foreground">
-                Страница {pagination.page} из {pagination.totalPages}
+                {t('pageOf', { page: pagination.page, totalPages: pagination.totalPages })}
               </span>
               <Button
                 size="sm"
@@ -169,10 +170,10 @@ export const AdminCoursesList = ({
                 disabled={pagination.page >= pagination.totalPages}
                 onClick={() => onPageChange?.(pagination.page + 1)}
               >
-                Вперёд
+                {t('forward')}
               </Button>
             </div>
-          )}
+          ) : null}
         </>
       )}
     </div>

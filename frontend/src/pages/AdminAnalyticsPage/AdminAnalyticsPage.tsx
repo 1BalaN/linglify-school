@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { RootState } from '@/app/store'
@@ -6,12 +7,13 @@ import { LayoutDashboard, Users, BookOpen, GraduationCap } from 'lucide-react'
 import { AdminAnalyticsSection } from '@/features/admin/dashboard'
 import { useGetAdminAnalyticsOverviewQuery, useGetAdminAnalyticsTimeseriesQuery } from '@/entities/analytics'
 
-const formatNumber = (value: number | undefined | null): string => {
-  if (typeof value !== 'number') return '—'
-  return value.toLocaleString('ru-RU')
-}
-
 export const AdminAnalyticsPage = () => {
+  const { t, i18n } = useTranslation('platform', { keyPrefix: 'admin.analytics' })
+  const locale = i18n.language.startsWith('ru') ? 'ru-RU' : 'en-US'
+  const formatNumber = (value: number | undefined | null): string => {
+    if (typeof value !== 'number') return '—'
+    return value.toLocaleString(locale)
+  }
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -40,15 +42,13 @@ export const AdminAnalyticsPage = () => {
               <LayoutDashboard className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gradient">Аналитика платформы</h1>
-              <p className="text-sm text-muted-foreground">
-                Обзор пользователей, курсов и результатов обучения
-              </p>
+              <h1 className="text-3xl font-bold text-gradient">{t('title')}</h1>
+              <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-xs text-muted-foreground">Период:</span>
+            <span className="text-xs text-muted-foreground">{t('period')}</span>
             {[7, 30, 90].map(value => (
               <button
                 key={value}
@@ -68,7 +68,7 @@ export const AdminAnalyticsPage = () => {
                     : 'bg-background text-muted-foreground border border-border hover:bg-muted/60'
                 }`}
               >
-                {value} дн.
+                {t('days', { value })}
               </button>
             ))}
           </div>
@@ -78,34 +78,37 @@ export const AdminAnalyticsPage = () => {
               <div className="rounded-xl border border-border bg-background/60 p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Пользователи
+                    {t('users')}
                   </span>
                   <Users className="h-4 w-4 text-primary" />
                 </div>
                 <div className="text-2xl font-bold text-foreground">{formatNumber(overview.users.total)}</div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Студентов: {formatNumber(overview.users.students)} · Преподавателей:{' '}
-                  {formatNumber(overview.users.teachers)} · Админов: {formatNumber(overview.users.admins)}
+                  {t('usersLine', {
+                    students: formatNumber(overview.users.students),
+                    teachers: formatNumber(overview.users.teachers),
+                    admins: formatNumber(overview.users.admins),
+                  })}
                 </p>
               </div>
 
               <div className="rounded-xl border border-border bg-background/60 p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Курсы
+                    {t('courses')}
                   </span>
                   <BookOpen className="h-4 w-4 text-primary" />
                 </div>
                 <div className="text-2xl font-bold text-foreground">{formatNumber(overview.courses.total)}</div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Новых за 30 дней: {formatNumber(overview.courses.newLast30Days)}
+                  {t('coursesNew', { n: formatNumber(overview.courses.newLast30Days) })}
                 </p>
               </div>
 
               <div className="rounded-xl border border-border bg-background/60 p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Завершённые курсы
+                    {t('completedCourses')}
                   </span>
                   <GraduationCap className="h-4 w-4 text-primary" />
                 </div>
@@ -113,33 +116,33 @@ export const AdminAnalyticsPage = () => {
                   {formatNumber(overview.enrollments.completed)}
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Всего зачислений: {formatNumber(overview.enrollments.total)} · Завершено:{' '}
-                  {overview.enrollments.completionRate}%
+                  {t('enrollLine', {
+                    total: formatNumber(overview.enrollments.total),
+                    rate: overview.enrollments.completionRate,
+                  })}
                 </p>
               </div>
 
               <div className="rounded-xl border border-border bg-background/60 p-4">
                 <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Воронка обучения
+                  {t('funnel')}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Placement → Зачислены → Сертификаты
-                </p>
+                <p className="text-xs text-muted-foreground">{t('funnelSub')}</p>
                 <dl className="mt-2 space-y-1 text-xs">
                   <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Placement завершили</dt>
+                    <dt className="text-muted-foreground">{t('funnelPlacement')}</dt>
                     <dd className="font-semibold text-foreground">
                       {formatNumber(overview.funnel.placementCompleted)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Зачислены на курсы</dt>
+                    <dt className="text-muted-foreground">{t('funnelEnrolled')}</dt>
                     <dd className="font-semibold text-foreground">
                       {formatNumber(overview.funnel.enrolled)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Получили сертификат</dt>
+                    <dt className="text-muted-foreground">{t('funnelCert')}</dt>
                     <dd className="font-semibold text-foreground">
                       {formatNumber(overview.funnel.certificatesIssued)}
                     </dd>
@@ -160,21 +163,19 @@ export const AdminAnalyticsPage = () => {
 
             <div className="rounded-2xl glass-card p-4 backdrop-blur-xl">
               <h2 className="mb-3 text-sm font-semibold text-foreground">
-                Топ курсов по вовлечённости и рейтингу
+                {t('topTitle')}
               </h2>
               {overview.topCourses.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Пока недостаточно данных для отображения топа курсов.
-                </p>
+                <p className="text-xs text-muted-foreground">{t('topEmpty')}</p>
               ) : (
                 <div className="scroll-soft max-h-64 overflow-y-auto">
                   <table className="min-w-full text-left text-xs">
                     <thead className="sticky top-0 bg-background/80 backdrop-blur border-b border-border/60">
                       <tr>
-                        <th className="px-3 py-2 font-medium text-muted-foreground">Курс</th>
-                        <th className="px-3 py-2 font-medium text-muted-foreground">Уровень</th>
-                        <th className="px-3 py-2 font-medium text-muted-foreground">Студенты</th>
-                        <th className="px-3 py-2 font-medium text-muted-foreground">Рейтинг</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">{t('colCourse')}</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">{t('colLevel')}</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">{t('colStudents')}</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">{t('colRating')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -209,12 +210,10 @@ export const AdminAnalyticsPage = () => {
 
             <div className="rounded-2xl glass-card p-4 backdrop-blur-xl">
               <h2 className="mb-3 text-sm font-semibold text-foreground">
-                Языки курсов по количеству зачислений
+                {t('langTitle')}
               </h2>
               {overview.languageCourses.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Пока нет данных по языкам курсов.
-                </p>
+                <p className="text-xs text-muted-foreground">{t('langEmpty')}</p>
               ) : (
                 <div className="scroll-soft max-h-64 space-y-2 overflow-y-auto pr-1 text-xs">
                   {overview.languageCourses
@@ -241,8 +240,10 @@ export const AdminAnalyticsPage = () => {
                                 {lang.language}
                               </div>
                               <div className="mt-0.5 text-[11px] text-muted-foreground">
-                                Курсов: {formatNumber(lang.coursesCount)} · Зачислений:{' '}
-                                {formatNumber(lang.totalEnrollments)}
+                                {t('langLine', {
+                                  c: formatNumber(lang.coursesCount),
+                                  e: formatNumber(lang.totalEnrollments),
+                                })}
                               </div>
                             </div>
                             <div className="text-[11px] font-semibold text-muted-foreground">
@@ -264,21 +265,19 @@ export const AdminAnalyticsPage = () => {
 
             <div className="rounded-2xl glass-card p-4 backdrop-blur-xl">
               <h2 className="mb-3 text-sm font-semibold text-foreground">
-                Курсы с низким рейтингом (≤ 2.5)
+                {t('lowTitle')}
               </h2>
               {overview.lowRatedCourses.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Хорошая новость: курсов с рейтингом 2.5 и ниже сейчас нет.
-                </p>
+                <p className="text-xs text-muted-foreground">{t('lowEmpty')}</p>
               ) : (
                 <div className="scroll-soft max-h-64 overflow-y-auto">
                   <table className="min-w-full text-left text-xs">
                     <thead className="sticky top-0 bg-background/80 backdrop-blur border-b border-border/60">
                       <tr>
-                        <th className="px-3 py-2 font-medium text-muted-foreground">Курс</th>
-                        <th className="px-3 py-2 font-medium text-muted-foreground">Уровень</th>
-                        <th className="px-3 py-2 font-medium text-muted-foreground">Студенты</th>
-                        <th className="px-3 py-2 font-medium text-muted-foreground">Рейтинг</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">{t('colCourse')}</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">{t('colLevel')}</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">{t('colStudents')}</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">{t('colRating')}</th>
                       </tr>
                     </thead>
                     <tbody>

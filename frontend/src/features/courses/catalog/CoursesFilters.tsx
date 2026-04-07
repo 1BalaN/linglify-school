@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { GetCoursesQuery, CourseLevel } from '@/shared/types/course'
-import { COURSE_CATEGORIES } from '@/shared/constants/courseCategories'
+import { COURSE_CATEGORY_DEFS } from '@/shared/constants/courseCategories'
 import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface CoursesFiltersProps {
   filters: GetCoursesQuery
@@ -9,9 +10,8 @@ interface CoursesFiltersProps {
 }
 
 const levels: CourseLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-const categories = [...COURSE_CATEGORIES]
-
 export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
+  const { t } = useTranslation('courses')
   const [isExpanded, setIsExpanded] = useState(true)
   const [searchInput, setSearchInput] = useState(filters.search || '')
 
@@ -120,13 +120,13 @@ export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="h-4 w-4 text-primary" />
-          <h2 className="text-base font-bold text-foreground">Фильтры</h2>
+          <h2 className="text-base font-bold text-foreground">{t('filters.title')}</h2>
         </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="text-xs text-muted-foreground lg:hidden"
         >
-          {isExpanded ? 'Скрыть' : 'Показать'}
+          {isExpanded ? t('filters.hide') : t('filters.show')}
         </button>
       </div>
 
@@ -139,13 +139,13 @@ export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
                 type="text"
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
-                placeholder="Поиск курсов..."
+                placeholder={t('filters.searchPlaceholder')}
                 className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <button
                 type="submit"
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                aria-label="Выполнить поиск"
+                aria-label={t('filters.searchAction')}
               >
                 <Search className="h-4 w-4" />
               </button>
@@ -154,7 +154,7 @@ export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
                   type="button"
                   onClick={handleSearchClear}
                   className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-                  aria-label="Очистить поиск"
+                  aria-label={t('filters.searchClear')}
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -165,7 +165,7 @@ export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
           {/* Level */}
           <div>
             <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Уровень
+              {t('filters.level')}
             </h3>
             <div className="grid grid-cols-3 gap-1.5">
               {levels.map(level => (
@@ -188,21 +188,21 @@ export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
           {/* Category */}
           <div>
             <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Категория
+              {t('filters.category')}
             </h3>
             <div className="space-y-1">
-              {categories.map(category => (
+              {COURSE_CATEGORY_DEFS.map(({ value, labelKey }) => (
                 <button
-                  key={category}
+                  key={value}
                   type="button"
-                  onClick={() => handleCategoryChange(category)}
+                  onClick={() => handleCategoryChange(value)}
                   className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                    filters.category === category
+                    filters.category === value
                       ? 'bg-primary text-primary-foreground font-medium'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
-                  {category}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
@@ -211,14 +211,14 @@ export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
           {/* Price */}
           <div>
             <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Цена
+              {t('filters.price')}
             </h3>
             <div className="space-y-1">
               {[
-                { type: 'free' as const, label: 'Бесплатные', active: filters.minPrice === 0 && filters.maxPrice === 0 },
+                { type: 'free' as const, label: t('filters.free'), active: filters.minPrice === 0 && filters.maxPrice === 0 },
                 {
                   type: 'paid' as const,
-                  label: 'Платные',
+                  label: t('filters.paid'),
                   active: !!(filters.minPrice && filters.minPrice > 0),
                 },
               ].map(({ type, label, active }) => (
@@ -241,7 +241,7 @@ export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
           {/* Sort */}
           <div>
             <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Сортировка
+              {t('filters.sort')}
             </h3>
             <div className="relative">
               <select
@@ -251,12 +251,12 @@ export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
                 }
                 className="w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 pr-9 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               >
-                <option value="createdAt">Новые</option>
-                <option value="updatedAt">Недавно обновленные</option>
-                <option value="title">По названию</option>
-                <option value="price">По цене</option>
-                <option value="enrolledCount">По популярности</option>
-                <option value="averageRating">По рейтингу</option>
+                <option value="createdAt">{t('filters.sortNew')}</option>
+                <option value="updatedAt">{t('filters.sortUpdated')}</option>
+                <option value="title">{t('filters.sortTitle')}</option>
+                <option value="price">{t('filters.sortPrice')}</option>
+                <option value="enrolledCount">{t('filters.sortPopular')}</option>
+                <option value="averageRating">{t('filters.sortRating')}</option>
               </select>
               <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted-foreground">
                 <ChevronDown className="h-4 w-4" />
@@ -271,7 +271,7 @@ export const CoursesFilters = ({ filters, onChange }: CoursesFiltersProps) => {
               onClick={clearFilters}
               className="w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
             >
-              Сбросить фильтры
+              {t('filters.reset')}
             </button>
           )}
         </div>

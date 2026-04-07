@@ -21,7 +21,7 @@ export interface ErrorFormState {
 }
 
 export const emptyQuestionForm: QuestionFormState = {
-  language: 'Английский',
+  language: 'English',
   type: 'GRAMMAR',
   difficulty: 3,
   prompt: '',
@@ -37,11 +37,12 @@ export type AdminPlacementQuestion = PlacementQuestion & {
   explanation?: string | null
 }
 
-export const typeOptions: { value: PlacementQuestionType | 'ALL'; label: string }[] = [
-  { value: 'ALL', label: 'Все типы' },
-  { value: 'GRAMMAR', label: 'Грамматика' },
-  { value: 'VOCAB', label: 'Лексика' },
-  { value: 'READING', label: 'Чтение' },
-  { value: 'LISTENING', label: 'Аудирование' },
+/** Filter / form option values; labels come from i18n in UI (placement.inProgress + admin.placementBank). */
+export const typeOptions: { value: PlacementQuestionType | 'ALL' }[] = [
+  { value: 'ALL' },
+  { value: 'GRAMMAR' },
+  { value: 'VOCAB' },
+  { value: 'READING' },
+  { value: 'LISTENING' },
 ]
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { RefreshCw, BookOpen } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Question, QuestionOption } from '@/shared/types/course'
@@ -62,6 +63,7 @@ export const LessonLexicalView = ({
   initialCompleted,
   initialScore,
 }: LessonLexicalViewProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'lessonTaking.lexical' })
   const pairs = useMemo(() => buildPairs(questions), [questions])
 
   const [cards, setCards] = useState<Card[]>(() => {
@@ -117,7 +119,7 @@ export const LessonLexicalView = ({
       return
     }
 
-    // Проверяем совпадение пары: одно слово + один перевод, общий pairId
+    // Match term + translation with the same pairId
     if (first.pairId === card.pairId && first.kind !== card.kind) {
       const nextMatched = new Set(matchedCardIds)
       nextMatched.add(first.id)
@@ -133,7 +135,7 @@ export const LessonLexicalView = ({
         onComplete(finalScore)
       }
     } else {
-      // Не совпало — просто снимаем выделение, без задержек
+      // Mismatch: clear selection (no delay)
       setSelectedCardId(null)
     }
   }
@@ -143,10 +145,10 @@ export const LessonLexicalView = ({
       {totalPairs > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-sky-50 px-4 py-3 text-xs text-sky-800 dark:bg-sky-950/30 dark:text-sky-200">
           <span>
-            Пар для сопоставления: <span className="font-semibold">{totalPairs}</span>
+            {t('pairsLabel')} <span className="font-semibold">{totalPairs}</span>
           </span>
           <span>
-            Найдено:{' '}
+            {t('found')}{' '}
             <span className="font-semibold">
               {matchedCardIds.size / 2} / {totalPairs}
             </span>
@@ -163,13 +165,11 @@ export const LessonLexicalView = ({
           }`}
         >
           <p className="text-2xl font-bold text-primary">{score}%</p>
-          <p className="text-sm text-muted-foreground">
-            {totalPairs} из {totalPairs} пар сопоставлено верно
-          </p>
+          <p className="text-sm text-muted-foreground">{t('allMatched', { total: totalPairs })}</p>
           <div className="mt-3 flex flex-wrap justify-center gap-2">
             <Button variant="outline" size="sm" onClick={resetGame}>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Пройти заново
+              {t('retry')}
             </Button>
           </div>
         </div>
@@ -177,7 +177,7 @@ export const LessonLexicalView = ({
 
       {totalPairs === 0 && (
         <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
-          Слова для тренажёра ещё не добавлены
+          {t('emptyShort')}
         </div>
       )}
 
@@ -188,17 +188,15 @@ export const LessonLexicalView = ({
             <div className="rounded-2xl border border-border bg-card p-4">
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
                 <BookOpen className="h-4 w-4" />
-                <span>Соотнесите слова и переводы</span>
+                <span>{t('title')}</span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Нажмите сначала на слово слева, затем на соответствующий перевод справа. Правильные пары подсвечиваются зелёным.
-              </p>
+              <p className="text-xs text-muted-foreground">{t('hint')}</p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
-                  Слова
+                  {t('wordsCol')}
                 </p>
                 <div className="space-y-2">
                   {cards
@@ -235,7 +233,7 @@ export const LessonLexicalView = ({
 
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-pink-700 dark:text-pink-300">
-                  Перевод
+                  {t('translationsCol')}
                 </p>
                 <div className="space-y-2">
                   {cards
@@ -276,7 +274,7 @@ export const LessonLexicalView = ({
             <div className="rounded-2xl border border-border bg-card p-5">
               <h4 className="mb-4 flex items-center gap-2 text-base font-semibold text-foreground">
                 <BookOpen className="h-4 w-4 text-emerald-600" />
-                Соответствия для повторения
+                {t('reviewTitle')}
               </h4>
 
               <div className="grid gap-3 sm:grid-cols-2">
@@ -296,22 +294,6 @@ export const LessonLexicalView = ({
               </div>
             </div>
           )}
-          {/* {submitted && (
-            <div className="rounded-2xl border border-border bg-card p-4 text-sm">
-              <h4 className="mb-2 text-sm font-semibold text-foreground">
-                Соответствия для повторения
-              </h4>
-              <div className="space-y-1">
-                {pairs.map(p => (
-                  <div key={p.id}>
-                    <span className="font-medium text-foreground">{p.term}</span>
-                    <span className="mx-1 text-muted-foreground">—</span>
-                    <span className="text-foreground">{p.allTranslations.join(', ')}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )} */}
         </>
       )}
     </div>

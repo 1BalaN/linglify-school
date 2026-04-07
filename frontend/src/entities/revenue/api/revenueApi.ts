@@ -2,7 +2,7 @@ import { api } from '@/app/store/api'
 import type { ApiResponse } from '@/shared/types/api'
 import type { CourseRevenue, PayoutRequest } from '@/shared/types/user'
 
-interface TeacherEarnings {
+export interface TeacherEarnings {
   totalEarned: number
   totalPaidOut: number
   pendingPayout: number
@@ -41,9 +41,13 @@ interface AdminRevenue {
 
 export const revenueApi = api.injectEndpoints({
   endpoints: build => ({
-    getTeacherEarnings: build.query<ApiResponse<TeacherEarnings>, void>({
+    // Arg is current teacher user id — only for cache keys; API still returns data for the authenticated user.
+    getTeacherEarnings: build.query<ApiResponse<TeacherEarnings>, string>({
       query: () => '/revenue/teacher/earnings',
-      providesTags: ['Revenue'],
+      providesTags: (_result, _error, teacherUserId) => [
+        'Revenue',
+        { type: 'Revenue', id: `teacher-earnings-${teacherUserId}` },
+      ],
     }),
 
     createPayoutRequest: build.mutation<ApiResponse<PayoutRequest>, { amount: number; payoutDetails: string }>({

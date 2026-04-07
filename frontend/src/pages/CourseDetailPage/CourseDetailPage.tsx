@@ -12,10 +12,12 @@ import type { RootState } from '@/app/store'
 import type { Review } from '@/shared/types/course'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CourseHero, CourseDetailTabs, ReviewsSection } from '@/features/courses/detail'
 import { Button } from '@/shared/ui'
 
 export const CourseDetailPage = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'courseCatalog' })
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useSelector((state: RootState) => state.auth)
@@ -46,24 +48,24 @@ export const CourseDetailPage = () => {
 
     if (!course) return
 
-    // Уже зачислен — сразу ведём к обучению
+    // Already enrolled — go to learning flow.
     if (course.isEnrolled) {
       navigate(`/courses/${course.id}/learn`)
       return
     }
 
-    // Бесплатные курсы
+    // Free courses: enroll via API.
     if (course.price === 0) {
       try {
         await enrollCourse(id!).unwrap()
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error('Ошибка записи на курс:', error)
+        console.error('Course enrollment failed:', error)
       }
       return
     }
 
-    // Платные курсы — создаём Stripe Checkout Session
+    // Paid courses: Stripe Checkout.
     try {
       const response = await createCheckoutSession({ courseId: course.id }).unwrap()
       const { url } = response.data
@@ -72,11 +74,11 @@ export const CourseDetailPage = () => {
         window.location.href = url
       } else {
         // eslint-disable-next-line no-console
-        console.error('Stripe не вернул URL сессии оплаты')
+        console.error('Stripe did not return checkout URL')
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Ошибка при создании платежной сессии:', error)
+      console.error('Failed to create checkout session:', error)
     }
   }
 
@@ -93,11 +95,9 @@ export const CourseDetailPage = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Курс не найден
+            {t('notFound')}
           </h2>
-          <Button onClick={() => navigate('/courses')}>
-            Вернуться к каталогу
-          </Button>
+          <Button onClick={() => navigate('/courses')}>{t('backCatalog')}</Button>
         </div>
       </div>
     )
@@ -146,11 +146,11 @@ export const CourseDetailPage = () => {
             onSubmit={async () => {
               setReviewError(null)
               if (reviewRating < 1 || reviewRating > 5) {
-                setReviewError('Укажите оценку от 1 до 5')
+                setReviewError(t('reviewRating'))
                 return
               }
               if (!reviewComment.trim()) {
-                setReviewError('Напишите комментарий')
+                setReviewError(t('reviewComment'))
                 return
               }
               try {
@@ -175,7 +175,7 @@ export const CourseDetailPage = () => {
                 setEditingReview(null)
               } catch (err) {
                 const e = err as { data?: { error?: { message?: string } } }
-                setReviewError(e?.data?.error?.message || 'Ошибка при сохранении отзыва')
+                setReviewError(e?.data?.error?.message || t('reviewSaveError'))
               }
             }}
             onDeleteConfirm={async () => {

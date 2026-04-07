@@ -89,16 +89,14 @@ export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
         <div className="flex flex-1 flex-col gap-3 p-4">
           <div className="flex-1 space-y-3">
             {/* Title & description */}
-            <h3 className="mb-1 line-clamp-2 text-base font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+            <h3 className="mb-1 min-h-[2.75rem] line-clamp-2 text-base font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
               {course.title}
             </h3>
-            {course.shortDescription && (
-              <p className="line-clamp-2 text-xs text-muted-foreground">
-                {course.shortDescription}
-              </p>
-            )}
+            <p className="min-h-[2.5rem] line-clamp-2 text-xs text-muted-foreground">
+              {course.shortDescription || ' '}
+            </p>
             {/* Teacher */}
-            <div className="flex items-center gap-2">
+            <div className="flex min-h-7 items-center gap-2">
               {course.teacher.avatar ? (
                 <img
                   src={course.teacher.avatar}
@@ -120,7 +118,7 @@ export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
             </div>
 
             {/* Stats row */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <div className="flex min-h-5 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <BookOpen className="h-3.5 w-3.5" />
                 {course.lessonsCount} {getLessonsLabel(course.lessonsCount)}

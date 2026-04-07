@@ -120,11 +120,22 @@ io.use((socket, next) => {
 })
 
 io.on('connection', socket => {
- 
   const userId: string | undefined = socket.data.userId
   if (userId) {
     socket.join(`user:${userId}`)
   }
+
+  socket.on('chat:thread:join', (payload: { threadId?: string }) => {
+    const threadId = payload?.threadId?.trim()
+    if (!threadId) return
+    socket.join(`thread:${threadId}`)
+  })
+
+  socket.on('chat:thread:leave', (payload: { threadId?: string }) => {
+    const threadId = payload?.threadId?.trim()
+    if (!threadId) return
+    socket.leave(`thread:${threadId}`)
+  })
 })
 
 // Start server

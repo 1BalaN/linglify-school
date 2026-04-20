@@ -3,15 +3,17 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { setCredentials } from '@/entities/user'
 import { useGetCurrentUserQuery } from '@/entities/user'
+import { useTranslation } from 'react-i18next'
 
 export const AuthCallbackPage = () => {
+  const { t } = useTranslation('platform')
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const accessToken = searchParams.get('accessToken')
   const [tokenSet, setTokenSet] = useState(false)
 
-  // Устанавливаем токен сразу
+  // Set token first
   useEffect(() => {
     if (accessToken && !tokenSet) {
       localStorage.setItem('accessToken', accessToken)
@@ -21,7 +23,7 @@ export const AuthCallbackPage = () => {
     }
   }, [accessToken, tokenSet, navigate])
 
-  // Запрашиваем пользователя только после установки токена
+  // Fetch user only after token is stored
   const { data, error, isLoading } = useGetCurrentUserQuery(undefined, {
     skip: !tokenSet,
   })
@@ -43,7 +45,7 @@ export const AuthCallbackPage = () => {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground">Завершаем вход через Google...</p>
+          <p className="text-muted-foreground">{t('authFlow.callback.googleWait')}</p>
         </div>
       </div>
     )
@@ -53,7 +55,7 @@ export const AuthCallbackPage = () => {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center">
         <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="text-muted-foreground">Обработка авторизации...</p>
+        <p className="text-muted-foreground">{t('authFlow.callback.processing')}</p>
       </div>
     </div>
   )

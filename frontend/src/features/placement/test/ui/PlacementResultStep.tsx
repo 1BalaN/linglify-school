@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type {
   PlacementRecommendedCourse,
   PlacementResultResponse,
@@ -32,6 +33,16 @@ export const PlacementResultStep = ({
   onGoToMyCourses,
   onRetake,
 }: PlacementResultStepProps) => {
+  const { t: tr } = useTranslation('platform', { keyPrefix: 'placement.result' })
+  const { t: ts } = useTranslation('platform', { keyPrefix: 'placement.inProgress' })
+
+  const placementSkillLabel = (type: string) => {
+    if (type === 'GRAMMAR') return ts('skillGrammar')
+    if (type === 'VOCAB') return ts('skillLexical')
+    if (type === 'READING') return ts('skillReading')
+    return ts('skillListening')
+  }
+
   const correctCount = useMemo(() => {
     if (!detailedResult) return null
     return detailedResult.answers.filter(a => a.isCorrect).length
@@ -52,17 +63,13 @@ export const PlacementResultStep = ({
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
             <div>
-              <h2 className="text-xl font-semibold text-foreground">
-                Ваш результат placement-теста
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Итоги на основе 25 адаптивных вопросов
-              </p>
+              <h2 className="text-xl font-semibold text-foreground">{tr('title')}</h2>
+              <p className="text-xs text-muted-foreground">{tr('subtitle')}</p>
             </div>
           </div>
           <div className="rounded-xl bg-gradient-to-r from-emerald-500/10 via-primary/10 to-blue-500/10 px-4 py-2 text-right text-xs text-muted-foreground">
             <div className="text-[11px] uppercase tracking-wide">
-              Определённый уровень
+              {tr('estimatedLevel')}
             </div>
             <div className="text-gradient text-3xl font-bold leading-tight">
               {estimatedLevel ?? '—'}
@@ -72,14 +79,14 @@ export const PlacementResultStep = ({
 
         <div className="mt-2 grid gap-3 text-xs sm:grid-cols-3">
           <div className="rounded-lg bg-muted/60 px-3 py-2">
-            <div className="text-muted-foreground">Всего вопросов</div>
+            <div className="text-muted-foreground">{tr('totalQuestions')}</div>
             <div className="text-sm font-semibold text-foreground">
               {totalQuestions ?? '—'}
             </div>
           </div>
           <div className="rounded-lg bg-emerald-500/10 px-3 py-2">
             <div className="text-emerald-700 dark:text-emerald-300">
-              Правильных ответов
+              {tr('correct')}
             </div>
             <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
               {correctCount !== null ? correctCount : '—'}
@@ -87,7 +94,7 @@ export const PlacementResultStep = ({
           </div>
           <div className="rounded-lg bg-red-500/5 px-3 py-2">
             <div className="text-red-600 dark:text-red-400">
-              Ошибок
+              {tr('incorrect')}
             </div>
             <div className="text-sm font-semibold text-red-600 dark:text-red-400">
               {correctCount !== null && totalQuestions !== null
@@ -97,22 +104,17 @@ export const PlacementResultStep = ({
           </div>
         </div>
 
-        <p className="mt-3 text-sm text-muted-foreground">
-          Мы учитываем не только количество правильных ответов, но и сложность
-          вопросов, чтобы точнее определить ваш уровень.
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground">{tr('levelNote')}</p>
 
         <div className="mt-4 flex flex-wrap gap-3">
-          <Button onClick={onGoToCourses}>
-            Перейти к каталогу курсов
-          </Button>
+          <Button onClick={onGoToCourses}>{tr('toCatalog')}</Button>
           {hasUser && (
             <Button
               type="button"
               variant="outline"
               onClick={onGoToMyCourses}
             >
-              Мои курсы
+              {tr('myCourses')}
             </Button>
           )}
           <Button
@@ -120,7 +122,7 @@ export const PlacementResultStep = ({
             variant="ghost"
             onClick={onRetake}
           >
-            Пройти тест заново
+            {tr('retake')}
           </Button>
         </div>
       </div>
@@ -129,20 +131,16 @@ export const PlacementResultStep = ({
         <div className="glass-card rounded-2xl p-6 backdrop-blur-xl space-y-4">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-semibold text-foreground">
-              Детальный разбор ответов
+              {tr('breakdownTitle')}
             </h3>
             {isLoadingDetails && (
               <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                <span>Загружаем разбор...</span>
+                <span>{tr('loadingBreakdown')}</span>
               </div>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Ниже показано, на какие вопросы вы ответили правильно, а где
-            допустили ошибки. Это поможет понять, над какими темами стоит
-            поработать.
-          </p>
+          <p className="text-xs text-muted-foreground">{tr('breakdownIntro')}</p>
 
           <div className="scroll-soft max-h-80 space-y-3 overflow-y-auto pr-1">
             {detailedResult.answers.map((answer, index) => {
@@ -165,16 +163,12 @@ export const PlacementResultStep = ({
                 >
                   <div className="mb-1 flex items-center justify-between gap-2">
                     <span className="font-medium text-foreground">
-                      Вопрос {index + 1}{' '}
+                      {tr('questionN', { n: index + 1 })}{' '}
                       <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                        ({question.type === 'GRAMMAR'
-                          ? 'Грамматика'
-                          : question.type === 'VOCAB'
-                            ? 'Лексика'
-                            : question.type === 'READING'
-                              ? 'Чтение'
-                              : 'Аудирование'}
-                        , сложность {question.difficulty})
+                        {tr('skillSuffix', {
+                          skill: placementSkillLabel(question.type),
+                          difficulty: question.difficulty,
+                        })}
                       </span>
                     </span>
                     <span
@@ -184,7 +178,7 @@ export const PlacementResultStep = ({
                           : 'bg-red-500/15 text-red-700 dark:text-red-300'
                       }`}
                     >
-                      {isCorrect ? 'Верно' : 'Ошибка'}
+                      {isCorrect ? tr('correctBadge') : tr('wrongBadge')}
                     </span>
                   </div>
                   <div className="text-foreground">
@@ -193,7 +187,7 @@ export const PlacementResultStep = ({
                   <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2">
                     <div>
                       <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                        Ваш ответ
+                        {tr('yourAnswer')}
                       </div>
                       <div
                         className={`mt-0.5 rounded-md px-2 py-1 ${
@@ -207,7 +201,7 @@ export const PlacementResultStep = ({
                     </div>
                     <div>
                       <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                        Правильный ответ
+                        {tr('rightAnswer')}
                       </div>
                       <div className="mt-0.5 rounded-md bg-emerald-500/10 px-2 py-1 text-emerald-800 dark:text-emerald-200">
                         {correctOption}
@@ -229,25 +223,22 @@ export const PlacementResultStep = ({
       <div className="glass-card rounded-2xl p-6 backdrop-blur-xl space-y-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-lg font-semibold text-foreground">
-            Рекомендуемые курсы
+            {tr('recommended')}
           </h3>
           {estimatedLevel && (
             <span className="text-[11px] text-muted-foreground">
-              Подбор на основе вашего уровня {estimatedLevel}
+              {tr('recommendedSub', { level: estimatedLevel })}
             </span>
           )}
         </div>
         {isLoadingRecommendations && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Подбираем курсы по вашему уровню...</span>
+            <span>{tr('loadingCourses')}</span>
           </div>
         )}
         {!isLoadingRecommendations && recommendedCourses.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            Пока нет курсов, подходящих под ваш язык и уровень. Вы можете
-            просмотреть общий каталог курсов.
-          </p>
+          <p className="text-sm text-muted-foreground">{tr('noCourses')}</p>
         )}
         {!isLoadingRecommendations && recommendedCourses.length > 0 && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -277,11 +268,11 @@ export const PlacementResultStep = ({
                   )}
                   <div className="mt-auto flex items-center justify-between text-[11px] text-muted-foreground">
                     <span>
-                      Студентов: {course.enrolledCount}
+                      {tr('students', { count: course.enrolledCount })}
                     </span>
                     {typeof course.averageRating === 'number' && (
                       <span>
-                        Рейтинг: {course.averageRating.toFixed(1)}
+                        {tr('rating', { rating: course.averageRating.toFixed(1) })}
                       </span>
                     )}
                   </div>

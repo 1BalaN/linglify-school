@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Input } from '@/shared/ui'
 import { Edit2, Trash2, Save, X } from 'lucide-react'
 import { FAQItem } from '@/shared/types/faq'
@@ -26,23 +27,20 @@ export const FAQItemSection = memo(
     onDelete,
     onUpdate,
   }: FAQItemSectionProps) => {
+    const { t: tUi } = useTranslation('platform', { keyPrefix: 'admin.faqUi' })
+    const { t: c } = useTranslation('platform', { keyPrefix: 'commonLabels' })
     const isEditing = editingId === item.id
 
     return (
       <div
         className={`rounded-xl border-2 p-4 transition-all ${
-          isEditing
-            ? 'border-primary bg-primary/5'
-            : 'border-border bg-background/50'
+          isEditing ? 'border-primary bg-primary/5' : 'border-border bg-background/50'
         } ${!item.isActive ? 'opacity-50' : ''}`}
       >
         {isEditing ? (
           <>
             <div className="space-y-4">
-              <Input
-                value={formData.question}
-                onChange={e => onChange('question', e.target.value)}
-              />
+              <Input value={formData.question} onChange={e => onChange('question', e.target.value)} />
 
               <textarea
                 value={formData.answer}
@@ -54,12 +52,12 @@ export const FAQItemSection = memo(
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => onUpdate(item.id)}>
                   <Save className="mr-2 h-4 w-4" />
-                  Сохранить
+                  {c('save')}
                 </Button>
 
                 <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
                   <X className="mr-2 h-4 w-4" />
-                  Отмена
+                  {c('cancel')}
                 </Button>
               </div>
             </div>
@@ -68,19 +66,19 @@ export const FAQItemSection = memo(
           <>
             <div className="mb-2 flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h4 className="font-semibold text-foreground mb-1">
-                  {item.question}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {item.answer}
-                </p>
+                <h4 className="font-semibold text-foreground mb-1">{item.question}</h4>
+                <p className="text-sm text-muted-foreground">{item.answer}</p>
               </div>
 
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => {
-                  setEditingId(item.id)
-                  setFormData(item)
-                }}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingId(item.id)
+                    setFormData(item)
+                  }}
+                >
                   <Edit2 className="h-4 w-4" />
                 </Button>
 
@@ -96,14 +94,16 @@ export const FAQItemSection = memo(
             </div>
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span>Порядок: {item.order}</span>
+              <span>{tUi('order', { n: item.order })}</span>
               <span>
-                Статус: {item.isActive ? 'Активен' : 'Неактивен'}
+                {tUi('status', {
+                  state: item.isActive ? tUi('statusActive') : tUi('statusInactive'),
+                })}
               </span>
             </div>
           </>
         )}
       </div>
     )
-  }
+  },
 )

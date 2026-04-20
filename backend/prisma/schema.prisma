@@ -72,6 +72,13 @@ model User {
   chatSupportThreads   ChatThread[] @relation("ChatSupportUser")
   sentMessages         ChatMessage[] @relation("UserChatMessages")
 
+  // Монетизация
+  teacherSubscription  TeacherSubscription?
+  courseRevenues       CourseRevenue[]     @relation("TeacherRevenue")
+  purchases            CourseRevenue[]     @relation("StudentPurchases")
+  payoutRequests       PayoutRequest[]     @relation("TeacherPayouts")
+  processedPayouts     PayoutRequest[]     @relation("AdminProcessedPayouts")
+
   @@unique([oauthProvider, oauthId])
   @@map("users")
 }
@@ -111,6 +118,9 @@ model FAQItem {
   question  String
   answer    String
   category  String
+  questionI18n Json?
+  answerI18n   Json?
+  categoryI18n Json?
   order     Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -147,6 +157,25 @@ enum CourseStatus {
   REJECTED        // Отклонен
   PUBLISHED       // Опубликован
   ARCHIVED        // Архивирован
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
 }
 
 enum LessonType {
@@ -195,9 +224,14 @@ model Course {
   title           String
   description     String        @db.Text
   shortDescription String?      @db.Text
+  titleI18n       Json?
+  descriptionI18n Json?
+  shortDescriptionI18n Json?
   level           CourseLevel
   language        String        @default("Английский")
+  languageI18n    Json?
   category        String?
+  categoryI18n    Json?
   
   // Преподаватель
   teacherId       String
@@ -227,6 +261,11 @@ model Course {
   tags            String[]      @default([])
   prerequisites   String[]      @default([]) // ID предварительных курсов
   learningOutcomes String[]     @default([]) // Что изучит студент
+
+  // Политика сертификата (на уровне курса)
+  requireFinalTestForCertificate Boolean @default(true)
+  minProgressForCertificate      Int     @default(100) // 0-100 (%)
+
   // Модерация
   lastReviewComment String?     @db.Text
   lastReviewedAt   DateTime?
@@ -242,6 +281,7 @@ model Course {
   certificates    Certificate[]
   progress        Progress[]
   chatThreads     ChatThread[]
+  revenues        CourseRevenue[]
 
   @@index([teacherId])
   @@index([level])
@@ -259,12 +299,15 @@ model Lesson {
   // Основная информация
   title       String
   description String?    @db.Text
+  titleI18n   Json?
+  descriptionI18n Json?
   order       Int        // Порядок урока в курсе
   type        LessonType @default(VIDEO)
   isFinalTest Boolean    @default(false)
   
   // Контент
   content     String?    @db.Text // Markdown или HTML контент
+  contentI18n Json?
   videoUrl    String?    // URL видео (YouTube, Vimeo, или собственный)
   duration    Int?       // Продолжительность в секундах
   
@@ -589,14 +632,100 @@ model ChatMessage {
 /// Глобальные настройки платформы (singleton запись)
 model PlatformSettings {
   id                           Int      @id @default(1)
-  requireFinalTestForCertificate Boolean @default(true)
-  minProgressForCertificate    Int      @default(100) // 0-100 (%)
+
+  // Аналитика
   lowRatingThreshold           Float    @default(2.5)
   minEnrollmentsForRating      Int      @default(5)
+
+  // Placement-тест
   placementDefaultQuestions    Int      @default(25)
   placementAllowedLanguages    String[] @default([])
   placementRecommendationMap   Json?
+
+  // Подписки преподавателей
+  trialSubscriptionDays        Int      @default(30)
+
+  // Студенты
+  maxCoursesPerStudent         Int      @default(0)  // 0 = без ограничений
+
+  // Автоматизация
+  autoArchiveDaysAfterInactivity Int    @default(0)  // 0 = отключено
+  reviewModerationEnabled      Boolean  @default(false)
+
+  // Сертификаты (глобально)
+  certificateValidityMonths    Int      @default(0)  // 0 = бессрочно
+
   updatedAt                    DateTime @updatedAt
 
   @@map("platform_settings")
+}
+
+model TeacherSubscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status               SubscriptionStatus @default(TRIAL)
+  plan                 SubscriptionPlan?
+
+  stripeCustomerId     String?
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+
+  trialEndsAt          DateTime?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("teacher_subscriptions")
+}
+
+model CourseRevenue {
+  id              String   @id @default(uuid())
+  courseId        String
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacherId       String
+  teacher         User     @relation("TeacherRevenue", fields: [teacherId], references: [id], onDelete: Cascade)
+  studentId       String
+  student         User     @relation("StudentPurchases", fields: [studentId], references: [id], onDelete: Cascade)
+
+  amount          Int      // Total amount in cents
+  platformFee     Int      // 20% in cents
+  teacherEarning  Int      // 80% in cents
+  currency        String   @default("usd")
+
+  stripeSessionId String?
+
+  createdAt       DateTime @default(now())
+
+  @@index([teacherId])
+  @@index([courseId])
+  @@map("course_revenues")
+}
+
+model PayoutRequest {
+  id            String      @id @default(uuid())
+  teacherId     String
+  teacher       User        @relation("TeacherPayouts", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  amount        Int         // Amount in cents requested
+  currency      String      @default("byn")
+  payoutDetails String?     @db.Text // Payment method: bank card, phone, IBAN, etc.
+  status        PayoutStatus @default(PENDING)
+
+  adminNote     String?     @db.Text
+  processedAt   DateTime?
+  processedById String?
+  processedBy   User?       @relation("AdminProcessedPayouts", fields: [processedById], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([teacherId])
+  @@index([status])
+  @@map("payout_requests")
 }

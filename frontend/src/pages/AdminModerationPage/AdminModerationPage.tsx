@@ -1,13 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { RootState } from '@/app/store'
 import { AlertCircle, Shield } from 'lucide-react'
 import { Button, ConfirmModal } from '@/shared/ui'
 import { CoursesFilters, CoursesList, useAdminModeration } from '@/features/admin/moderation'
+import { CourseStatus } from '@/shared/constants/courseStatus'
+
+const MODERATION_STATUS_QUERY_KEY = 'status'
+
+const parseStatusFromSearchParams = (value: string | null): CourseStatus | 'ALL' => {
+  if (!value || value === 'ALL') return 'ALL'
+  const validStatuses: CourseStatus[] = [
+    'DRAFT',
+    'PENDING_REVIEW',
+    'IN_REVIEW',
+    'PUBLISHED',
+    'REJECTED',
+    'ARCHIVED',
+  ]
+  return validStatuses.includes(value as CourseStatus) ? (value as CourseStatus) : 'ALL'
+}
 
 export const AdminModerationPage = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.moderation' })
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialStatus = parseStatusFromSearchParams(searchParams.get(MODERATION_STATUS_QUERY_KEY))
   const user = useSelector((s: RootState) => s.auth.user)
 
   const {
@@ -20,17 +40,35 @@ export const AdminModerationPage = () => {
     removeCourse,
     actionLoading,
     message,
-  } = useAdminModeration()
+  } = useAdminModeration(initialStatus)
+  const handleStatusChange = (nextStatus: CourseStatus | 'ALL') => {
+    setSelectedStatus(nextStatus)
+    const nextParams = new URLSearchParams(searchParams)
+    if (nextStatus === 'ALL') {
+      nextParams.delete(MODERATION_STATUS_QUERY_KEY)
+    } else {
+      nextParams.set(MODERATION_STATUS_QUERY_KEY, nextStatus)
+    }
+    setSearchParams(nextParams, { replace: true })
+  }
+
 
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fromUrl = parseStatusFromSearchParams(searchParams.get(MODERATION_STATUS_QUERY_KEY))
+    if (fromUrl !== selectedStatus) {
+      setSelectedStatus(fromUrl)
+    }
+  }, [searchParams, selectedStatus, setSelectedStatus])
 
   if (!user || user.role !== 'ADMIN') {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="glass-card p-8 text-center">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h2 className="mb-2 text-xl font-bold">Доступ запрещён</h2>
-          <Button onClick={() => navigate('/')}>На главную</Button>
+          <h2 className="mb-2 text-xl font-bold">{t('accessDenied')}</h2>
+          <Button onClick={() => navigate('/')}>{t('home')}</Button>
         </div>
       </div>
     )
@@ -44,20 +82,18 @@ export const AdminModerationPage = () => {
             <Shield className="h-6 w-6 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gradient">
-            Модерация курсов
+            {t('pageTitle')}
           </h1>
         </div>
 
-        {message && (
-          <div className="mb-6 text-sm">
-            {message.text}
-          </div>
-        )}
+        {message ? (
+          <div className="mb-6 text-sm">{t(message.messageKey)}</div>
+        ) : null}
 
         <CoursesFilters
           value={selectedStatus}
           stats={stats}
-          onChange={setSelectedStatus}
+          onChange={handleStatusChange}
         />
 
         <CoursesList
@@ -77,10 +113,10 @@ export const AdminModerationPage = () => {
           await removeCourse(deleteCourseId)
           setDeleteCourseId(null)
         }}
-        title="Удалить курс?"
-        message="Это действие необратимо. Курс и вся его статистика будут удалены."
-        confirmText="Удалить курс"
-        cancelText="Отмена"
+        title={t('deleteCourseTitle')}
+        message={t('deleteCourseMsg')}
+        confirmText={t('deleteCourseConfirm')}
+        cancelText={t('cancel')}
         variant="danger"
       />
     </div>

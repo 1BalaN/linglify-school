@@ -53,12 +53,7 @@ export class AnalyticsController {
     const { periodDays } = teacherCourseTimeseriesQuerySchema.parse(req.query)
 
     if (!req.user) {
-      res.status(401).json({
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Не авторизован',
-        },
-      })
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Не авторизован' } })
       return
     }
 
@@ -68,6 +63,38 @@ export class AnalyticsController {
       courseId,
       periodDays ?? 30
     )
+
+    res.json({ data })
+  }
+
+  /** All enrolled students ranked by efficiency score (teacher / admin) */
+  async getCourseStudentScores(req: AuthRequest, res: Response) {
+    const { courseId } = teacherCourseParamsSchema.parse(req.params)
+
+    if (!req.user) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Не авторизован' } })
+      return
+    }
+
+    const data = await analyticsService.getCourseStudentScores(
+      req.user.userId,
+      req.user.role as UserRole,
+      courseId
+    )
+
+    res.json({ data })
+  }
+
+  /** Student's own efficiency score for a course */
+  async getMyEfficiencyScore(req: AuthRequest, res: Response) {
+    const { courseId } = teacherCourseParamsSchema.parse(req.params)
+
+    if (!req.user) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Не авторизован' } })
+      return
+    }
+
+    const data = await analyticsService.getMyEfficiencyScore(req.user.userId, courseId)
 
     res.json({ data })
   }

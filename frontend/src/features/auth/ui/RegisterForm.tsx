@@ -1,47 +1,63 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useRegisterMutation } from '@/entities/user'
 import { setCredentials } from '@/entities/user'
 import { useDispatch } from 'react-redux'
 import { Button, Input } from '@/shared/ui'
-import { UserPlus } from 'lucide-react'
+import { GraduationCap, BookOpen } from 'lucide-react'
+import { cn } from '@/shared/lib/utils'
+import { Trans, useTranslation } from 'react-i18next'
 
-const registerSchema = z.object({
-  email: z.string().email('Введите корректный email'),
-  password: z
-    .string()
-    .min(8, 'Пароль должен быть не менее 8 символов')
-    .max(128, 'Пароль не должен превышать 128 символов')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Пароль должен содержать хотя бы одну заглавную букву, одну строчную букву и одну цифру'
-    ),
-  firstName: z.string().min(2, 'Имя должно содержать минимум 2 символа').max(50, 'Имя не должно превышать 50 символов'),
-  lastName: z.string().min(2, 'Фамилия должна содержать минимум 2 символа').max(50, 'Фамилия не должна превышать 50 символов'),
-})
+const createRegisterSchema = (t: (key: string) => string) =>
+  z.object({
+    email: z.string().email(t('register.errors.invalidEmail')),
+    password: z
+      .string()
+      .min(8, t('register.errors.passwordMin'))
+      .max(128, t('register.errors.passwordMax'))
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        t('register.errors.passwordPattern')
+      ),
+    firstName: z
+      .string()
+      .min(2, t('register.errors.firstNameMin'))
+      .max(50, t('register.errors.firstNameMax')),
+    lastName: z
+      .string()
+      .min(2, t('register.errors.lastNameMin'))
+      .max(50, t('register.errors.lastNameMax')),
+  })
 
-type RegisterFormData = z.infer<typeof registerSchema>
+type RegisterFormData = z.infer<ReturnType<typeof createRegisterSchema>>
 
 export const RegisterForm = () => {
+  const { t } = useTranslation('auth')
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [register, { isLoading, error }] = useRegisterMutation()
+
+  const defaultRole = searchParams.get('role') === 'teacher' ? 'TEACHER' : 'STUDENT'
+  const [selectedRole, setSelectedRole] = useState<'STUDENT' | 'TEACHER'>(defaultRole)
 
   const {
     register: registerField,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(createRegisterSchema(t)),
   })
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      const result = await register(data).unwrap()
+      const result = await register({ ...data, role: selectedRole }).unwrap()
       dispatch(setCredentials(result.data))
-      navigate('/')
+      // Redirect teachers to subscription page after registration
+      navigate(selectedRole === 'TEACHER' ? '/teacher/subscription' : '/')
     } catch (err) {
       console.error('Register error:', err)
     }
@@ -54,21 +70,56 @@ export const RegisterForm = () => {
   return (
     <div className="mx-auto w-full max-w-md space-y-6 rounded-2xl glass-card p-8 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 animate-float">
-          <UserPlus className="h-8 w-8 text-white" />
-        </div>
-        <h2 className="text-3xl font-bold text-gradient">Создать аккаунт</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Начните свое обучение уже сегодня
-        </p>
+        <h2 className="text-3xl font-bold text-gradient">{t('register.title')}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t('register.subtitle')}</p>
       </div>
+
+      {/* Role toggle */}
+      <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-muted/40 p-1">
+        <button
+          type="button"
+          onClick={() => setSelectedRole('STUDENT')}
+          className={cn(
+            'flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all',
+            selectedRole === 'STUDENT'
+              ? 'bg-card shadow text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <BookOpen className="h-4 w-4" />
+          {t('register.roleStudent')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedRole('TEACHER')}
+          className={cn(
+            'flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all',
+            selectedRole === 'TEACHER'
+              ? 'bg-card shadow text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <GraduationCap className="h-4 w-4" />
+          {t('register.roleTeacher')}
+        </button>
+      </div>
+
+      {selectedRole === 'TEACHER' && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+          <Trans
+            i18nKey="register.teacherTrial"
+            ns="auth"
+            components={{ strong: <strong /> }}
+          />
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
           {...registerField('firstName')}
           type="text"
-          label="Имя"
-          placeholder="Иван"
+          label={t('register.firstNameLabel')}
+          placeholder={t('register.firstNamePlaceholder')}
           error={errors.firstName?.message}
           autoComplete="given-name"
         />
@@ -76,8 +127,8 @@ export const RegisterForm = () => {
         <Input
           {...registerField('lastName')}
           type="text"
-          label="Фамилия"
-          placeholder="Иванов"
+          label={t('register.lastNameLabel')}
+          placeholder={t('register.lastNamePlaceholder')}
           error={errors.lastName?.message}
           autoComplete="family-name"
         />
@@ -85,8 +136,8 @@ export const RegisterForm = () => {
         <Input
           {...registerField('email')}
           type="email"
-          label="Email"
-          placeholder="your@email.com"
+          label={t('register.emailLabel')}
+          placeholder={t('register.emailPlaceholder')}
           error={errors.email?.message}
           autoComplete="email"
         />
@@ -94,23 +145,23 @@ export const RegisterForm = () => {
         <Input
           {...registerField('password')}
           type="password"
-          label="Пароль"
+          label={t('register.passwordLabel')}
           placeholder="••••••••"
           error={errors.password?.message}
           autoComplete="new-password"
-          helperText="Минимум 8 символов, заглавная и строчная буква, цифра"
+          helperText={t('register.passwordHelper')}
         />
 
         {error && (
           <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
             {'data' in error
               ? (error.data as { error: { message: string } }).error.message
-              : 'Произошла ошибка при регистрации'}
+              : t('register.errors.default')}
           </div>
         )}
 
         <Button type="submit" className="w-full" isLoading={isLoading}>
-          Зарегистрироваться
+          {selectedRole === 'TEACHER' ? t('register.submitTeacher') : t('register.submitStudent')}
         </Button>
       </form>
 
@@ -119,45 +170,23 @@ export const RegisterForm = () => {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-card px-2 text-muted-foreground">Или</span>
+          <span className="bg-card px-2 text-muted-foreground">{t('common:common.or')}</span>
         </div>
       </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={handleGoogleRegister}
-      >
+      <Button type="button" variant="outline" className="w-full" onClick={handleGoogleRegister}>
         <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-          <path
-            fill="currentColor"
-            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-          />
-          <path
-            fill="currentColor"
-            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-          />
-          <path
-            fill="currentColor"
-            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-          />
-          <path
-            fill="currentColor"
-            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-          />
+          <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+          <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+          <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+          <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
-        Регистрация через Google
+        {t('register.googleRegister')}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Уже есть аккаунт?{' '}
-        <Link
-          to="/login"
-          className="font-medium text-primary hover:underline"
-        >
-          Войти
-        </Link>
+        {t('register.hasAccount')}{' '}
+        <Link to="/login" className="font-medium text-primary hover:underline">{t('register.loginLink')}</Link>
       </p>
     </div>
   )

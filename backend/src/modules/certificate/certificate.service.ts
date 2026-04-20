@@ -3,21 +3,30 @@ import { AppError } from '../../shared/middleware/errorHandler'
 import { tokenService } from '../../shared/lib/token'
 import { emailService } from '../../shared/lib/email'
 import { config } from '../../config/env'
-import { platformSettingsService } from '../settings/platformSettings.service'
 import { chatService } from '../chat/chat.service'
 
 class CertificateService {
+  /**
+   * Check whether the student is eligible for a certificate.
+   *
+   * Certificate policy is now per-course:
+   *   - course.requireFinalTestForCertificate  — must pass the final-test lesson
+   *   - course.minProgressForCertificate       — overall progress threshold (0-100)
+   *
+   * Since the certificate PDF always prints the final-test score, we try to
+   * look up the score even when the test is not *required* — so the PDF value
+   * is never unexpectedly empty when the student did take the test.
+   */
   private async ensureEligibility(userId: string, courseId: string) {
-    const settings = await platformSettingsService.getSettings()
     const enrollment = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId,
-          courseId,
-        },
-      },
+      where: { userId_courseId: { userId, courseId } },
       include: {
-        course: true,
+        course: {
+          select: {
+            requireFinalTestForCertificate: true,
+            minProgressForCertificate: true,
+          },
+        },
       },
     })
 
@@ -25,55 +34,41 @@ class CertificateService {
       throw new AppError(403, 'NOT_ENROLLED', 'Необходимо быть записанным на курс')
     }
 
-    if (enrollment.progress < settings.minProgressForCertificate) {
+    const { requireFinalTestForCertificate, minProgressForCertificate } = enrollment.course
+
+    if (enrollment.progress < minProgressForCertificate) {
       throw new AppError(400, 'COURSE_NOT_COMPLETED', 'Курс ещё не завершён')
     }
 
-    if (!settings.requireFinalTestForCertificate) {
-      return {
-        enrollment,
-        finalTestLesson: null,
-        finalTestProgress: null,
-      }
-    }
-
+    // Look for the final-test lesson regardless of policy (we want the score for the PDF)
     const finalTestLesson = await prisma.lesson.findFirst({
-      where: {
-        courseId,
-        isFinalTest: true,
-      },
-      select: {
-        id: true,
-        title: true,
-      },
+      where: { courseId, isFinalTest: true },
+      select: { id: true, title: true },
     })
 
-    if (!finalTestLesson) {
+    // Policy: final test is required but not configured → block
+    if (requireFinalTestForCertificate && !finalTestLesson) {
       throw new AppError(
         400,
         'FINAL_TEST_NOT_CONFIGURED',
-        'Для этого курса не настроен финальный тест'
+        'Для этого курса не настроен финальный тест',
       )
     }
 
-    const finalTestProgress = await prisma.progress.findUnique({
-      where: {
-        userId_lessonId: {
-          userId,
-          lessonId: finalTestLesson.id,
-        },
-      },
-    })
+    let finalTestProgress: { score: number | null; isCompleted: boolean } | null = null
 
-    if (!finalTestProgress || !finalTestProgress.isCompleted) {
-      throw new AppError(400, 'FINAL_TEST_NOT_PASSED', 'Финальный тест курса ещё не пройден')
+    if (finalTestLesson) {
+      finalTestProgress = await prisma.progress.findUnique({
+        where: { userId_lessonId: { userId, lessonId: finalTestLesson.id } },
+      })
+
+      // Policy: final test is required but not passed → block
+      if (requireFinalTestForCertificate && (!finalTestProgress || !finalTestProgress.isCompleted)) {
+        throw new AppError(400, 'FINAL_TEST_NOT_PASSED', 'Финальный тест курса ещё не пройден')
+      }
     }
 
-    return {
-      enrollment,
-      finalTestLesson,
-      finalTestProgress,
-    }
+    return { enrollment, finalTestLesson, finalTestProgress }
   }
 
   private calculateCompletionTimeInDays(

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Camera, Upload, X } from 'lucide-react'
 import { Button } from './Button'
 import { cn } from '@/shared/lib/utils'
@@ -14,6 +15,8 @@ export const AvatarUpload = ({
   onImageSelect,
   className,
 }: AvatarUploadProps) => {
+  const { t } = useTranslation('platform')
+  const a = (k: string) => t(`sharedUi.avatarUpload.${k}`)
   const [preview, setPreview] = useState<string | null>(currentAvatar || null)
   const [isLoading, setIsLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -29,7 +32,7 @@ export const AvatarUpload = ({
           const canvas = document.createElement('canvas')
           const ctx = canvas.getContext('2d')
           
-          // Максимальный размер 800x800
+          // Max size 800x800
           let width = img.width
           let height = img.height
           const maxSize = 800
@@ -50,7 +53,7 @@ export const AvatarUpload = ({
           canvas.height = height
           ctx?.drawImage(img, 0, 0, width, height)
           
-          // Конвертируем в JPEG с качеством 0.8
+          // JPEG quality 0.8
           const compressed = canvas.toDataURL('image/jpeg', 0.8)
           resolve(compressed)
         }
@@ -64,15 +67,13 @@ export const AvatarUpload = ({
     const file = event.target.files?.[0]
     if (!file) return
 
-    // Проверка типа файла
     if (!file.type.startsWith('image/')) {
-      alert('Пожалуйста, выберите изображение')
+      alert(a('pickImage'))
       return
     }
 
-    // Проверка размера файла (макс 10МБ до сжатия)
     if (file.size > 10 * 1024 * 1024) {
-      alert('Размер файла не должен превышать 10 МБ')
+      alert(a('maxSize'))
       return
     }
 
@@ -84,7 +85,7 @@ export const AvatarUpload = ({
       onImageSelect(compressed)
       setIsLoading(false)
     } catch (error) {
-      alert('Ошибка при обработке изображения')
+      alert(a('processError'))
       setIsLoading(false)
     }
   }
@@ -118,7 +119,7 @@ export const AvatarUpload = ({
           <button
             onClick={handleRemove}
             className="absolute -right-2 -top-2 rounded-full border-2 border-background bg-destructive p-1.5 text-destructive-foreground shadow-md transition-transform hover:scale-110"
-            aria-label="Удалить аватар"
+            aria-label={a('removeAria')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -143,11 +144,11 @@ export const AvatarUpload = ({
         className="w-full max-w-xs"
       >
         <Upload className="mr-2 h-4 w-4" />
-        {preview ? 'Изменить фото' : 'Загрузить фото'}
+        {preview ? a('changePhoto') : a('uploadPhoto')}
       </Button>
 
       <p className="text-xs text-muted-foreground">
-        JPG, PNG или GIF. Максимум 10 МБ. Изображение будет автоматически сжато.
+        {a('hint')}
       </p>
     </div>
   )

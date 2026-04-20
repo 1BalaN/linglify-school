@@ -5,6 +5,38 @@ import { AppError } from '../../shared/middleware/errorHandler'
 import { getSocketServer } from '../../shared/lib/socket'
 
 export class ChatService {
+  async getUnreadCount(userId: string, role: UserRole): Promise<{ count: number }> {
+    const where =
+      role === UserRole.TEACHER
+        ? {
+            OR: [
+              { teacherId: userId },
+              { type: ChatThreadType.SUPPORT, userId },
+            ],
+          }
+        : role === UserRole.ADMIN
+          ? { type: ChatThreadType.SUPPORT }
+          : {
+              OR: [
+                { studentId: userId },
+                { type: ChatThreadType.SUPPORT, userId },
+              ],
+            }
+
+    const unreadFilter =
+      role === UserRole.STUDENT
+        ? { hasUnreadForStudent: true }
+        : role === UserRole.TEACHER
+          ? { hasUnreadForTeacher: true }
+          : { hasUnreadForAdmin: true }
+
+    const count = await prisma.chatThread.count({
+      where: { ...where, ...unreadFilter },
+    })
+
+    return { count }
+  }
+
   async getMyThreads(userId: string, role: UserRole) {
     const where =
       role === UserRole.TEACHER

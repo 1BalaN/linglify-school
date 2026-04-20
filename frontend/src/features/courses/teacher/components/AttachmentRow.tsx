@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Input } from '@/shared/ui'
 import { uploadDocument } from '@/shared/lib/uploadDocument'
 import { Trash2, Upload, Loader2 } from 'lucide-react'
@@ -11,6 +12,7 @@ interface AttachmentRowProps {
 }
 
 export function AttachmentRow({ attachment, onUpdate, onRemove, onUploadError }: AttachmentRowProps) {
+  const { t } = useTranslation('platform', { keyPrefix: 'lessonBuilder.attachmentRow' })
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
 
@@ -22,7 +24,7 @@ export function AttachmentRow({ attachment, onUpdate, onRemove, onUploadError }:
       const result = await uploadDocument(file)
       onUpdate({ url: result.url, name: result.name, size: result.size })
     } catch (err) {
-      onUploadError(err instanceof Error ? err.message : 'Ошибка загрузки')
+      onUploadError(err instanceof Error ? err.message : t('uploadError'))
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -32,13 +34,13 @@ export function AttachmentRow({ attachment, onUpdate, onRemove, onUploadError }:
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background p-2">
       <Input
-        placeholder="Название (например: Методичка PDF)"
+        placeholder={t('namePh')}
         value={attachment.name}
         onChange={e => onUpdate({ name: e.target.value })}
         className="min-w-[140px] flex-1 text-sm"
       />
       <Input
-        placeholder="URL или загрузите файл"
+        placeholder={t('urlPh')}
         value={attachment.url}
         onChange={e => onUpdate({ url: e.target.value })}
         className="min-w-[180px] flex-1 text-sm"

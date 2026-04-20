@@ -1,0 +1,50 @@
+{
+  "hero": {
+    "title": "Become a teacher on Linglify",
+    "subtitle": "Create language courses, automate routine tasks, and earn money — the platform only takes a 25% commission."
+  },
+  "steps": [
+    {
+      "title": "Sign up",
+      "description": "Choose the “Teacher” role during registration and get a 30-day free trial."
+    },
+    {
+      "title": "Create a course",
+      "description": "Add different lesson types, upload materials, and submit the course for moderation."
+    },
+    {
+      "title": "Start earning",
+      "description": "After publication, students enroll and pay for the course. 75% of the amount is yours."
+    }
+  ],
+  "features": {
+    "builderTitle": "Course builder",
+    "builderDesc": "Video, tests, interactive tasks, dialogues, lexical trainers — all in one place.",
+    "analyticsTitle": "Detailed analytics",
+    "analyticsDesc": "Track engagement, progress, and weak topics for each student.",
+    "chatTitle": "Chat with students",
+    "chatDesc": "Answer questions right inside the platform and receive system notifications.",
+    "certsTitle": "Auto certificates",
+    "certsDesc": "The platform issues verifiable certificates automatically — without your manual work."
+  },
+  "pricing": {
+    "monthlyLabel": "Monthly",
+    "monthlyPrice": "30 BYN",
+    "monthlySuffix": "/ month",
+    "annualLabel": "Yearly",
+    "annualBadge": "−33%",
+    "annualPrice": "240 BYN",
+    "annualSuffix": "/ year",
+    "annualNote": "20 BYN per month",
+    "planFeatures": [
+      "Unlimited number of courses",
+      "Course publishing and sales",
+      "Priority support",
+      "Full analytics",
+      "75% share from sales"
+    ],
+    "ctaMonthly": "Get started",
+    "ctaAnnual": "Sign up and save",
+    "footer": "Start with a <strong>30-day free trial</strong> — no card required. Payments in Belarusian rubles."
+  }
+}

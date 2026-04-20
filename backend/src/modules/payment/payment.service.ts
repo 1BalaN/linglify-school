@@ -5,6 +5,8 @@ import { prisma } from '../../shared/lib/prisma'
 import { config } from '../../config/env'
 import type { CreateCheckoutSessionDto, ConfirmPaymentDto } from './payment.schema'
 import { courseService } from '../course/course.service'
+import { revenueService } from '../revenue/revenue.service'
+import { subscriptionService } from '../subscription/subscription.service'
 
 class PaymentService {
   private getStripeClient(): Stripe {
@@ -132,13 +134,32 @@ class PaymentService {
     }
 
     // Пытаемся зачислить (идемпотентно)
+    let alreadyEnrolled = false
     try {
       await courseService.enrollCourse(userId, { courseId }, { allowPaid: true })
     } catch (error) {
       if (error instanceof AppError && error.code === 'ALREADY_ENROLLED') {
-        // уже зачислен — это нормально
+        alreadyEnrolled = true
       } else {
         throw error
+      }
+    }
+
+    // Записываем выручку только при первом зачислении
+    if (!alreadyEnrolled) {
+      const course = await prisma.course.findUnique({
+        where: { id: courseId },
+        select: { teacherId: true, price: true, currency: true },
+      })
+      if (course && course.price > 0) {
+        void revenueService.recordCourseSale({
+          courseId,
+          teacherId: course.teacherId,
+          studentId: userId,
+          amount: course.price,
+          currency: course.currency,
+          stripeSessionId: dto.sessionId,
+        })
       }
     }
 
@@ -171,18 +192,38 @@ class PaymentService {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session
-      const userId = session.metadata?.userId
-      const courseId = session.metadata?.courseId
 
-      if (!userId || !courseId) {
-        return { handled: false }
+      // --- Подписка преподавателя ---
+      if (session.mode === 'subscription') {
+        await subscriptionService.handleSubscriptionCreated(session.id)
+        return { handled: true }
       }
 
-      // Зачисляем пользователя на курс, если он ещё не зачислен
+      // --- Оплата курса ---
+      const userId  = session.metadata?.userId
+      const courseId = session.metadata?.courseId
+
+      if (!userId || !courseId) return { handled: false }
+
       try {
         await courseService.enrollCourse(userId, { courseId }, { allowPaid: true })
+
+        // Запись выручки 80/20
+        const course = await prisma.course.findUnique({
+          where: { id: courseId },
+          select: { teacherId: true, price: true, currency: true },
+        })
+        if (course && course.price > 0) {
+          void revenueService.recordCourseSale({
+            courseId,
+            teacherId: course.teacherId,
+            studentId: userId,
+            amount: course.price,
+            currency: course.currency,
+            stripeSessionId: session.id,
+          })
+        }
       } catch (error) {
-        // Игнорируем ошибку ALREADY_ENROLLED, остальные логируем
         if (
           error instanceof AppError &&
           (error.code === 'ALREADY_ENROLLED' || error.code === 'COURSE_NOT_PUBLISHED')
@@ -193,6 +234,20 @@ class PaymentService {
         console.error('Stripe webhook enroll error:', error)
       }
 
+      return { handled: true }
+    }
+
+    if (event.type === 'customer.subscription.updated') {
+      const sub = event.data.object as Stripe.Subscription
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const periodEnd = (sub as any).current_period_end as number
+      await subscriptionService.handleSubscriptionUpdated(sub.id, sub.status, periodEnd)
+      return { handled: true }
+    }
+
+    if (event.type === 'customer.subscription.deleted') {
+      const sub = event.data.object as Stripe.Subscription
+      await subscriptionService.handleSubscriptionDeleted(sub.id)
       return { handled: true }
     }
 

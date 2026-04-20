@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { ChatThread } from '@/shared/types/chat'
 import type { UserRole } from '@/shared/types/user'
 
@@ -14,6 +15,8 @@ export const ChatThreadList = ({
   currentUserRole,
   onSelect,
 }: ChatThreadListProps) => {
+  const { t } = useTranslation('platform')
+  const tl = (k: string) => t(`chat.threadList.${k}`)
   const getTitle = (thread: ChatThread) => {
     if (thread.type === 'SUPPORT') {
       if (currentUserRole === 'ADMIN') {
@@ -22,13 +25,13 @@ export const ChatThreadList = ({
           const name = `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim()
           return name || u.email
         }
-        return 'Запрос в поддержку'
+        return tl('supportRequest')
       }
-      return 'Поддержка Linglify'
+      return tl('supportLinglify')
     }
 
     if (currentUserRole === 'STUDENT') {
-      return thread.course?.title ?? 'Курс'
+      return thread.course?.title ?? tl('courseFallback')
     }
 
     if (currentUserRole === 'TEACHER') {
@@ -37,11 +40,10 @@ export const ChatThreadList = ({
         const name = `${s.firstName ?? ''} ${s.lastName ?? ''}`.trim()
         return name || s.email
       }
-      return thread.course?.title ?? 'Студент'
+      return thread.course?.title ?? tl('studentFallback')
     }
 
-    // ADMIN другие типы чатов сейчас не показываются
-    return thread.course?.title ?? 'Чат'
+    return thread.course?.title ?? tl('chatFallback')
   }
 
   const hasUnreadForMe = (thread: ChatThread) => {
@@ -54,7 +56,7 @@ export const ChatThreadList = ({
 
   const getAvatarData = (thread: ChatThread) => {
     if (thread.type === 'SUPPORT') {
-      // Для админа показываем юзера, который написал в поддержку
+      // Admin sees the user who opened support
       if (currentUserRole === 'ADMIN') {
         const u = thread.user
         if (!u) {
@@ -72,7 +74,7 @@ export const ChatThreadList = ({
         }
       }
 
-      // Для студента и преподавателя SUPPORT‑чат — это всегда “поддержка”
+      // Student/teacher: support thread
       return {
         avatar: null,
         initials: 'S',
@@ -81,12 +83,12 @@ export const ChatThreadList = ({
     }
 
     if (currentUserRole === 'STUDENT') {
-      const t = thread.teacher
-      if (!t) return null
-      const initials = `${(t.firstName?.[0] ?? '').toUpperCase()}${(t.lastName?.[0] ?? '').toUpperCase()}`
+      const teacher = thread.teacher
+      if (!teacher) return null
+      const initials = `${(teacher.firstName?.[0] ?? '').toUpperCase()}${(teacher.lastName?.[0] ?? '').toUpperCase()}`
       return {
-        avatar: t.avatar ?? null,
-        initials: initials || t.email[0]?.toUpperCase() || 'T',
+        avatar: teacher.avatar ?? null,
+        initials: initials || teacher.email[0]?.toUpperCase() || 'T',
         color: 'bg-blue-600',
       }
     }
@@ -106,10 +108,10 @@ export const ChatThreadList = ({
   }
 
   return (
-    <div className="space-y-1 max-h-[480px] overflow-y-auto scroll-soft pr-1">
+    <div className="flex-1 space-y-1 overflow-y-auto scroll-soft pr-1">
       {threads.length === 0 && (
         <div className="rounded-xl border border-dashed border-border/60 bg-muted/40 p-4 text-center text-xs text-muted-foreground">
-          Пока нет диалогов. Начните общение с преподавателем курса или напишите в поддержку.
+          {tl('emptyList')}
         </div>
       )}
       {threads.map(thread => {
@@ -149,7 +151,7 @@ export const ChatThreadList = ({
                   <span className="line-clamp-1 font-medium">{getTitle(thread)}</span>
                   {thread.type === 'SUPPORT' && (
                     <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] text-blue-600 dark:text-blue-400">
-                      Поддержка
+                      {tl('supportTag')}
                     </span>
                   )}
                 </div>

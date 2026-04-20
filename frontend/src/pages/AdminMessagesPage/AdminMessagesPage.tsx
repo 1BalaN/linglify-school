@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import type { RootState } from '@/app/store'
@@ -8,6 +9,7 @@ import { ContactMessage } from '@/shared/types/contact'
 import { MessageDetails, MessagesFilters, MessagesList, MessagesStats, useAdminMessages } from '@/features/admin/messages'
 
 export const AdminMessagesPage = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.messages' })
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
 
@@ -36,13 +38,9 @@ export const AdminMessagesPage = () => {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5">
         <div className="text-center rounded-2xl glass-card p-8 backdrop-blur-xl">
-          <h1 className="text-2xl font-bold text-foreground mb-4">
-            Доступ запрещён
-          </h1>
-          <p className="text-muted-foreground mb-6">
-            Только администраторы могут просматривать сообщения
-          </p>
-          <Button onClick={() => navigate('/')}>На главную</Button>
+          <h1 className="text-2xl font-bold text-foreground mb-4">{t('forbidden')}</h1>
+          <p className="text-muted-foreground mb-6">{t('forbiddenBody')}</p>
+          <Button onClick={() => navigate('/')}>{t('home')}</Button>
         </div>
       </div>
     )
@@ -65,8 +63,8 @@ export const AdminMessagesPage = () => {
       adminNote: noteText,
     })
       .unwrap()
-      .then(() => setSuccessModal('Заметка сохранена'))
-      .catch(() => setErrorModal('Ошибка при сохранении заметки'))
+      .then(() => setSuccessModal(t('noteSaved')))
+      .catch(() => setErrorModal(t('noteError')))
   }
 
   const handleMarkReplied = () => {
@@ -79,9 +77,9 @@ export const AdminMessagesPage = () => {
       .unwrap()
       .then(() => {
         setSelectedMessage(null)
-        setSuccessModal('Сообщение помечено как отвеченное')
+        setSuccessModal(t('answered'))
       })
-      .catch(() => setErrorModal('Ошибка при пометке ответа'))
+      .catch(() => setErrorModal(t('answerError')))
   }
 
   const handleDelete = () => {
@@ -93,9 +91,9 @@ export const AdminMessagesPage = () => {
         if (selectedMessage?.id === deleteModal) {
           setSelectedMessage(null)
         }
-        setSuccessModal('Сообщение удалено')
+        setSuccessModal(t('deleted'))
       })
-      .catch(() => setErrorModal('Ошибка при удалении сообщения'))
+      .catch(() => setErrorModal(t('deleteError')))
       .finally(() => setDeleteModal(null))
   }
 
@@ -111,15 +109,11 @@ export const AdminMessagesPage = () => {
               onClick={() => navigate('/admin/dashboard')}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Назад
+              {t('back')}
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gradient">
-                Сообщения пользователей
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Управление обращениями через форму контактов
-              </p>
+              <h1 className="text-3xl font-bold text-gradient">{t('title')}</h1>
+              <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
             </div>
           </div>
         </div>
@@ -158,9 +152,7 @@ export const AdminMessagesPage = () => {
             ) : (
               <div className="rounded-2xl glass-card p-12 backdrop-blur-xl text-center">
                 <MessageSquare className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  Выберите сообщение для просмотра
-                </p>
+                <p className="text-muted-foreground">{t('pick')}</p>
               </div>
             )}
           </div>
@@ -172,17 +164,17 @@ export const AdminMessagesPage = () => {
         isOpen={!!deleteModal}
         onClose={() => setDeleteModal(null)}
         onConfirm={handleDelete}
-        title="Удалить сообщение?"
-        message="Вы уверены, что хотите удалить это сообщение?"
-        confirmText="Удалить"
-        cancelText="Отмена"
+        title={t('deleteTitle')}
+        message={t('deleteMsg')}
+        confirmText={t('deleteConfirm')}
+        cancelText={t('cancel')}
         variant="danger"
       />
 
       <AlertModal
         isOpen={!!errorModal}
         onClose={() => setErrorModal(null)}
-        title="Ошибка"
+        title={t('modalError')}
         message={errorModal || ''}
         variant="error"
       />
@@ -190,7 +182,7 @@ export const AdminMessagesPage = () => {
       <AlertModal
         isOpen={!!successModal}
         onClose={() => setSuccessModal(null)}
-        title="Успешно"
+        title={t('modalOk')}
         message={successModal || ''}
         variant="success"
       />

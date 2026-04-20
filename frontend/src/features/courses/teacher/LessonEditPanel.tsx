@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useGetLessonByIdQuery,
   useUpdateLessonMutation,
@@ -15,38 +16,17 @@ import type {
 } from '@/shared/types/course'
 import { VideoUpload, Button, Input } from '@/shared/ui'
 import { AttachmentRow } from '@/features/courses/teacher/components/AttachmentRow'
+import { TestEditor } from '@/features/courses/teacher/components/TestEditor'
+import { InteractiveEditor } from '@/features/courses/teacher/components/InteractiveEditor'
+import { LexicalEditor } from '@/features/courses/teacher/components/LexicalEditor'
+import { DialogueEditor } from '@/features/courses/teacher/components/DialogueEditor'
+import type { EditQuestionForm } from '@/features/courses/teacher/components/TestEditor'
+import type { EditExerciseForm } from '@/features/courses/teacher/components/InteractiveEditor'
+import type { EditLexicalItemForm } from '@/features/courses/teacher/components/LexicalEditor'
+import type { EditDialogueStepForm } from '@/features/courses/teacher/components/DialogueEditor'
 import {
-  Save, X, Plus, Trash2, Video, ClipboardCheck, MessageSquare, Loader2,
-  AlertCircle,
+  Save, X, Video, Loader2, AlertCircle, Plus,
 } from 'lucide-react'
-
-interface EditQuestionForm {
-  id: string
-  text: string
-  explanation: string
-  isMultiple: boolean
-  options: { id: string; text: string; isCorrect: boolean }[]
-}
-
-interface EditExerciseForm {
-  id: string
-  sentence: string
-  /** Ответы по пропускам: blanks[0] — для первого ___, blanks[1] — для второго и т.д. (в каждом — синонимы через запятую) */
-  blanks: string[]
-  hint: string
-}
-
-interface EditLexicalItemForm {
-  id: string
-  term: string
-  translations: string
-}
-
-interface EditDialogueStepForm {
-  id: string
-  prompt: string
-  options: { id: string; text: string; isCorrect: boolean }[]
-}
 
 
 function uid() { return 'new_' + Math.random().toString(36).slice(2) }
@@ -137,6 +117,8 @@ export const LessonEditPanel = ({
   onSuccess,
   onError,
 }: LessonEditPanelProps) => {
+  const { t: te } = useTranslation('platform', { keyPrefix: 'lessonBuilder.errors' })
+  const { t: tu } = useTranslation('platform', { keyPrefix: 'lessonBuilder.editLesson' })
   const { data, isLoading } = useGetLessonByIdQuery(lessonId)
   const lesson = data?.data
 
@@ -357,7 +339,7 @@ export const LessonEditPanel = ({
   const handleSave = async () => {
     if (!lesson) return
     if (!title.trim()) {
-      onError('Введите название урока')
+      onError(te('titleRequired'))
       return
     }
 
@@ -368,20 +350,20 @@ export const LessonEditPanel = ({
         : undefined
     } else if (lesson.type === 'TEST') {
       if (!passThreshold || Number.isNaN(Number(passThreshold))) {
-        onError('Укажите порог прохождения')
+        onError(te('thresholdRequired'))
         return
       }
       for (const q of testQuestions) {
         if (!q.text.trim()) {
-          onError('Заполните текст всех вопросов')
+          onError(te('fillAllQuestions'))
           return
         }
         if (q.options.some(o => !o.text.trim())) {
-          onError('Заполните все варианты ответов')
+          onError(te('fillAllOptions'))
           return
         }
         if (!q.options.some(o => o.isCorrect)) {
-          onError('Отметьте хотя бы один правильный ответ в каждом вопросе')
+          onError(te('markCorrectAnswer'))
           return
         }
       }
@@ -396,11 +378,11 @@ export const LessonEditPanel = ({
     } else if (lesson.type === 'INTERACTIVE') {
       for (const ex of exercises) {
         if (!ex.sentence.trim()) {
-          onError('Заполните текст всех упражнений')
+          onError(te('fillAllExerciseText'))
           return
         }
         if (!ex.sentence.includes('___')) {
-          onError(`Упражнение "${ex.sentence.slice(0, 20)}..." не содержит пропуск ___`)
+          onError(te('exerciseNoBlank', { snippet: `${ex.sentence.slice(0, 20)}` }))
           return
         }
         const requiredBlanks = (ex.sentence.match(/___/g) || []).length
@@ -408,7 +390,12 @@ export const LessonEditPanel = ({
         for (let i = 0; i < requiredBlanks; i++) {
           const hasAnswer = (blanks[i] || '').split(',').some(s => s.trim())
           if (!hasAnswer) {
-            onError(`Укажите ответ для пропуска ${i + 1} в упражнении "${ex.sentence.slice(0, 20)}..."`)
+            onError(
+              te('blankAnswerExercise', {
+                n: i + 1,
+                snippet: `${ex.sentence.slice(0, 20)}`,
+              }),
+            )
             return
           }
         }
@@ -416,35 +403,35 @@ export const LessonEditPanel = ({
     } else if (lesson.type === 'LEXICAL') {
       for (const item of lexicalItems) {
         if (!item.term.trim()) {
-          onError('Заполните слово/фразу для всех элементов')
+          onError(te('fillAllTerms'))
           return
         }
         const hasTranslation = item.translations
           .split(',')
           .some(t => t.trim().length > 0)
         if (!hasTranslation) {
-          onError(`Укажите хотя бы один перевод для "${item.term}"`)
+          onError(te('translationForTerm', { term: item.term }))
           return
         }
       }
     } else if (lesson.type === 'DIALOGUE') {
       if (dialogueSteps.length === 0) {
-        onError('Добавьте хотя бы один шаг диалога')
+        onError(te('atLeastOneDialogueStep'))
         return
       }
       for (const step of dialogueSteps) {
         if (!step.prompt.trim()) {
-          onError('Заполните текст реплики собеседника для всех шагов')
+          onError(te('fillAllDialoguePrompts'))
           return
         }
         if (step.options.length < 2) {
-          onError('В каждом шаге диалога должно быть минимум два варианта ответа')
+          onError(te('dialogueMinTwoOptions'))
           return
         }
         const hasText = step.options.some(o => o.text.trim())
         const hasCorrect = step.options.some(o => o.isCorrect && o.text.trim())
         if (!hasText || !hasCorrect) {
-          onError('В каждом шаге диалога должен быть хотя бы один непустой правильный вариант')
+          onError(te('dialogueCorrectOption'))
           return
         }
       }
@@ -638,16 +625,14 @@ export const LessonEditPanel = ({
         }
       }
 
-      onSuccess('Урок обновлён!')
+      onSuccess(te('successUpdated'))
     } catch (e) {
       const err = e as { data?: { message?: string; code?: string } }
       if (err?.data?.code === 'FINAL_TEST_ALREADY_EXISTS') {
-        onError(
-          'Финальный тест для этого курса уже создан. Отредактируйте существующий финальный тест или снимите с него этот статус.'
-        )
+        onError(te('finalTestExists'))
         return
       }
-      onError(err?.data?.message || 'Не удалось сохранить урок')
+      onError(err?.data?.message || te('saveFailed'))
     }
   }
 
@@ -662,7 +647,7 @@ export const LessonEditPanel = ({
   return (
     <div className="glass-card p-6 rounded-md">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Редактирование урока</h3>
+        <h3 className="text-lg font-semibold">{tu('title')}</h3>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -671,15 +656,15 @@ export const LessonEditPanel = ({
       <div className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Название урока *</label>
+            <label className="mb-1 block text-sm font-medium">{tu('lessonTitle')}</label>
             <Input
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Название урока"
+              placeholder={tu('lessonTitlePh')}
             />
           </div>
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Описание</label>
+            <label className="mb-1 block text-sm font-medium">{tu('description')}</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
@@ -687,7 +672,7 @@ export const LessonEditPanel = ({
             />
           </div>
           <div>
-            <label className="mb-3.5 block text-sm font-medium">Длительность (мин)</label>
+            <label className="mb-3.5 block text-sm font-medium">{tu('duration')}</label>
             <Input
               type="number"
               value={duration}
@@ -696,8 +681,7 @@ export const LessonEditPanel = ({
             />
           </div>
           <div>
-            {/* <label className="mb-1 block text-sm font-medium">Видео</label> */}
-            <VideoUpload value={videoUrl} onChange={setVideoUrl} label="Видео урока" />
+            <VideoUpload value={videoUrl} onChange={setVideoUrl} label={tu('videoLabel')} />
           </div>
         </div>
 
@@ -706,18 +690,18 @@ export const LessonEditPanel = ({
             <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
               <div className="flex items-center gap-2 text-sm font-medium text-primary">
                 <Video className="h-4 w-4" />
-                <span>Дополнительные материалы</span>
+                <span>{tu('additional')}</span>
               </div>
               <textarea
                 value={additionalInfo}
                 onChange={e => setAdditionalInfo(e.target.value)}
-                placeholder="Полезные ссылки, заметки, описание урока..."
+                placeholder={tu('additionalPh')}
                 className="min-h-[100px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
               />
             </div>
             <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-primary">Методички и файлы</span>
+                <span className="text-sm font-medium text-primary">{tu('attachmentsTitle')}</span>
                 <Button
                   type="button"
                   variant="outline"
@@ -725,11 +709,11 @@ export const LessonEditPanel = ({
                   onClick={() => setAttachments(a => [...a, { name: '', url: '', size: 0 }])}
                 >
                   <Plus className="mr-1 h-3 w-3" />
-                  Добавить файл
+                  {tu('addFile')}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Загрузите файл с устройства или укажите ссылку. PDF, DOC, DOCX, TXT, ODT — до 25 МБ.
+                {tu('filesHint')}
               </p>
               {attachments.map((att, idx) => (
                 <AttachmentRow
@@ -747,471 +731,72 @@ export const LessonEditPanel = ({
         )}
 
         {lesson.type === 'TEST' && (
-          <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
-            <div className="flex items-center justify-between gap-2 text-sm font-medium text-amber-700 dark:text-amber-400">
-              <div className="flex items-center gap-2">
-                <ClipboardCheck className="h-4 w-4" />
-                <span>Настройки теста</span>
-              </div>
-              <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-amber-800 dark:text-amber-300">
-                <input
-                  type="checkbox"
-                  checked={isFinalTest}
-                  onChange={e => setIsFinalTest(e.target.checked)}
-                  className="h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
-                />
-                <span>Финальный тест курса</span>
-              </label>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium">Порог прохождения (%) *</label>
-                <Input
-                  type="number"
-                  value={passThreshold}
-                  onChange={e => setPassThreshold(e.target.value)}
-                  min={1}
-                  max={100}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">Таймер (минут)</label>
-                <Input
-                  type="number"
-                  value={testTimeLimit}
-                  onChange={e => setTestTimeLimit(e.target.value)}
-                  min={1}
-                  placeholder="Без таймера"
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={testShuffleQuestions}
-                  onChange={e => setTestShuffleQuestions(e.target.checked)}
-                  className="h-4 w-4 rounded text-amber-600"
-                />
-                Перемешивать вопросы
-              </label>
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={testShuffleOptions}
-                  onChange={e => setTestShuffleOptions(e.target.checked)}
-                  className="h-4 w-4 rounded text-amber-600"
-                />
-                Перемешивать варианты ответов
-              </label>
-            </div>
-
-            <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1 scroll-soft">
-              <div className="mb-3 flex items-center justify-between">
-                <h4 className="text-sm font-semibold">Вопросы ({testQuestions.length})</h4>
-              </div>
-              <div className="space-y-4">
-                {testQuestions.map((q, qi) => (
-                  <div key={q.id} className="rounded-lg border border-border bg-card p-4">
-                    <div className="mb-3 flex items-start gap-2">
-                      <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                        {qi + 1}
-                      </span>
-                      <div className="flex-1">
-                        <textarea
-                          value={q.text}
-                          onChange={e => patchQ(q.id, { text: e.target.value })}
-                          className="min-h-[60px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                        />
-                      </div>
-                      <button
-                        onClick={() => removeQ(q.id)}
-                        type="button"
-                        className="mt-2 text-muted-foreground hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    <div className="mb-2">
-                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                        Объяснение (показывается после ответа)
-                      </label>
-                      <textarea
-                        value={q.explanation}
-                        onChange={e => patchQ(q.id, { explanation: e.target.value })}
-                        placeholder="Почему этот ответ правильный..."
-                        className="min-h-[60px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                      />
-                    </div>
-                    <div className="mb-2 flex items-center gap-2">
-                      <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
-                        <input
-                          type="checkbox"
-                          checked={q.isMultiple}
-                          onChange={e => patchQ(q.id, { isMultiple: e.target.checked })}
-                          className="h-3.5 w-3.5 rounded"
-                        />
-                        Несколько правильных ответов
-                      </label>
-                    </div>
-
-                    <div className="space-y-2">
-                      {q.options.map(opt => (
-                        <div key={opt.id} className="flex items-center gap-2">
-                          <input
-                            type={q.isMultiple ? 'checkbox' : 'radio'}
-                            checked={opt.isCorrect}
-                            onChange={e => {
-                              if (!q.isMultiple) {
-                                q.options.forEach(o =>
-                                  patchOpt(q.id, o.id, { isCorrect: false }),
-                                )
-                              }
-                              patchOpt(q.id, opt.id, { isCorrect: e.target.checked })
-                            }}
-                            className="h-4 w-4 shrink-0 text-primary"
-                            name={`q-${q.id}`}
-                          />
-                          <Input
-                            value={opt.text}
-                            onChange={e =>
-                              patchOpt(q.id, opt.id, { text: e.target.value })
-                            }
-                            className="flex-1 text-sm"
-                          />
-                          {q.options.length > 2 && (
-                            <button
-                              onClick={() => removeOpt(q.id, opt.id)}
-                              type="button"
-                              className="text-muted-foreground hover:text-red-500"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => addOpt(q.id)}
-                        type="button"
-                        className="text-xs"
-                      >
-                        <Plus className="mr-1 h-3 w-3" />
-                        Добавить вариант
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={addQ}
-                  className="mt-3 w-full"
-                >
-                  <Plus className="mr-1 h-3 w-3" />
-                  Добавить вопрос
-                </Button>
-              </div>
-            </div>
-          </div>
+          <TestEditor
+            isFinalTest={isFinalTest}
+            onIsFinalTestChange={setIsFinalTest}
+            passThreshold={passThreshold}
+            onPassThresholdChange={setPassThreshold}
+            testTimeLimit={testTimeLimit}
+            onTestTimeLimitChange={setTestTimeLimit}
+            testShuffleQuestions={testShuffleQuestions}
+            onShuffleQuestionsChange={setTestShuffleQuestions}
+            testShuffleOptions={testShuffleOptions}
+            onShuffleOptionsChange={setTestShuffleOptions}
+            questions={testQuestions}
+            onAddQuestion={addQ}
+            onRemoveQuestion={removeQ}
+            onPatchQuestion={patchQ}
+            onAddOption={addOpt}
+            onRemoveOption={removeOpt}
+            onPatchOption={patchOpt}
+          />
         )}
 
         {lesson.type === 'INTERACTIVE' && (
-          <div className="space-y-4 rounded-xl border border-purple-200 bg-purple-50/50 p-4 dark:border-purple-900/30 dark:bg-purple-950/20">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-400">
-                <MessageSquare className="h-4 w-4" />
-                <span>Интерактивные упражнения ({exercises.length})</span>
-              </div>
-            </div>
-
-            <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1 scroll-soft">
-              {exercises.map((ex, ei) => (
-                <div key={ex.id} className="rounded-lg border border-border bg-card p-4">
-                  <div className="mb-3 flex items-start gap-2">
-                    <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple-500/10 text-xs font-bold text-purple-600 dark:text-purple-400">
-                      {ei + 1}
-                    </span>
-                    <div className="flex-1 space-y-2">
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                          Предложение с пропусками ___ *
-                        </label>
-                        <Input
-                          value={ex.sentence}
-                          onChange={e => {
-                            const newSentence = e.target.value
-                            const count = (newSentence.match(/___/g) || []).length || 1
-                            const newBlanks = [...ex.blanks]
-                            while (newBlanks.length < count) newBlanks.push('')
-                            patchEx(ex.id, { sentence: newSentence, blanks: newBlanks.slice(0, count) })
-                          }}
-                          placeholder="I ___ to school ___ ."
-                        />
-                      </div>
-                      {Array.from({ length: Math.max(1, (ex.sentence.match(/___/g) || []).length) }, (_, bi) => (
-                        <div key={bi}>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                            Пропуск {bi + 1} * (синонимы через запятую)
-                          </label>
-                          <Input
-                            value={ex.blanks[bi] ?? ''}
-                            onChange={e => {
-                              const newBlanks = [...(ex.blanks || [])]
-                              while (newBlanks.length <= bi) newBlanks.push('')
-                              newBlanks[bi] = e.target.value
-                              patchEx(ex.id, { blanks: newBlanks })
-                            }}
-                            placeholder="go, goes"
-                          />
-                        </div>
-                      ))}
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                          Подсказка (опционально)
-                        </label>
-                        <Input
-                          value={ex.hint}
-                          onChange={e => patchEx(ex.id, { hint: e.target.value })}
-                          placeholder="Глагол в форме 1-го лица..."
-                        />
-                      </div>
-                    </div>
-                    {exercises.length > 1 && (
-                      <button
-                        onClick={() => removeEx(ex.id)}
-                        type="button"
-                        className="mt-2 text-muted-foreground hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Button variant="outline" size="sm" type="button" onClick={addEx} className="mt-3 w-full">
-              <Plus className="mr-1 h-3 w-3" />
-              Добавить упражнение
-            </Button>
-          </div>
+          <InteractiveEditor
+            exercises={exercises}
+            onAddExercise={addEx}
+            onRemoveExercise={removeEx}
+            onPatchExercise={patchEx}
+          />
         )}
 
         {lesson.type === 'LEXICAL' && (
-          <div className="space-y-4 rounded-xl border border-sky-200 bg-sky-50/50 p-4 dark:border-sky-900/30 dark:bg-sky-950/20">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium text-sky-700 dark:text-sky-400">
-                <MessageSquare className="h-4 w-4" />
-                <span>Лексический тренажёр ({lexicalItems.length})</span>
-              </div>
-            </div>
-
-            <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1 scroll-soft">
-              {lexicalItems.map((item, idx) => (
-                <div key={item.id} className="rounded-lg border border-border bg-card p-4">
-                  <div className="mb-3 flex items-start gap-2">
-                    <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-xs font-bold text-sky-600 dark:text-sky-300">
-                      {idx + 1}
-                    </span>
-                    <div className="flex-1 space-y-2">
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                          Слово / фраза *
-                        </label>
-                        <Input
-                          value={item.term}
-                          onChange={e =>
-                            setLexicalItems(items =>
-                              items.map(x =>
-                                x.id === item.id ? { ...x, term: e.target.value } : x,
-                              ),
-                            )
-                          }
-                          placeholder="to book, make up, etc."
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                          Переводы * (через запятую)
-                        </label>
-                        <Input
-                          value={item.translations}
-                          onChange={e =>
-                            setLexicalItems(items =>
-                              items.map(x =>
-                                x.id === item.id
-                                  ? { ...x, translations: e.target.value }
-                                  : x,
-                              ),
-                            )
-                          }
-                          placeholder="бронь, заказывать, резервировать"
-                        />
-                      </div>
-                      <div>
-                        {/* Подсказка убрана по требованиям UX для лексических тренажёров */}
-                      </div>
-                    </div>
-                    {lexicalItems.length > 1 && (
-                      <button
-                        onClick={() =>
-                          setLexicalItems(items => items.filter(x => x.id !== item.id))
-                        }
-                        type="button"
-                        className="mt-2 text-muted-foreground hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <Button
-                className="mt-3 w-full"
-                variant="outline"
-                size="sm"
-                type="button"
-                onClick={() => setLexicalItems(items => [...items, makeEmptyLexicalItem()])}
-              >
-                <Plus className="mr-1 h-3 w-3" />
-                Добавить слово
-              </Button>
-            </div>
-          </div>
+          <LexicalEditor
+            items={lexicalItems}
+            onAddItem={() => setLexicalItems(items => [...items, makeEmptyLexicalItem()])}
+            onUpdateItem={(id, patch) =>
+              setLexicalItems(items => items.map(x => (x.id === id ? { ...x, ...patch } : x)))
+            }
+            onRemoveItem={id => setLexicalItems(items => items.filter(x => x.id !== id))}
+          />
         )}
 
         {lesson.type === 'DIALOGUE' && (
-          <div className="space-y-4 rounded-xl border border-sky-200 bg-sky-50/50 p-4 dark:border-sky-900/30 dark:bg-sky-950/20">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium text-sky-700 dark:text-sky-400">
-                <MessageSquare className="h-4 w-4" />
-                <span>Диалоговые шаги ({dialogueSteps.length})</span>
-              </div>
-            </div>
-
-            <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1 scroll-soft">
-              {dialogueSteps.map((step, index) => (
-                <div key={step.id} className="rounded-lg border border-border bg-card p-4">
-                  <div className="mb-3 flex items-start gap-2">
-                    <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-xs font-bold text-sky-600 dark:text-sky-300">
-                      {index + 1}
-                    </span>
-                    <div className="flex-1 space-y-2">
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                          Реплика собеседника *
-                        </label>
-                        <textarea
-                          value={step.prompt}
-                          onChange={e =>
-                            patchDialogueStep(step.id, { prompt: e.target.value })
-                          }
-                          placeholder="Например: Waiter: Good evening! Do you have a reservation?"
-                          className="min-h-[60px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="text-xs font-medium text-muted-foreground">
-                            Варианты ответа ученика (один правильный) *
-                          </label>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            type="button"
-                            onClick={() => addDialogueOption(step.id)}
-                            className="text-[11px]"
-                          >
-                            <Plus className="mr-1 h-3 w-3" />
-                            Добавить вариант
-                          </Button>
-                        </div>
-
-                        {step.options.map(opt => (
-                          <div key={opt.id} className="flex items-center gap-2">
-                            <input
-                              type="radio"
-                              checked={opt.isCorrect}
-                              onChange={e => {
-                                if (e.target.checked) {
-                                  // только один правильный вариант
-                                  step.options.forEach(o =>
-                                    patchDialogueOption(step.id, o.id, {
-                                      isCorrect: o.id === opt.id,
-                                    }),
-                                  )
-                                }
-                              }}
-                              className="h-4 w-4 shrink-0 text-primary"
-                              name={`dialogue-${step.id}`}
-                            />
-                            <Input
-                              value={opt.text}
-                              onChange={e =>
-                                patchDialogueOption(step.id, opt.id, {
-                                  text: e.target.value,
-                                })
-                              }
-                              placeholder="Вариант ответа"
-                              className="flex-1 text-sm"
-                            />
-                            {step.options.length > 2 && (
-                              <button
-                                type="button"
-                                onClick={() => removeDialogueOption(step.id, opt.id)}
-                                className="text-muted-foreground hover:text-red-500"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {dialogueSteps.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeDialogueStep(step.id)}
-                        className="mt-2 text-muted-foreground hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <Button
-                className="mt-3 w-full"
-                variant="outline"
-                size="sm"
-                type="button"
-                onClick={addDialogueStep}
-              >
-                <Plus className="mr-1 h-3 w-3" />
-                Добавить шаг
-              </Button>
-            </div>
-          </div>
+          <DialogueEditor
+            steps={dialogueSteps}
+            onAddStep={addDialogueStep}
+            onRemoveStep={removeDialogueStep}
+            onPatchStep={patchDialogueStep}
+            onAddOption={addDialogueOption}
+            onRemoveOption={removeDialogueOption}
+            onPatchOption={patchDialogueOption}
+          />
         )}
 
         <div className="mt-4 flex gap-2">
           <Button onClick={handleSave} disabled={isSaving}>
             <Save className="mr-2 h-4 w-4" />
-            {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
+            {isSaving ? tu('saveSaving') : tu('save')}
           </Button>
           <Button variant="outline" onClick={onClose}>
-            Отмена
+            {tu('cancel')}
           </Button>
         </div>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <AlertCircle className="h-3.5 w-3.5" />
-          <span>Изменения сразу сохраняются для всех студентов курса.</span>
+          <span>{tu('noteStudents')}</span>
         </div>
       </div>
     </div>

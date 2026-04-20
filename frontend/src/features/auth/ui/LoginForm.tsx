@@ -7,15 +7,18 @@ import { setCredentials } from '@/entities/user'
 import { useDispatch } from 'react-redux'
 import { Button, Input } from '@/shared/ui'
 import { LogIn } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-const loginSchema = z.object({
-  email: z.string().email('Введите корректный email'),
-  password: z.string().min(1, 'Введите пароль'),
-})
+const createLoginSchema = (t: (key: string) => string) =>
+  z.object({
+    email: z.string().email(t('login.errors.invalidEmail')),
+    password: z.string().min(1, t('login.errors.requiredPassword')),
+  })
 
-type LoginFormData = z.infer<typeof loginSchema>
+type LoginFormData = z.infer<ReturnType<typeof createLoginSchema>>
 
 export const LoginForm = () => {
+  const { t } = useTranslation('auth')
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const [login, { isLoading, error }] = useLoginMutation()
@@ -25,7 +28,7 @@ export const LoginForm = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(createLoginSchema(t)),
   })
 
   const onSubmit = async (data: LoginFormData) => {
@@ -48,9 +51,9 @@ export const LoginForm = () => {
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 animate-float">
           <LogIn className="h-8 w-8 text-white" />
         </div>
-        <h2 className="text-3xl font-bold text-gradient">Войти в аккаунт</h2>
+        <h2 className="text-3xl font-bold text-gradient">{t('login.title')}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Добро пожаловать! Войдите, чтобы продолжить
+          {t('login.subtitle')}
         </p>
       </div>
 
@@ -68,7 +71,7 @@ export const LoginForm = () => {
           <Input
             {...register('password')}
             type="password"
-            label="Пароль"
+            label={t('login.passwordLabel')}
             placeholder="••••••••"
             error={errors.password?.message}
             autoComplete="current-password"
@@ -78,7 +81,7 @@ export const LoginForm = () => {
               to="/forgot-password"
               className="text-sm text-primary hover:text-primary/80 transition-colors"
             >
-              Забыли пароль?
+              {t('login.forgotPassword')}
             </Link>
           </div>
         </div>
@@ -87,12 +90,12 @@ export const LoginForm = () => {
           <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
             {'data' in error
               ? (error.data as { error: { message: string } }).error.message
-              : 'Произошла ошибка при входе'}
+              : t('login.errors.default')}
           </div>
         )}
 
         <Button type="submit" className="w-full" isLoading={isLoading}>
-          Войти
+          {t('login.submit')}
         </Button>
       </form>
 
@@ -101,7 +104,7 @@ export const LoginForm = () => {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-card px-2 text-muted-foreground">Или</span>
+          <span className="bg-card px-2 text-muted-foreground">{t('common:common.or')}</span>
         </div>
       </div>
 
@@ -129,16 +132,16 @@ export const LoginForm = () => {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        Войти через Google
+        {t('login.googleLogin')}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Нет аккаунта?{' '}
+        {t('login.noAccount')}{' '}
         <Link
           to="/register"
           className="font-medium text-primary hover:underline"
         >
-          Зарегистрироваться
+          {t('login.registerLink')}
         </Link>
       </p>
     </div>

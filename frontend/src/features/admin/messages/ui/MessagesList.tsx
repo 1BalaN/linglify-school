@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { ContactMessage } from '@/shared/types/contact'
 import { EmptyState, MessageListItem } from '..'
 
@@ -14,17 +15,19 @@ export const MessagesList = ({
   isLoading,
   onSelect,
 }: MessagesListProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.messagesUi' })
+
   if (isLoading) {
     return (
       <div className="py-8 text-center">
         <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="text-sm text-muted-foreground">Загрузка...</p>
+        <p className="text-sm text-muted-foreground">{t('loadingList')}</p>
       </div>
     )
   }
 
   if (!messages.length) {
-    return <EmptyState text="Сообщений нет" />
+    return <EmptyState text={t('emptyList')} />
   }
 
   return (

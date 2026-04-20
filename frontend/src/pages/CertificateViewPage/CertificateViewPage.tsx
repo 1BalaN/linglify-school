@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { AlertCircle, Loader2, Download } from 'lucide-react'
 import { useVerifyCertificateQuery } from '@/entities/certificate'
@@ -5,6 +6,7 @@ import { CertificateCard } from '@/features/certificate'
 import { openCertificatePdf } from '@/shared/lib/certificate'
 
 export const CertificateViewPage = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'certificateViewPage' })
   const { code } = useParams<{ code: string }>()
 
   const {
@@ -20,7 +22,7 @@ export const CertificateViewPage = () => {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-3 h-10 w-10 text-red-500" />
-          <p className="text-lg font-semibold">Некорректная ссылка на сертификат</p>
+          <p className="text-lg font-semibold">{t('invalidLink')}</p>
         </div>
       </div>
     )
@@ -39,10 +41,8 @@ export const CertificateViewPage = () => {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-3 h-10 w-10 text-red-500" />
-          <p className="text-lg font-semibold">Сертификат не найден</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Проверьте корректность ссылки или свяжитесь с поддержкой Linglify.
-          </p>
+          <p className="text-lg font-semibold">{t('notFound')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('notFoundBody')}</p>
         </div>
       </div>
     )
@@ -61,7 +61,7 @@ export const CertificateViewPage = () => {
             className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
           >
             <Download className="h-3.5 w-3.5" />
-            Открыть / скачать PDF
+            {t('openPdf')}
           </button>
         </div>
       </div>

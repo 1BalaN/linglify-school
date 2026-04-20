@@ -12,6 +12,9 @@ import type {
 } from './course.schema'
 import { CourseStatus, UserRole } from '@prisma/client'
 import { chatService } from '../chat/chat.service'
+import { emailService } from '../../shared/lib/email'
+import { config } from '../../config/env'
+import { subscriptionService } from '../subscription/subscription.service'
 
 class CourseService {
   /**
@@ -392,6 +395,18 @@ class CourseService {
 
     // Проверки при отправке на модерацию
     if (nextStatus === CourseStatus.PENDING_REVIEW) {
+      // Только для преподавателей: проверяем активную подписку
+      if (userRole === UserRole.TEACHER) {
+        const hasActiveSub = await subscriptionService.isSubscriptionActive(userId)
+        if (!hasActiveSub) {
+          throw new AppError(
+            403,
+            'SUBSCRIPTION_REQUIRED',
+            'Для публикации курсов необходима активная подписка. Оформите подписку в разделе "Подписка".'
+          )
+        }
+      }
+
       if (!course.title?.trim() || !course.description?.trim()) {
         throw new AppError(
           400,
@@ -601,6 +616,22 @@ class CourseService {
 
     // Системное сообщение в чат студент ↔ преподаватель
     await chatService.createSystemMessageForEnrollment(userId, dto.courseId)
+
+    // Email-уведомление о зачислении (fire-and-forget, не блокирует ответ)
+    void (async () => {
+      const enrolledUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, firstName: true },
+      })
+      if (enrolledUser) {
+        const courseUrl = `${config.frontendUrl}/courses/${dto.courseId}/lessons`
+        await emailService.sendEnrollmentEmail(enrolledUser.email, {
+          courseTitle: enrollment.course.title,
+          courseUrl,
+          firstName: enrolledUser.firstName ?? undefined,
+        })
+      }
+    })()
 
     return enrollment
   }

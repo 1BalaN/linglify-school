@@ -26,7 +26,7 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_REDIRECT_URI: z.string().optional(),
 
-  // Email (SMTP)
+  // Email (SMTP or Gmail OAuth2)
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().optional().default('587'),
   SMTP_SECURE: z.string().optional().default('false'),
@@ -34,6 +34,8 @@ const envSchema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   SMTP_FROM_EMAIL: z.string().optional().default('noreply@linglify.com'),
   SMTP_FROM_NAME: z.string().optional().default('Linglify'),
+  // Gmail OAuth2 (для production/Railway — обходит блокировку SMTP-портов)
+  GMAIL_REFRESH_TOKEN: z.string().optional(),
 
   // SMS (Twilio)
   TWILIO_ACCOUNT_SID: z.string().optional(),
@@ -123,6 +125,7 @@ export const config = {
       fromEmail: parsed.data.SMTP_FROM_EMAIL,
       fromName: parsed.data.SMTP_FROM_NAME,
     },
+    gmailRefreshToken: parsed.data.GMAIL_REFRESH_TOKEN,
   },
 
   sms: {

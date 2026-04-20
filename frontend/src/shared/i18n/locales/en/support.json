@@ -1,0 +1,122 @@
+{
+  "faq": {
+    "title": "Frequently asked questions",
+    "subtitle": "Answers to common questions about Linglify",
+    "searchPlaceholder": "Search questions...",
+    "loading": "Loading FAQ...",
+    "emptySearch": "No results found for your query. Try changing your search or",
+    "contactSupportLink": "contact support",
+    "notFoundAnswer": "Didn't find the answer?",
+    "supportReady": "Our support team is always ready to help",
+    "contactSupportButton": "Contact support"
+  },
+  "contact": {
+    "title": "Contact us",
+    "subtitle": "We are always happy to help and answer your questions",
+    "formTitle": "Send a message",
+    "success": "Thanks! Your message has been sent. We will contact you soon.",
+    "error": "An error occurred while sending your message. Please try again later.",
+    "fields": {
+      "name": "Your name",
+      "email": "Email",
+      "subject": "Subject",
+      "message": "Message"
+    },
+    "placeholders": {
+      "name": "John Smith",
+      "email": "your@email.com",
+      "subject": "Question about subscription",
+      "message": "Please describe your question in more detail..."
+    },
+    "actions": {
+      "sending": "Sending...",
+      "send": "Send message"
+    },
+    "schedule": {
+      "title": "Support hours:",
+      "hours": "Mon-Fri, 9:00-18:00 (UTC+3)",
+      "note": "Outside business hours the response may take up to 48 hours."
+    },
+    "validation": {
+      "nameMin": "Name must contain at least 2 characters",
+      "invalidEmail": "Please enter a valid email",
+      "subjectMin": "Subject must contain at least 5 characters",
+      "messageMin": "Message must contain at least 10 characters"
+    },
+    "info": {
+      "emailReply24h": "We reply within 24 hours",
+      "telegramFast": "Fast communication in messenger",
+      "office": "Office",
+      "social": "Social media",
+      "addressLine1": "Belarus, Minsk",
+      "addressLine2": "Nezavisimosti Ave, 102"
+    }
+  },
+  "help": {
+    "title": "Help center",
+    "subtitle": "Everything you need to use the platform effectively",
+    "contactSupport": "Contact support",
+    "topics": [
+      {
+        "title": "Getting started",
+        "description": "Learn how to create an account, choose a course, and start learning",
+        "items": [
+          "Registration and sign in",
+          "Profile setup",
+          "Choosing a target language",
+          "Your first lesson"
+        ]
+      },
+      {
+        "title": "Interactive lessons",
+        "description": "How to work with video, audio, and text materials",
+        "items": [
+          "Watching video lessons",
+          "Completing exercises",
+          "Pronunciation practice",
+          "Progress tracking"
+        ]
+      },
+      {
+        "title": "Exercises and tests",
+        "description": "Practice and validate your knowledge",
+        "items": [
+          "Exercise types",
+          "Taking tests",
+          "Grading system",
+          "Working on mistakes"
+        ]
+      },
+      {
+        "title": "Community",
+        "description": "Communicate with students and teachers",
+        "items": [
+          "Forums and discussions",
+          "Language partner search",
+          "Group sessions",
+          "Feedback"
+        ]
+      },
+      {
+        "title": "Achievements",
+        "description": "Track your progress and earn rewards",
+        "items": [
+          "Level system",
+          "Badges and rewards",
+          "Learning statistics",
+          "Certificates"
+        ]
+      },
+      {
+        "title": "Account settings",
+        "description": "Manage your profile and preferences",
+        "items": [
+          "Profile data updates",
+          "Security and passwords",
+          "Notifications",
+          "Subscription and payments"
+        ]
+      }
+    ]
+  }
+}

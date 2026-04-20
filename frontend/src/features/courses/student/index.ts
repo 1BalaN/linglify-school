@@ -4,4 +4,5 @@ export { MyCourseCard } from './MyCourseCard'
 export { StudentCourseHeader } from './StudentCourseHeader'
 export { StudentLessonItem } from './StudentLessonItem'
 export { StudentCourseProgressSidebar } from './StudentCourseProgressSidebar'
+export { StudentEfficiencyCard } from './StudentEfficiencyCard'
 

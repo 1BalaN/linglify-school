@@ -343,6 +343,16 @@ export class UserService {
       placement,
     }
   }
+
+  async getStats() {
+    const [students, teachers, admins, inactive] = await Promise.all([
+      prisma.user.count({ where: { role: 'STUDENT' } }),
+      prisma.user.count({ where: { role: 'TEACHER' } }),
+      prisma.user.count({ where: { role: 'ADMIN' } }),
+      prisma.user.count({ where: { isActive: false } }),
+    ])
+    return { students, teachers, admins, inactive, total: students + teachers + admins }
+  }
 }
 
 export const userService = new UserService()

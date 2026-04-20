@@ -12,6 +12,7 @@ export const registerSchema = z.object({
     ),
   firstName: z.string().min(2, 'Имя должно содержать минимум 2 символа').max(50, 'Имя не должно превышать 50 символов'),
   lastName: z.string().min(2, 'Фамилия должна содержать минимум 2 символа').max(50, 'Фамилия не должна превышать 50 символов'),
+  role: z.enum(['STUDENT', 'TEACHER']).optional().default('STUDENT'),
 })
 
 export const loginSchema = z.object({

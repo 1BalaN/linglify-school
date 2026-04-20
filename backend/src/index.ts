@@ -22,9 +22,12 @@ import analyticsRouter from './modules/analytics/analytics.router'
 import settingsRouter from './modules/settings/settings.router'
 import userRouter from './modules/user/user.router'
 import chatRouter from './modules/chat/chat.router'
+import subscriptionRouter from './modules/subscription/subscription.router'
+import revenueRouter from './modules/revenue/revenue.router'
 import { setSocketServer } from './shared/lib/socket'
 import { jwtService } from './shared/lib/jwt'
 import { Server } from 'socket.io'
+import { startCronJobs } from './cron'
 
 const app = express()
 
@@ -69,6 +72,8 @@ app.use('/api/analytics', analyticsRouter)
 app.use('/api/settings', settingsRouter)
 app.use('/api/users', userRouter)
 app.use('/api/chats', chatRouter)
+app.use('/api/subscriptions', subscriptionRouter)
+app.use('/api/revenue', revenueRouter)
 
 // Error handlers
 app.use(notFoundHandler)
@@ -81,7 +86,16 @@ const io = new Server(httpServer, {
   cors: {
     origin: config.frontendUrl,
     credentials: true,
+    methods: ['GET', 'POST'],
   },
+  // Polling первым — Railway и другие облачные прокси могут не поддерживать
+  // WebSocket upgrade без специальной конфигурации. Клиент автоматически
+  // поднимется до WebSocket, если прокси это разрешает.
+  transports: ['polling', 'websocket'],
+  pingTimeout: 60_000,
+  pingInterval: 25_000,
+  // Максимальный размер пакета (для вложений-превью и т.д.)
+  maxHttpBufferSize: 1e7,
 })
 
 setSocketServer(io)
@@ -106,11 +120,22 @@ io.use((socket, next) => {
 })
 
 io.on('connection', socket => {
- 
   const userId: string | undefined = socket.data.userId
   if (userId) {
     socket.join(`user:${userId}`)
   }
+
+  socket.on('chat:thread:join', (payload: { threadId?: string }) => {
+    const threadId = payload?.threadId?.trim()
+    if (!threadId) return
+    socket.join(`thread:${threadId}`)
+  })
+
+  socket.on('chat:thread:leave', (payload: { threadId?: string }) => {
+    const threadId = payload?.threadId?.trim()
+    if (!threadId) return
+    socket.leave(`thread:${threadId}`)
+  })
 })
 
 // Start server
@@ -119,6 +144,7 @@ httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`)
   console.log(`📝 Environment: ${config.nodeEnv}`)
   console.log(`🔗 Frontend URL: ${config.frontendUrl}`)
+  startCronJobs()
 })
 
 export default app

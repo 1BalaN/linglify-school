@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { CourseStudent } from '@/shared/types/course'
 
 interface CourseStudentsTableProps {
@@ -6,10 +7,14 @@ interface CourseStudentsTableProps {
 }
 
 export const CourseStudentsTable = ({ students, isLoading }: CourseStudentsTableProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'teacher.courseStudents' })
+  const { i18n } = useTranslation('platform')
+  const locale = i18n.language.startsWith('ru') ? 'ru-RU' : 'en-US'
+
   if (isLoading) {
     return (
       <div className="mt-4 rounded-xl border border-border bg-background/60 p-4 text-sm text-muted-foreground">
-        Загрузка списка учеников...
+        {t('loading')}
       </div>
     )
   }
@@ -17,7 +22,7 @@ export const CourseStudentsTable = ({ students, isLoading }: CourseStudentsTable
   if (!students.length) {
     return (
       <div className="mt-4 rounded-xl border border-border bg-background/60 p-4 text-sm text-muted-foreground">
-        Пока нет ни одного ученика, записанного на этот курс.
+        {t('empty')}
       </div>
     )
   }
@@ -25,19 +30,19 @@ export const CourseStudentsTable = ({ students, isLoading }: CourseStudentsTable
   return (
     <div className="mt-4 rounded-xl border border-border bg-background/60 p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-foreground">Ученики курса</h3>
-        <span className="text-xs text-foreground">Всего: {students.length}</span>
+        <h3 className="text-sm font-semibold text-foreground">{t('title')}</h3>
+        <span className="text-xs text-foreground">{t('total', { count: students.length })}</span>
       </div>
 
       <div className="scroll-soft max-h-72 overflow-y-auto">
         <table className="min-w-full text-left text-xs">
           <thead className="sticky top-0 bg-background/90 backdrop-blur border-b border-border/60">
             <tr>
-              <th className="px-3 py-2 font-medium text-muted-foreground">Ученик</th>
-              <th className="px-3 py-2 font-medium text-muted-foreground">Email</th>
-              <th className="px-3 py-2 font-medium text-muted-foreground">Прогресс</th>
-              <th className="px-3 py-2 font-medium text-muted-foreground">Дата записи</th>
-              <th className="px-3 py-2 font-medium text-muted-foreground">Завершён</th>
+              <th className="px-3 py-2 font-medium text-muted-foreground">{t('colStudent')}</th>
+              <th className="px-3 py-2 font-medium text-muted-foreground">{t('colEmail')}</th>
+              <th className="px-3 py-2 font-medium text-muted-foreground">{t('colProgress')}</th>
+              <th className="px-3 py-2 font-medium text-muted-foreground">{t('colEnrolled')}</th>
+              <th className="px-3 py-2 font-medium text-muted-foreground">{t('colCompleted')}</th>
             </tr>
           </thead>
           <tbody>
@@ -47,9 +52,9 @@ export const CourseStudentsTable = ({ students, isLoading }: CourseStudentsTable
                 ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
                 : enrollment.userId
 
-              const enrolledAt = new Date(enrollment.enrolledAt).toLocaleDateString('ru-RU')
+              const enrolledAt = new Date(enrollment.enrolledAt).toLocaleDateString(locale)
               const completedAt = enrollment.completedAt
-                ? new Date(enrollment.completedAt).toLocaleDateString('ru-RU')
+                ? new Date(enrollment.completedAt).toLocaleDateString(locale)
                 : null
 
               return (
@@ -78,4 +83,3 @@ export const CourseStudentsTable = ({ students, isLoading }: CourseStudentsTable
     </div>
   )
 }
-

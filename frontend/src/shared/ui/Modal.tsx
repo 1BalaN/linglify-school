@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from './Button'
 
 interface ModalProps {
@@ -66,7 +67,6 @@ export const Modal = ({
   )
 }
 
-// Компонент для подтверждения
 interface ConfirmModalProps {
   isOpen: boolean
   onClose: () => void
@@ -84,10 +84,13 @@ export const ConfirmModal = ({
   onConfirm,
   title,
   message,
-  confirmText = 'Подтвердить',
-  cancelText = 'Отмена',
+  confirmText: confirmTextProp,
+  cancelText: cancelTextProp,
   variant = 'primary',
 }: ConfirmModalProps) => {
+  const { t } = useTranslation('platform')
+  const confirmText = confirmTextProp ?? t('sharedUi.modal.confirm')
+  const cancelText = cancelTextProp ?? t('sharedUi.modal.cancel')
   return (
     <Modal
       isOpen={isOpen}
@@ -110,7 +113,6 @@ export const ConfirmModal = ({
   )
 }
 
-// Компонент для уведомлений
 interface AlertModalProps {
   isOpen: boolean
   onClose: () => void
@@ -126,6 +128,7 @@ export const AlertModal = ({
   message,
   variant = 'info',
 }: AlertModalProps) => {
+  const { t } = useTranslation('platform')
   const variantStyles = {
     success: 'text-green-600 dark:text-green-400',
     error: 'text-red-600 dark:text-red-400',
@@ -141,7 +144,7 @@ export const AlertModal = ({
       size="sm"
       footer={
         <Button onClick={onClose}>
-          OK
+          {t('commonLabels.ok')}
         </Button>
       }
     >

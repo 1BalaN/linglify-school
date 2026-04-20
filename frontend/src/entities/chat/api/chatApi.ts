@@ -8,6 +8,11 @@ import type {
 
 export const chatApi = api.injectEndpoints({
   endpoints: builder => ({
+    getUnreadCount: builder.query<{ count: number }, void>({
+      query: () => ({ url: '/chats/unread-count', method: 'GET' }),
+      providesTags: ['Chat'],
+    }),
+
     getMyThreads: builder.query<ChatThreadListResponse, void>({
       query: () => ({
         url: '/chats/my',
@@ -34,7 +39,8 @@ export const chatApi = api.injectEndpoints({
         method: 'POST',
         body: { text, attachments },
       }),
-      invalidatesTags: (_res, _err, arg) => [{ type: 'Chat', id: arg.threadId }],
+      // Намеренно без invalidatesTags — Socket.io эмитит chat:message:new в комнату треда,
+      // и ChatWindow добавляет сообщение локально через setMessages. Двойной refetch не нужен.
     }),
 
     markThreadAsRead: builder.mutation<{ message: string }, { threadId: string }>({
@@ -65,6 +71,7 @@ export const chatApi = api.injectEndpoints({
 })
 
 export const {
+  useGetUnreadCountQuery,
   useGetMyThreadsQuery,
   useGetThreadMessagesQuery,
   useSendMessageMutation,

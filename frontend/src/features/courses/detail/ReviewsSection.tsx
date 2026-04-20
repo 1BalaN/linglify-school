@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Star, X, Lock, UserCheck } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { Review } from '@/shared/types/course'
@@ -47,6 +48,8 @@ export const ReviewsSection = ({
   onSubmit,
   onDeleteConfirm,
 }: ReviewsSectionProps) => {
+  const { t } = useTranslation('platform', { keyPrefix: 'courseDetail.reviews' })
+  const { t: tc } = useTranslation('platform', { keyPrefix: 'commonLabels' })
   const isAuthenticated = !!currentUser
   const isTeacher = currentUser?.role === 'TEACHER'
   const isAdmin = currentUser?.role === 'ADMIN'
@@ -54,8 +57,7 @@ export const ReviewsSection = ({
   const isTeacherOrAdmin = isTeacher || isAdmin
   const canLeaveReview = isEnrolled || isTeacherOrAdmin
 
-  // Для отображения среднего рейтинга и распределения используем только отзывы студентов,
-  // чтобы оценки преподавателя/админа не искажали картину.
+  // Average rating uses student reviews only so staff scores do not skew the summary.
   const studentReviews = reviews.filter(r => r.user?.role === 'STUDENT')
   const totalStudentReviews = studentReviews.length
   const averageRating =
@@ -86,12 +88,7 @@ export const ReviewsSection = ({
             <Star className="h-7 w-7 fill-yellow-400 text-yellow-400" />
           </div>
           <p className="text-sm text-muted-foreground">
-            На основе {totalStudentReviews}{' '}
-            {totalStudentReviews === 1
-              ? 'отзыва'
-              : totalStudentReviews < 5
-                ? 'отзывов'
-                : 'отзывов'}
+            {t('basedOn', { count: totalStudentReviews })}
           </p>
         </div>
         <div className="space-y-2">
@@ -120,8 +117,8 @@ export const ReviewsSection = ({
         <div className="flex items-center gap-2 rounded-xl border border-border bg-card/60 p-4 text-sm text-muted-foreground">
           <Lock className="h-4 w-4" />
           <span>
-            Только авторизованные пользователи могут оставлять отзывы.{' '}
-            <span className="font-medium text-primary">Войдите в аккаунт.</span>
+            {t('loginHint')}{' '}
+            <span className="font-medium text-primary">{t('loginCta')}</span>
           </span>
         </div>
       )}
@@ -130,7 +127,7 @@ export const ReviewsSection = ({
         <div className="flex items-center gap-2 rounded-xl border border-border bg-card/60 p-4 text-sm text-muted-foreground">
           <UserCheck className="h-4 w-4" />
           <span>
-            Оставлять отзывы могут только ученики курса, преподаватель и администраторы.
+            {t('roleHint')}
           </span>
         </div>
       )}
@@ -138,7 +135,7 @@ export const ReviewsSection = ({
         <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
           <UserCheck className="h-4 w-4" />
           <span>
-            Вы уже оставили отзыв к этому курсу. Вы можете его отредактировать или удалить.
+            {t('alreadyReviewed')}
           </span>
         </div>
       )}
@@ -167,7 +164,7 @@ export const ReviewsSection = ({
       <div className="space-y-3">
         {reviews.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Пока нет ни одного отзыва. Станьте первым, кто поделится мнением о курсе.
+            {t('empty')}
           </p>
         ) : (
           reviews.map(review => (
@@ -187,14 +184,14 @@ export const ReviewsSection = ({
 
               {deleteReviewId === review.id && (
                 <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
-                  <span>Удалить отзыв?</span>
+                  <span>{t('deletePrompt')}</span>
                   <Button
                     size="sm"
                     variant="danger"
                     onClick={onDeleteConfirm}
                     disabled={isUpdatingReview}
                   >
-                    Удалить
+                    {tc('delete')}
                   </Button>
                   <Button
                     size="sm"
@@ -202,7 +199,7 @@ export const ReviewsSection = ({
                     onClick={() => setDeleteReviewId(null)}
                   >
                     <X className="h-4 w-4" />
-                    Отмена
+                    {tc('cancel')}
                   </Button>
                 </div>
               )}

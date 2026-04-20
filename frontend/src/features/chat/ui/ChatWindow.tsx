@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import type { ChatMessage, ChatThread } from '@/shared/types/chat'
 import {
@@ -18,6 +19,8 @@ interface ChatWindowProps {
 }
 
 export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
+  const { t, i18n } = useTranslation('platform', { keyPrefix: 'chat.window' })
+  const locale = i18n.language.startsWith('ru') ? 'ru-RU' : 'en-US'
   const [messageText, setMessageText] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [pendingAttachments, setPendingAttachments] = useState<
@@ -30,7 +33,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
 
   const threadId = thread?.id ?? ''
 
-  const { data, isLoading, refetch } = useGetThreadMessagesQuery(
+  const { data, isLoading } = useGetThreadMessagesQuery(
     threadId ? { threadId } : { threadId: '' },
     { skip: !threadId }
   )
@@ -39,7 +42,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
 
   useEffect(() => {
     if (data?.data) {
-      // приходят в порядке desc, разворачиваем
+      // API returns newest-first; sort ascending for display.
       const sorted = [...data.data].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
       setMessages(sorted)
     } else {
@@ -53,7 +56,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
     const socket = getSocket()
     if (!socket) return
 
-    // присоединяемся к комнате треда
+    // Join thread room for live updates.
     socket.emit('chat:thread:join', { threadId })
 
     const handleNewMessage = (payload: { threadId: string; message: ChatMessage }) => {
@@ -91,39 +94,30 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
     setPendingAttachments([])
     try {
       await sendMessage({ threadId, text, attachments }).unwrap()
-      // сервер всё равно пришлёт сообщение по сокету, но можно подстраховаться refetch’ем
-      await refetch()
+      // Message also arrives via socket and merges into state.
     } catch {
-      // при ошибке можно вернуть текст и вложения обратно
+      // Restore draft on failure.
       setMessageText(text)
       setPendingAttachments(prevAttachments)
     }
   }
 
   const title = useMemo(() => {
-    if (!thread) return 'Выберите диалог'
+    if (!thread) return t('pickThread')
     if (thread.type === 'SUPPORT') {
       if (currentUser?.role === 'ADMIN' && thread.user) {
         const name = `${thread.user.firstName ?? ''} ${thread.user.lastName ?? ''}`.trim()
         return name || thread.user.email
       }
-      return 'Поддержка Linglify'
+      return t('supportTitle')
     }
     if (thread.type === 'COURSE_DM') {
-      return thread.course?.title ?? 'Диалог по курсу'
+      return thread.course?.title ?? t('courseThread')
     }
-    return 'Диалог'
-  }, [thread, currentUser])
+    return t('thread')
+  }, [thread, currentUser, t])
 
-  if (!thread) {
-    return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/40 text-sm text-muted-foreground">
-        Выберите диалог, чтобы начать общение
-      </div>
-    )
-  }
-
-  const handleFilesSelected = async (files: FileList | null) => {
+  const handleFilesSelected = useCallback(async (files: FileList | null) => {
     if (!files || !files.length) return
     setIsUploading(true)
     try {
@@ -140,30 +134,21 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
       )
       setPendingAttachments(prev => [...(prev ?? []), ...uploads])
     } catch (error) {
-      console.error('Ошибка загрузки файла в чат', error)
+      console.error(t('uploadErrorLog'), error)
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
     }
-  }
+  }, [t])
 
-  const handlePaste = async (
-    event: React.ClipboardEvent<HTMLDivElement | HTMLFormElement | HTMLInputElement>
-  ) => {
-    const { clipboardData } = event
-    if (!clipboardData) return
-
+  // Collect files from clipboard (files + screenshots).
+  const extractFilesFromClipboard = useCallback((clipboardData: DataTransfer): File[] => {
     const files: File[] = []
-
-    // Сначала берём реальные файлы, если они есть
-    if (clipboardData.files && clipboardData.files.length > 0) {
-      for (const file of Array.from(clipboardData.files)) {
-        files.push(file)
-      }
+    if (clipboardData.files?.length > 0) {
+      files.push(...Array.from(clipboardData.files))
     } else {
-      // Многие браузеры кладут скриншоты в items, а не в files
       for (const item of Array.from(clipboardData.items)) {
         if (item.kind === 'file') {
           const file = item.getAsFile()
@@ -171,18 +156,39 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         }
       }
     }
+    return files
+  }, [])
 
-    if (!files.length) return
+  // Global paste: works when focus is on the transcript, not only the input.
+  useEffect(() => {
+    if (!threadId) return
 
-    event.preventDefault()
-    const dataTransfer = new DataTransfer()
-    files.forEach(file => dataTransfer.items.add(file))
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      if (!e.clipboardData) return
+      const files = extractFilesFromClipboard(e.clipboardData)
+      if (!files.length) return
+      e.preventDefault()
+      const dt = new DataTransfer()
+      files.forEach(f => dt.items.add(f))
+      void handleFilesSelected(dt.files)
+    }
 
-    await handleFilesSelected(dataTransfer.files)
+    document.addEventListener('paste', handleGlobalPaste)
+    return () => {
+      document.removeEventListener('paste', handleGlobalPaste)
+    }
+  }, [threadId, handleFilesSelected, extractFilesFromClipboard])
+
+  if (!thread) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/40 text-sm text-muted-foreground">
+        {t('emptyState')}
+      </div>
+    )
   }
 
   const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString('ru-RU', {
+    new Date(iso).toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
     })
@@ -192,7 +198,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
       return {
         position: 'center' as const,
         bubbleClass: 'mx-auto bg-muted text-muted-foreground',
-        label: 'Система',
+        label: t('system'),
       }
     }
 
@@ -209,11 +215,11 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         position: 'right' as const,
         bubbleClass:
           'ml-auto bg-primary text-primary-foreground rounded-br-sm rounded-tl-2xl rounded-tr-2xl',
-        label: 'Вы',
+        label: t('you'),
       }
     }
 
-    let label = 'Собеседник'
+    let label = t('peer')
     if (thread?.type === 'COURSE_DM') {
       if (msg.senderId === thread?.teacherId && thread.teacher) {
         const name = `${thread.teacher.firstName ?? ''} ${thread.teacher.lastName ?? ''}`.trim()
@@ -225,9 +231,9 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
     } else if (thread?.type === 'SUPPORT') {
       if (msg.senderId === thread.userId && thread.user) {
         const name = `${thread.user.firstName ?? ''} ${thread.user.lastName ?? ''}`.trim()
-        label = name ? `Пользователь: ${name}` : `Пользователь: ${thread.user.email}`
+        label = t('adminUser', { name: name || thread.user.email })
       } else {
-        label = 'Поддержка'
+        label = t('supportPeer')
       }
     }
 
@@ -246,12 +252,12 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
           <h2 className="text-sm font-semibold text-foreground">{title}</h2>
           {thread.type === 'COURSE_DM' && thread.course && (
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Диалог по курсу «{thread.course.title}»
+              {t('courseHeading', { title: thread.course.title })}
             </p>
           )}
           {thread.type === 'SUPPORT' && (
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Задайте вопрос команде поддержки платформы
+              {t('supportHeading')}
             </p>
           )}
         </div>
@@ -260,23 +266,20 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
             type="button"
             onClick={onClose}
             className="ml-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-border text-xs text-muted-foreground transition hover:border-destructive/60 hover:text-destructive"
-            aria-label="Закрыть диалог"
+            aria-label={t('closeDialog')}
           >
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
 
-      <div
-        className="flex-1 space-y-3 overflow-y-auto px-4 py-3 scroll-soft"
-        onPaste={handlePaste}
-      >
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3 scroll-soft">
         {isLoading && (
-          <p className="text-xs text-muted-foreground">Загрузка сообщений...</p>
+          <p className="text-xs text-muted-foreground">{t('loadingMessages')}</p>
         )}
         {!isLoading && messages.length === 0 && (
           <p className="text-xs text-muted-foreground">
-            Здесь пока нет сообщений. Напишите первое, чтобы начать диалог.
+            {t('noMessages')}
           </p>
         )}
 
@@ -325,20 +328,26 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
         <div ref={bottomRef} />
       </div>
 
-      <form
-        onSubmit={handleSend}
-        className="border-t border-border px-3 py-2"
-        onPaste={handlePaste}
-      >
+      <form onSubmit={handleSend} className="border-t border-border px-3 py-2">
         {pendingAttachments.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {pendingAttachments.map(file => (
               <div
                 key={file.url}
-                className="flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-[11px]"
+                className="flex items-center gap-1.5 rounded-full bg-muted pl-3 pr-1.5 py-1 text-[11px]"
               >
-                <Paperclip className="h-3 w-3" />
+                <Paperclip className="h-3 w-3 shrink-0" />
                 <span className="max-w-[140px] truncate">{file.name}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPendingAttachments(prev => prev.filter(a => a.url !== file.url))
+                  }
+                  className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                  title={t('removeAttachment')}
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
               </div>
             ))}
           </div>
@@ -348,7 +357,7 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-border/60 text-muted-foreground transition hover:border-primary hover:text-primary"
-            title="Прикрепить файл"
+            title={t('attachFile')}
           >
             <Paperclip className="h-4 w-4" />
           </button>
@@ -362,14 +371,11 @@ export const ChatWindow = ({ thread, onClose }: ChatWindowProps) => {
           <Input
             value={messageText}
             onChange={e => setMessageText(e.target.value)}
-            placeholder={
-              isUploading ? 'Загружаем вложения...' : 'Напишите сообщение или вставьте скриншот Ctrl+V'
-            }
+            placeholder={isUploading ? t('inputUploading') : t('inputPlaceholder')}
             disabled={isUploading}
-            onPaste={handlePaste}
           />
           <Button type="submit" size="sm" isLoading={isSending || isUploading}>
-            Отправить
+            {t('send')}
           </Button>
         </div>
       </form>

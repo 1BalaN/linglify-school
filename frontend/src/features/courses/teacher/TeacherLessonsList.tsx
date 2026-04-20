@@ -2,15 +2,8 @@ import type { Lesson, LessonType } from '@/shared/types/course'
 import { Button } from '@/shared/ui'
 import { BookOpen, Edit2, Trash2 } from 'lucide-react'
 import { LessonEditPanel } from './LessonEditPanel'
-import { useState } from 'react'
-
-const lessonTypeMeta: { value: LessonType; label: string }[] = [
-  { value: 'VIDEO', label: 'Видео-урок' },
-  { value: 'TEST', label: 'Тест' },
-  { value: 'INTERACTIVE', label: 'Интерактив' },
-  { value: 'LEXICAL', label: 'Лексический тренажёр' },
-  { value: 'DIALOGUE', label: 'Диалоговый урок' },
-]
+import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface TeacherLessonsListProps {
   lessons: Lesson[]
@@ -27,12 +20,36 @@ export const TeacherLessonsList = ({
   onEditError,
   onRequestDelete,
 }: TeacherLessonsListProps) => {
+  const { t } = useTranslation('platform')
+  const lessonTypeMeta = useMemo(
+    () =>
+      (['VIDEO', 'TEST', 'INTERACTIVE', 'LEXICAL', 'DIALOGUE'] as LessonType[]).map(value => ({
+        value,
+        label: t(`lessonBuilder.lessonTypes.${value}.label`),
+      })),
+    [t],
+  )
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null)
 
   if (isLoading) {
     return (
-      <div className="py-12 text-center text-muted-foreground">
-        Загрузка уроков...
+      <div className="space-y-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="animate-pulse rounded-xl border border-border bg-card px-5 py-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-muted" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-2/5 rounded bg-muted" />
+                <div className="h-3 w-1/4 rounded bg-muted" />
+              </div>
+              <div className="h-7 w-16 rounded bg-muted" />
+              <div className="h-7 w-7 rounded bg-muted" />
+            </div>
+          </div>
+        ))}
       </div>
     )
   }
@@ -42,7 +59,7 @@ export const TeacherLessonsList = ({
       <div className="glass-card py-12 text-center rounded-xl">
         <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
         <p className="text-muted-foreground">
-          Уроков пока нет. Добавьте первый урок.
+          {t('lessonBuilder.teacherLessonsList.empty')}
         </p>
       </div>
     )
@@ -99,7 +116,7 @@ export const TeacherLessonsList = ({
                   </span>
                   {lesson.isFinalTest && (
                     <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">
-                      Финальный тест
+                      {t('lessonBuilder.teacherLessonsList.finalTest')}
                     </span>
                   )}
                 </div>
@@ -113,7 +130,9 @@ export const TeacherLessonsList = ({
             <div className="flex items-center gap-2">
               {lesson.duration && (
                 <span className="text-xs text-muted-foreground">
-                  {Math.floor(lesson.duration / 60)} мин
+                  {t('lessonBuilder.teacherLessonsList.minutes', {
+                    n: Math.floor(lesson.duration / 60),
+                  })}
                 </span>
               )}
               <Button

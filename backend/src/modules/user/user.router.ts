@@ -5,6 +5,13 @@ import { userController } from './user.controller'
 const router = Router()
 
 router.get(
+  '/stats',
+  requireAuth,
+  requireRole('ADMIN'),
+  userController.stats.bind(userController)
+)
+
+router.get(
   '/',
   requireAuth,
   requireRole('ADMIN'),

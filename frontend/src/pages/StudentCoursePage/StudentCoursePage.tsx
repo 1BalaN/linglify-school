@@ -13,9 +13,12 @@ import {
   StudentCourseHeader,
   StudentLessonItem,
   StudentCourseProgressSidebar,
+  StudentEfficiencyCard,
 } from '@/features/courses/student'
+import { useTranslation } from 'react-i18next'
 
 export const StudentCoursePage = () => {
+  const { t } = useTranslation('platform')
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
@@ -63,8 +66,8 @@ export const StudentCoursePage = () => {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h2 className="mb-2 text-xl font-bold">Курс не найден</h2>
-          <Button onClick={() => navigate('/courses')}>Вернуться к курсам</Button>
+          <h2 className="mb-2 text-xl font-bold">{t('student.coursePage.courseNotFound')}</h2>
+          <Button onClick={() => navigate('/courses')}>{t('student.coursePage.backToCourses')}</Button>
         </div>
       </div>
     )
@@ -75,11 +78,11 @@ export const StudentCoursePage = () => {
       <div className="flex min-h-screen items-center justify-center">
         <div className="glass-card max-w-md rounded-2xl p-8 text-center">
           <Lock className="mx-auto mb-4 h-12 w-12 text-amber-500" />
-          <h2 className="mb-2 text-xl font-bold">Доступ закрыт</h2>
+          <h2 className="mb-2 text-xl font-bold">{t('student.coursePage.accessClosed')}</h2>
           <p className="mb-6 text-muted-foreground">
-            Вы не записаны на этот курс. Запишитесь, чтобы начать обучение.
+            {t('student.coursePage.notEnrolled')}
           </p>
-          <Button onClick={() => navigate(`/courses/${id}`)}>Записаться</Button>
+          <Button onClick={() => navigate(`/courses/${id}`)}>{t('student.coursePage.enroll')}</Button>
         </div>
       </div>
     )
@@ -99,7 +102,7 @@ export const StudentCoursePage = () => {
       await ensureCourseThread({ courseId: id }).unwrap()
       navigate(`/chats?courseId=${id}`)
     } catch (error) {
-      console.error('Не удалось открыть чат с преподавателем', error)
+      console.error(t('student.chatOpenFailed'), error)
     }
   }
 
@@ -120,10 +123,10 @@ export const StudentCoursePage = () => {
           <div className="order-2 lg:order-1">
             <div className="glass-card rounded-2xl p-6">
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-2xl font-bold text-foreground">Уроки курса</h2>
+                <h2 className="text-2xl font-bold text-foreground">{t('student.coursePage.courseLessons')}</h2>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                    <span>{Math.round(progress)}% завершено</span>
+                    <span>{t('student.coursePage.percentComplete', { pct: Math.round(progress) })}</span>
                   </div>
                   <Button
                     variant="outline"
@@ -133,7 +136,7 @@ export const StudentCoursePage = () => {
                     disabled={isEnsuringChat}
                   >
                     <MessageCircle className="h-4 w-4" />
-                    <span>Написать преподавателю</span>
+                    <span>{t('student.coursePage.messageTeacher')}</span>
                   </Button>
                 </div>
               </div>
@@ -141,7 +144,7 @@ export const StudentCoursePage = () => {
               {lessons.length === 0 ? (
                 <div className="py-12 text-center">
                   <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Уроков пока нет</p>
+                  <p className="text-muted-foreground">{t('student.coursePage.noLessonsYet')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -160,13 +163,18 @@ export const StudentCoursePage = () => {
           <aside
             className={`order-1 lg:order-2 ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}
           >
-            <StudentCourseProgressSidebar
-              completedLessons={completedLessons}
-              totalLessons={lessons.length}
-              progress={progress}
-              hasCertificate={!!certificate}
-              onViewCertificate={certificate ? handleViewCertificate : undefined}
-            />
+            <div className="flex flex-col gap-3">
+              <StudentCourseProgressSidebar
+                completedLessons={completedLessons}
+                totalLessons={lessons.length}
+                progress={progress}
+                hasCertificate={!!certificate}
+                onViewCertificate={certificate ? handleViewCertificate : undefined}
+              />
+              {progress > 0 && id && (
+                <StudentEfficiencyCard courseId={id} />
+              )}
+            </div>
           </aside>
         </div>
       </div>

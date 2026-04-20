@@ -1,9 +1,32 @@
 import { useState, useEffect } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+import { Shield, TrendingDown, BookOpen, Crown, Users, Archive, MessageSquareWarning, Award } from 'lucide-react'
 import { useGetPlatformSettingsQuery, useUpdatePlatformSettingsMutation } from '@/entities/settings/api/settingsApi'
 import type { PlatformSettings } from '@/shared/types/settings'
 import { Button, Input, AlertModal } from '@/shared/ui'
 
+const SectionCard = ({ icon: Icon, title, description, children }: {
+  icon: React.ElementType
+  title: string
+  description: string
+  children: React.ReactNode
+}) => (
+  <section className="rounded-xl border border-border bg-card p-6 space-y-4 shadow-sm w-full">
+    <div className="flex items-start gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+        <Icon className="h-4.5 w-4.5 text-primary" />
+      </div>
+      <div>
+        <h2 className="text-base font-semibold">{title}</h2>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+    </div>
+    <div className="space-y-4">{children}</div>
+  </section>
+)
+
 export const AdminSettingsPage = () => {
+  const { t } = useTranslation('platform')
   const { data, isLoading } = useGetPlatformSettingsQuery()
   const [updateSettings, { isLoading: isSaving }] = useUpdatePlatformSettingsMutation()
 
@@ -17,32 +40,28 @@ export const AdminSettingsPage = () => {
     }
   }, [data])
 
-  const handleChange =
-    (field: keyof PlatformSettings) =>
-    (value: unknown) => {
-      setForm(prev => ({
-        ...prev,
-        [field]: value,
-      }))
-    }
+  const set = (field: keyof PlatformSettings) => (value: unknown) =>
+    setForm(prev => ({ ...prev, [field]: value }))
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!form) return
 
     const payload: Partial<PlatformSettings> = {
-      requireFinalTestForCertificate: form.requireFinalTestForCertificate,
-      minProgressForCertificate: form.minProgressForCertificate,
-      lowRatingThreshold: form.lowRatingThreshold,
-      minEnrollmentsForRating: form.minEnrollmentsForRating,
-      placementDefaultQuestions: form.placementDefaultQuestions,
-      placementAllowedLanguages: form.placementAllowedLanguages,
-      // placementRecommendationMap оставляем как есть, редактирование можно добавить позже
+      lowRatingThreshold:             form.lowRatingThreshold,
+      minEnrollmentsForRating:        form.minEnrollmentsForRating,
+      placementDefaultQuestions:      form.placementDefaultQuestions,
+      placementAllowedLanguages:      form.placementAllowedLanguages,
+      trialSubscriptionDays:          form.trialSubscriptionDays,
+      maxCoursesPerStudent:           form.maxCoursesPerStudent,
+      autoArchiveDaysAfterInactivity: form.autoArchiveDaysAfterInactivity,
+      reviewModerationEnabled:        form.reviewModerationEnabled,
+      certificateValidityMonths:      form.certificateValidityMonths,
     }
 
     try {
       await updateSettings(payload).unwrap()
-      setSuccessModal('Настройки платформы успешно сохранены')
+      setSuccessModal(t('admin.settings.saveSuccess'))
     } catch (error) {
       const message =
         typeof error === 'object' &&
@@ -50,7 +69,7 @@ export const AdminSettingsPage = () => {
         'data' in error &&
         (error as { data?: { error?: { message?: string } } }).data?.error?.message
           ? (error as { data?: { error?: { message?: string } } }).data!.error!.message!
-          : 'Не удалось сохранить настройки платформы. Попробуйте позже.'
+          : t('admin.settings.saveError')
       setErrorModal(message)
     }
   }
@@ -58,8 +77,8 @@ export const AdminSettingsPage = () => {
   if (isLoading || !form) {
     return (
       <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-semibold mb-4">Настройки платформы</h1>
-        <p className="text-muted-foreground">Загрузка настроек...</p>
+        <h1 className="text-2xl font-semibold mb-4">{t('admin.settings.title')}</h1>
+        <p className="text-muted-foreground">{t('admin.settings.loading')}</p>
       </div>
     )
   }
@@ -68,153 +87,234 @@ export const AdminSettingsPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Настройки платформы</h1>
-          <p className="text-sm text-muted-foreground">
-            Управление ключевыми правилами автоматизации: сертификаты, аналитика и placement‑тест.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-semibold">{t('admin.settings.title')}</h1>
+        <p className="text-sm text-muted-foreground">
+          {t('admin.settings.intro')}
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl mx-auto">
-        <section className="rounded-xl border bg-card p-6 space-y-4 shadow-sm">
-          <h2 className="text-lg font-semibold">Сертификаты</h2>
-          <p className="text-sm text-muted-foreground">
-            Управляет тем, когда студент может получить сертификат по курсу.
-          </p>
+      <form onSubmit={handleSubmit} className="space-y-6">
 
-          <label className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              className="mt-1 h-4 w-4 rounded border-muted-foreground/40"
-              checked={!!form.requireFinalTestForCertificate}
-              onChange={event => handleChange('requireFinalTestForCertificate')(event.target.checked)}
-            />
-            <div>
-              <div className="font-medium">Требовать финальный тест для сертификата</div>
-              <p className="text-sm text-muted-foreground">
-                Если включено, сертификат выдаётся только при наличии и успешном прохождении финального теста.
-              </p>
-            </div>
-          </label>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium">
-              Минимальный прогресс для сертификата (%)
-            </label>
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              value={form.minProgressForCertificate ?? 100}
-              onChange={event =>
-                handleChange('minProgressForCertificate')(Number(event.target.value))
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              При достижении этого прогресса курс считается завершённым для целей сертификата.
-            </p>
-          </div>
-        </section>
-
-        <section className="rounded-xl border bg-card p-6 space-y-4 shadow-sm">
-          <h2 className="text-lg font-semibold">Аналитика проблемных курсов</h2>
-          <p className="text-sm text-muted-foreground">
-            Пороговые значения для блока &quot;Курсы с низким рейтингом&quot; в аналитике.
-          </p>
-
+        {/* Analytics */}
+        <SectionCard
+          icon={TrendingDown}
+          title={t('admin.settings.analyticsTitle')}
+          description={t('admin.settings.analyticsDesc')}
+        >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Порог низкого рейтинга
-              </label>
+              <label className="text-sm font-medium">{t('admin.settings.lowRatingLabel')}</label>
               <Input
-                type="number"
-                step="0.1"
-                min={0}
-                max={5}
+                type="number" step="0.1" min={0} max={5}
                 value={form.lowRatingThreshold ?? 2.5}
-                onChange={event =>
-                  handleChange('lowRatingThreshold')(Number(event.target.value))
-                }
+                onChange={e => set('lowRatingThreshold')(Number(e.target.value))}
               />
               <p className="text-xs text-muted-foreground">
-                Курсы с средним рейтингом ниже или равным этому значению считаются проблемными.
+                {t('admin.settings.lowRatingHelp')}
               </p>
             </div>
-
             <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Минимум зачислений для учёта рейтинга
-              </label>
+              <label className="text-sm font-medium">{t('admin.settings.minEnrollLabel')}</label>
               <Input
-                type="number"
-                min={0}
+                type="number" min={0}
                 value={form.minEnrollmentsForRating ?? 5}
-                onChange={event =>
-                  handleChange('minEnrollmentsForRating')(Number(event.target.value))
-                }
+                onChange={e => set('minEnrollmentsForRating')(Number(e.target.value))}
               />
               <p className="text-xs text-muted-foreground">
-                Курсы с меньшим количеством зачисленных студентов не попадают в список проблемных.
+                {t('admin.settings.minEnrollHelp')}
               </p>
             </div>
           </div>
-        </section>
+        </SectionCard>
 
-        <section className="rounded-xl border bg-card p-6 space-y-4 shadow-sm">
-          <h2 className="text-lg font-semibold">Placement‑тест</h2>
-          <p className="text-sm text-muted-foreground">
-            Базовые параметры адаптивного теста и доступных языков.
-          </p>
-
+        {/* ──── PLACEMENT ──── */}
+        <SectionCard
+          icon={BookOpen}
+          title={t('admin.settings.placementTitle')}
+          description={t('admin.settings.placementDesc')}
+        >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Количество вопросов по умолчанию
-              </label>
+              <label className="text-sm font-medium">{t('admin.settings.placementQuestionsLabel')}</label>
               <Input
-                type="number"
-                min={1}
-                max={100}
+                type="number" min={1} max={100}
                 value={form.placementDefaultQuestions ?? 25}
-                onChange={event =>
-                  handleChange('placementDefaultQuestions')(Number(event.target.value))
-                }
+                onChange={e => set('placementDefaultQuestions')(Number(e.target.value))}
               />
               <p className="text-xs text-muted-foreground">
-                Сколько вопросов проходит студент в одной сессии placement‑теста.
+                {t('admin.settings.placementQuestionsHelp')}
               </p>
             </div>
-
             <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Разрешённые языки (через запятую)
-              </label>
+              <label className="text-sm font-medium">{t('admin.settings.placementLangLabel')}</label>
               <Input
                 type="text"
-                placeholder="Например: Английский, Русский, Немецкий"
+                placeholder={t('admin.settings.placementLangPlaceholder')}
                 value={languagesValue}
-                onChange={event => {
-                  const raw = event.target.value
-                  const list = raw
-                    .split(',')
-                    .map(item => item.trim())
-                    .filter(Boolean)
-                  handleChange('placementAllowedLanguages')(list)
+                onChange={e => {
+                  const list = e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                  set('placementAllowedLanguages')(list)
                 }}
               />
               <p className="text-xs text-muted-foreground">
-                Если список пустой, placement‑тест доступен для всех языков.
+                {t('admin.settings.placementLangHelp')}
               </p>
             </div>
           </div>
-        </section>
+        </SectionCard>
+
+        {/* Subscriptions */}
+        <SectionCard
+          icon={Crown}
+          title={t('admin.settings.subsTitle')}
+          description={t('admin.settings.subsDesc')}
+        >
+          <div className="md:w-1/2 space-y-1">
+            <label className="text-sm font-medium">{t('admin.settings.trialDaysLabel')}</label>
+            <Input
+              type="number" min={1} max={365}
+              value={form.trialSubscriptionDays ?? 30}
+              onChange={e => set('trialSubscriptionDays')(Number(e.target.value))}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t('admin.settings.trialDaysHelp')}
+            </p>
+          </div>
+        </SectionCard>
+
+        {/* Students */}
+        <SectionCard
+          icon={Users}
+          title={t('admin.settings.studentsTitle')}
+          description={t('admin.settings.studentsDesc')}
+        >
+          <div className="md:w-1/2 space-y-1">
+            <label className="text-sm font-medium">{t('admin.settings.maxCoursesLabel')}</label>
+            <Input
+              type="number" min={0}
+              value={form.maxCoursesPerStudent ?? 0}
+              onChange={e => set('maxCoursesPerStudent')(Number(e.target.value))}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t('admin.settings.maxCoursesHelp')}
+            </p>
+          </div>
+        </SectionCard>
+
+        {/* Automation */}
+        <SectionCard
+          icon={Archive}
+          title={t('admin.settings.autoTitle')}
+          description={t('admin.settings.autoDesc')}
+        >
+          <div className="space-y-4">
+            <div className="md:w-1/2 space-y-1">
+              <label className="text-sm font-medium">
+                {t('admin.settings.archiveLabel')}
+              </label>
+              <Input
+                type="number" min={0}
+                value={form.autoArchiveDaysAfterInactivity ?? 0}
+                onChange={e => set('autoArchiveDaysAfterInactivity')(Number(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t('admin.settings.archiveHelp')}
+              </p>
+            </div>
+
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 rounded border-muted-foreground/40"
+                checked={!!form.reviewModerationEnabled}
+                onChange={e => set('reviewModerationEnabled')(e.target.checked)}
+              />
+              <div>
+                <div className="font-medium text-sm">{t('admin.settings.reviewModTitle')}</div>
+                <p className="text-sm text-muted-foreground">
+                  {t('admin.settings.reviewModHelp')}
+                </p>
+              </div>
+            </label>
+          </div>
+        </SectionCard>
+
+        {/* Certificates (global) */}
+        <SectionCard
+          icon={Award}
+          title={t('admin.settings.certsTitle')}
+          description={t('admin.settings.certsDesc')}
+        >
+          <div className="md:w-1/2 space-y-1">
+            <label className="text-sm font-medium">{t('admin.settings.certMonthsLabel')}</label>
+            <Input
+              type="number" min={0}
+              value={form.certificateValidityMonths ?? 0}
+              onChange={e => set('certificateValidityMonths')(Number(e.target.value))}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t('admin.settings.certMonthsHelp')}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+            <div className="flex items-start gap-2">
+              <Shield className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                <Trans
+                  i18nKey="admin.settings.certNotice"
+                  ns="platform"
+                  components={{ 1: <strong className="text-foreground" /> }}
+                />
+              </span>
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* Review moderation (info) */}
+        <SectionCard
+          icon={MessageSquareWarning}
+          title={t('admin.settings.responsibilityTitle')}
+          description=""
+        >
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-primary">•</span>
+              <span>
+                <Trans
+                  i18nKey="admin.settings.responsibilityCertCourse"
+                  ns="platform"
+                  components={{ 0: <strong className="text-foreground" /> }}
+                />
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-primary">•</span>
+              <span>
+                <Trans
+                  i18nKey="admin.settings.responsibilityCertExpiry"
+                  ns="platform"
+                  components={{ 0: <strong className="text-foreground" /> }}
+                />
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-primary">•</span>
+              <span>
+                <Trans
+                  i18nKey="admin.settings.responsibilityTrial"
+                  ns="platform"
+                  components={{ 0: <strong className="text-foreground" /> }}
+                />
+              </span>
+            </li>
+          </ul>
+        </SectionCard>
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? 'Сохранение...' : 'Сохранить настройки'}
+          <Button type="submit" disabled={isSaving} className="min-w-[180px]">
+            {isSaving ? t('admin.settings.saving') : t('admin.settings.save')}
           </Button>
         </div>
       </form>
@@ -222,15 +322,14 @@ export const AdminSettingsPage = () => {
       <AlertModal
         isOpen={!!errorModal}
         onClose={() => setErrorModal(null)}
-        title="Ошибка"
+        title={t('admin.settings.modalError')}
         message={errorModal || ''}
         variant="error"
       />
-
       <AlertModal
         isOpen={!!successModal}
         onClose={() => setSuccessModal(null)}
-        title="Успешно"
+        title={t('admin.settings.modalSuccess')}
         message={successModal || ''}
         variant="success"
       />
@@ -239,4 +338,3 @@ export const AdminSettingsPage = () => {
 }
 
 export default AdminSettingsPage
-

@@ -1,21 +1,22 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
 import { AlertCircle, BarChart3, ArrowLeft } from 'lucide-react'
 import { Button } from '@/shared/ui'
-import { useGetCourseByIdQuery } from '@/entities/course'
+import { useGetCourseByIdQuery, useGetCourseStudentsQuery } from '@/entities/course'
 import { useGetTeacherCourseAnalyticsQuery } from '@/entities/analytics'
-import { TeacherCourseAnalytics, CourseStudentsTable } from '@/features/courses/teacher'
-import { useGetCourseStudentsQuery } from '@/entities/course'
+import { TeacherCourseAnalytics, CourseStudentsTable, StudentScoresTable } from '@/features/courses/teacher'
 
 export const CourseAnalyticsPage = () => {
+  const { t } = useTranslation('platform')
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
 
   const { data: courseData, isLoading: isCourseLoading } = useGetCourseByIdQuery(id!)
-  const { data: analyticsData } = useGetTeacherCourseAnalyticsQuery(id!)
+  const { data: analyticsData, isLoading: isAnalyticsLoading } = useGetTeacherCourseAnalyticsQuery(id!)
   const { data: studentsData, isLoading: isStudentsLoading } = useGetCourseStudentsQuery(id!)
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export const CourseAnalyticsPage = () => {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
-          <p className="text-muted-foreground">Загрузка курса...</p>
+          <p className="text-muted-foreground">{t('courseAnalytics.loading')}</p>
         </div>
       </div>
     )
@@ -52,8 +53,8 @@ export const CourseAnalyticsPage = () => {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h2 className="mb-2 text-xl font-bold">Курс не найден</h2>
-          <Button onClick={() => navigate('/admin/courses')}>К списку курсов</Button>
+          <h2 className="mb-2 text-xl font-bold">{t('courseAnalytics.courseNotFound')}</h2>
+          <Button onClick={() => navigate('/admin/courses')}>{t('courseAnalytics.toCourseList')}</Button>
         </div>
       </div>
     )
@@ -64,11 +65,11 @@ export const CourseAnalyticsPage = () => {
       <div className="flex min-h-screen items-center justify-center">
         <div className="glass-card max-w-md p-8 text-center">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h2 className="mb-2 text-xl font-bold">Доступ запрещён</h2>
+          <h2 className="mb-2 text-xl font-bold">{t('courseAnalytics.accessDenied')}</h2>
           <p className="mb-6 text-muted-foreground">
-            Аналитику курса могут видеть только администраторы и преподаватель этого курса.
+            {t('courseAnalytics.accessDeniedBody')}
           </p>
-          <Button onClick={() => navigate(`/courses/${id}`)}>К курсу</Button>
+          <Button onClick={() => navigate(`/courses/${id}`)}>{t('courseAnalytics.toCourse')}</Button>
         </div>
       </div>
     )
@@ -81,14 +82,14 @@ export const CourseAnalyticsPage = () => {
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={() => navigate(`/courses/${id}/lessons`)}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              К урокам
+              {t('courseAnalytics.toLessons')}
             </Button>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600">
                 <BarChart3 className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">Аналитика курса</h1>
+                <h1 className="text-xl font-bold text-foreground">{t('courseAnalytics.title')}</h1>
                 <p className="text-xs text-muted-foreground">
                   {course.title} · {course.level} · {course.language}
                 </p>
@@ -100,28 +101,28 @@ export const CourseAnalyticsPage = () => {
         {students.length > 0 && (
           <div className="mb-4 grid gap-3 sm:grid-cols-4 text-xs">
             <div className="rounded-lg bg-muted/60 px-3 py-2">
-              <div className="text-muted-foreground">Всего учеников</div>
+              <div className="text-muted-foreground">{t('courseAnalytics.totalStudents')}</div>
               <div className="mt-1 text-sm font-semibold text-foreground">
                 {students.length}
               </div>
             </div>
 
             <div className="rounded-lg bg-blue-500/10 px-3 py-2">
-              <div className="text-blue-700 dark:text-blue-300">Начали (&lt; 25%)</div>
+              <div className="text-blue-700 dark:text-blue-300">{t('courseAnalytics.bucketStarted')}</div>
               <div className="mt-1 text-sm font-semibold">
                 {students.filter(s => s.progress < 25).length}
               </div>
             </div>
 
             <div className="rounded-lg bg-violet-500/10 px-3 py-2">
-              <div className="text-violet-700 dark:text-violet-300">В процессе (25–75%)</div>
+              <div className="text-violet-700 dark:text-violet-300">{t('courseAnalytics.bucketInProgress')}</div>
               <div className="mt-1 text-sm font-semibold">
                 {students.filter(s => s.progress >= 25 && s.progress < 75).length}
               </div>
             </div>
 
             <div className="rounded-lg bg-emerald-500/10 px-3 py-2">
-              <div className="text-emerald-700 dark:text-emerald-300">Почти/завершили (&gt;= 75%)</div>
+              <div className="text-emerald-700 dark:text-emerald-300">{t('courseAnalytics.bucketAlmost')}</div>
               <div className="mt-1 text-sm font-semibold">
                 {students.filter(s => s.progress >= 75).length}
               </div>
@@ -129,11 +130,31 @@ export const CourseAnalyticsPage = () => {
           </div>
         )}
 
-        {courseAnalytics && id && (
-          <TeacherCourseAnalytics courseId={id} analytics={courseAnalytics} />
+        {isAnalyticsLoading ? (
+          <div className="mb-6 space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse rounded-2xl border border-border bg-card p-6"
+              >
+                <div className="mb-4 h-5 w-1/3 rounded bg-muted" />
+                <div className="h-40 rounded-xl bg-muted" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          courseAnalytics && id && (
+            <TeacherCourseAnalytics courseId={id} analytics={courseAnalytics} />
+          )
         )}
 
         <CourseStudentsTable students={students} isLoading={isStudentsLoading} />
+
+        {students.length > 0 && (
+          <div className="mt-4">
+            <StudentScoresTable courseId={id!} />
+          </div>
+        )}
       </div>
     </div>
   )

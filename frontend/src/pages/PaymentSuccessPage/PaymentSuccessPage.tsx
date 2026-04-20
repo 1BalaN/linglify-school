@@ -3,8 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { CheckCircle, ArrowRight, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import { useConfirmPaymentMutation } from '@/entities/payment'
+import { useTranslation } from 'react-i18next'
 
 export const PaymentSuccessPage = () => {
+  const { t } = useTranslation('platform')
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -20,7 +22,7 @@ export const PaymentSuccessPage = () => {
       try {
         await confirmPayment({ sessionId }).unwrap()
       } catch {
-        // ошибка отобразится в UI через isError
+        // Error surfaces via isError in the UI
       }
     })()
   }, [sessionId, confirmPayment])
@@ -31,48 +33,45 @@ export const PaymentSuccessPage = () => {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300">
           <CheckCircle className="h-9 w-9" />
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Оплата прошла успешно</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('payments.success.title')}</h1>
         {isLoading && (
           <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Подтверждаем оплату и открываем доступ к курсу...
+            {t('payments.success.confirming')}
           </p>
         )}
         {!isLoading && isError && (
           <p className="flex items-center justify-center gap-2 text-sm text-red-600 dark:text-red-300">
             <AlertCircle className="h-4 w-4" />
-            Не удалось автоматически подтвердить оплату. Если доступ не открылся, обновите страницу
-            или обратитесь в поддержку.
+            {t('payments.success.confirmError')}
           </p>
         )}
         {!isLoading && !isError && (
           <p className="text-sm text-muted-foreground">
-            Доступ к курсу открыт. Вы можете перейти к обучению или найти курс в разделе “Мои
-            курсы”.
+            {t('payments.success.accessReady')}
           </p>
         )}
         <div className="flex flex-col gap-3 pt-2">
-          {courseId && (
+          {courseId ? (
             <Button
               onClick={() => navigate(`/courses/${courseId}/learn`)}
               className="w-full"
               size="lg"
             >
-              Начать обучение
+              {t('payments.success.startLearning')}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-          )}
+          ) : null}
           <Button
             variant="outline"
             onClick={() => navigate('/my-courses')}
             className="w-full"
             size="sm"
           >
-            Перейти в мои курсы
+            {t('payments.success.myCourses')}
           </Button>
         </div>
       </div>
     </div>
   )
 }
-

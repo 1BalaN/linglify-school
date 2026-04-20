@@ -687,6 +687,226 @@ class AnalyticsService {
       activeStudents: activeStudentsSeries,
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Student efficiency scoring (additive scalarization)
+  //
+  // Criteria:
+  //   K1 – accuracy  : avg lesson score (0-100 → 0-1)
+  //   K2 – regularity: active days / days since enrolment (0-1)
+  //   K3 – practice  : share of TEST/INTERACTIVE lessons completed
+  //   K4 – engagement: Harrington-based composite (0-1)
+  //
+  // Weights are derived from cross-student spread, so that criteria
+  // that differentiate students most get the highest weight.
+  // ─────────────────────────────────────────────────────────────────
+
+  private courseLevelToNum(level: string): number {
+    const map: Record<string, number> = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 }
+    return map[level] ?? 3
+  }
+
+  private harringtonLabel(score: number): 'excellent' | 'good' | 'average' | 'poor' | 'critical' {
+    if (score >= 0.80) return 'excellent'
+    if (score >= 0.63) return 'good'
+    if (score >= 0.37) return 'average'
+    if (score >= 0.20) return 'poor'
+    return 'critical'
+  }
+
+  /**
+   * Compute per-student efficiency scores for an entire course.
+   * Returns an array sorted by integral score (descending).
+   */
+  async getCourseStudentScores(
+    requesterId: string,
+    requesterRole: UserRole,
+    courseId: string
+  ) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { id: true, teacherId: true, level: true },
+    })
+    if (!course) throw new AppError(404, 'COURSE_NOT_FOUND', 'Курс не найден')
+    if (course.teacherId !== requesterId && requesterRole !== UserRole.ADMIN) {
+      throw new AppError(403, 'ACCESS_DENIED', 'Нет доступа')
+    }
+
+    return this._computeScoresForCourse(courseId, course.level)
+  }
+
+  /**
+   * Compute efficiency score for a single student in a course.
+   * Returns the student's own row (or null if not enrolled).
+   */
+  async getMyEfficiencyScore(userId: string, courseId: string) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { id: true, level: true },
+    })
+    if (!course) throw new AppError(404, 'COURSE_NOT_FOUND', 'Курс не найден')
+
+    const rows = await this._computeScoresForCourse(courseId, course.level)
+    return rows.find(r => r.userId === userId) ?? null
+  }
+
+  private async _computeScoresForCourse(courseId: string, _courseLevel: string) {
+    const now = new Date()
+
+    // 1. Fetch all required data in parallel
+    const [enrollments, allProgress, lessons] = await Promise.all([
+      prisma.enrollment.findMany({
+        where: { courseId },
+        select: {
+          userId: true,
+          progress: true,
+          enrolledAt: true,
+          completedAt: true,
+          user: { select: { id: true, firstName: true, lastName: true, email: true, avatar: true } },
+        },
+      }),
+      prisma.progress.findMany({
+        where: { courseId },
+        select: {
+          userId: true,
+          lessonId: true,
+          score: true,
+          isCompleted: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.lesson.findMany({
+        where: { courseId },
+        select: { id: true, type: true },
+      }),
+    ])
+
+    if (!enrollments.length) return []
+
+    const practiceTypes = new Set(['TEST', 'INTERACTIVE', 'DIALOGUE', 'LEXICAL'])
+    const practiceLessonIds = new Set(
+      lessons.filter(l => practiceTypes.has(l.type)).map(l => l.id)
+    )
+    const totalPracticeLessons = practiceLessonIds.size
+
+    // Group progress by userId
+    const progressByUser: Record<string, typeof allProgress> = {}
+    for (const p of allProgress) {
+      if (!progressByUser[p.userId]) progressByUser[p.userId] = []
+      progressByUser[p.userId].push(p)
+    }
+
+    // 2. Compute raw criteria values per student
+    const raw = enrollments.map(enr => {
+      const userProgress = progressByUser[enr.userId] ?? []
+      const completed = userProgress.filter(p => p.isCompleted)
+
+      // K1 – accuracy: average score of completed lessons that have a score
+      const scored = completed.filter(p => p.score !== null && p.score !== undefined)
+      const k1Raw = scored.length > 0
+        ? scored.reduce((sum, p) => sum + (p.score ?? 0), 0) / scored.length / 100
+        : 0
+
+      // K2 – regularity: distinct active days / total days enrolled (capped at 1)
+      const daysSinceEnroll = Math.max(
+        1,
+        Math.ceil((now.getTime() - new Date(enr.enrolledAt).getTime()) / 86400000)
+      )
+      const activeDays = new Set(
+        userProgress.map(p => p.updatedAt.toISOString().slice(0, 10))
+      ).size
+      const k2Raw = Math.min(1, activeDays / daysSinceEnroll)
+
+      // K3 – practice: share of TEST/INTERACTIVE/DIALOGUE/LEXICAL lessons completed
+      const practiceDone = completed.filter(p => practiceLessonIds.has(p.lessonId)).length
+      const k3Raw = totalPracticeLessons > 0 ? practiceDone / totalPracticeLessons : k1Raw
+
+      // K4 – engagement (Harrington quantification)
+      // Based on: completion rate, longest gap, depth of session
+      const completionRate = enr.progress / 100
+      let longestGapDays = 0
+      if (userProgress.length > 1) {
+        const dates = userProgress
+          .map(p => new Date(p.updatedAt).getTime())
+          .sort((a, b) => a - b)
+        for (let i = 1; i < dates.length; i++) {
+          longestGapDays = Math.max(longestGapDays, (dates[i] - dates[i - 1]) / 86400000)
+        }
+      }
+      let k4Raw: number
+      if (completionRate > 0.75 && longestGapDays < 7) k4Raw = 0.90
+      else if (completionRate > 0.50 && longestGapDays < 14) k4Raw = 0.72
+      else if (completionRate > 0.25) k4Raw = 0.50
+      else if (completionRate > 0.05) k4Raw = 0.28
+      else k4Raw = 0.10
+
+      return { userId: enr.userId, user: enr.user, k1Raw, k2Raw, k3Raw, k4Raw }
+    })
+
+    // 3. Normalise K1, K2, K3 by their max across students
+    const maxK1 = Math.max(...raw.map(r => r.k1Raw), 0.001)
+    const maxK2 = Math.max(...raw.map(r => r.k2Raw), 0.001)
+    const maxK3 = Math.max(...raw.map(r => r.k3Raw), 0.001)
+
+    const normalised = raw.map(r => ({
+      userId: r.userId,
+      user: r.user,
+      p1: r.k1Raw / maxK1,
+      p2: r.k2Raw / maxK2,
+      p3: r.k3Raw / maxK3,
+      p4: r.k4Raw, // already [0,1] from Harrington
+    }))
+
+    // 4. Compute variance-based weights
+    const mean = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length
+    const spread = (vals: number[], avg: number) => {
+      if (avg === 0) return 0
+      return vals.reduce((s, v) => s + Math.abs(v - avg), 0) / (vals.length * avg)
+    }
+
+    const p1s = normalised.map(r => r.p1)
+    const p2s = normalised.map(r => r.p2)
+    const p3s = normalised.map(r => r.p3)
+    const p4s = normalised.map(r => r.p4)
+
+    const r1 = spread(p1s, mean(p1s))
+    const r2 = spread(p2s, mean(p2s))
+    const r3 = spread(p3s, mean(p3s))
+    const r4 = spread(p4s, mean(p4s))
+    const rSum = r1 + r2 + r3 + r4
+
+    // If all spreads are zero (e.g. single student) — use equal weights
+    const w1 = rSum > 0 ? r1 / rSum : 0.25
+    const w2 = rSum > 0 ? r2 / rSum : 0.25
+    const w3 = rSum > 0 ? r3 / rSum : 0.25
+    const w4 = rSum > 0 ? r4 / rSum : 0.25
+
+    // 5. Compute integral score and build result
+    const result = normalised.map(r => {
+      const score = w1 * r.p1 + w2 * r.p2 + w3 * r.p3 + w4 * r.p4
+      const level = this.harringtonLabel(score)
+      return {
+        userId: r.userId,
+        user: r.user,
+        score: Math.round(score * 1000) / 1000,
+        level,
+        breakdown: {
+          accuracy:   Math.round(r.p1 * 100),
+          regularity: Math.round(r.p2 * 100),
+          practice:   Math.round(r.p3 * 100),
+          engagement: Math.round(r.p4 * 100),
+        },
+        weights: {
+          accuracy:   Math.round(w1 * 100),
+          regularity: Math.round(w2 * 100),
+          practice:   Math.round(w3 * 100),
+          engagement: Math.round(w4 * 100),
+        },
+      }
+    })
+
+    return result.sort((a, b) => b.score - a.score)
+  }
 }
 
 export const analyticsService = new AnalyticsService()

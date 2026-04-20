@@ -1,4 +1,5 @@
 import { CheckCircle, Award, Download } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/ui'
 
 interface StudentCourseProgressSidebarProps {
@@ -16,15 +17,17 @@ export const StudentCourseProgressSidebar = ({
   hasCertificate,
   onViewCertificate,
 }: StudentCourseProgressSidebarProps) => {
+  const { t } = useTranslation('platform')
+  const s = (k: string) => t(`student.progressSidebar.${k}`)
   const remaining = totalLessons - completedLessons
 
   return (
-    <div className="glass-card sticky top-4 rounded-2xl p-6">
-      <h3 className="mb-4 text-lg font-semibold text-foreground">Ваш прогресс</h3>
+    <div className="glass-card rounded-2xl p-6">
+      <h3 className="mb-4 text-lg font-semibold text-foreground">{s('title')}</h3>
 
       <div className="mb-6">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Завершено</span>
+          <span className="text-muted-foreground">{s('completed')}</span>
           <span className="font-medium text-foreground">
             {completedLessons} / {totalLessons}
           </span>
@@ -40,17 +43,17 @@ export const StudentCourseProgressSidebar = ({
       <div className="space-y-3">
         <div className="rounded-lg border border-border bg-card/50 p-4">
           <div className="mb-1 text-2xl font-bold text-foreground">{totalLessons}</div>
-          <div className="text-sm text-muted-foreground">Всего уроков</div>
+          <div className="text-sm text-muted-foreground">{s('totalLessons')}</div>
         </div>
 
         <div className="rounded-lg border border-border bg-card/50 p-4">
           <div className="mb-1 text-2xl font-bold text-emerald-600">{completedLessons}</div>
-          <div className="text-sm text-muted-foreground">Завершено</div>
+          <div className="text-sm text-muted-foreground">{s('completedLabel')}</div>
         </div>
 
         <div className="rounded-lg border border-border bg-card/50 p-4">
           <div className="mb-1 text-2xl font-bold text-amber-600">{remaining}</div>
-          <div className="text-sm text-muted-foreground">Осталось</div>
+          <div className="text-sm text-muted-foreground">{s('remaining')}</div>
         </div>
       </div>
 
@@ -58,10 +61,10 @@ export const StudentCourseProgressSidebar = ({
         <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/30 dark:bg-emerald-950/20">
           <div className="mb-2 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
             <CheckCircle className="h-5 w-5" />
-            <span className="font-semibold">Курс завершён!</span>
+            <span className="font-semibold">{s('courseDoneTitle')}</span>
           </div>
           <p className="text-sm text-emerald-600 dark:text-emerald-400">
-            Поздравляем! Вы прошли все уроки этого курса.
+            {s('courseDoneBody')}
           </p>
         </div>
       )}
@@ -70,10 +73,10 @@ export const StudentCourseProgressSidebar = ({
         <div className="mt-4 space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
           <div className="mb-1 flex items-center gap-2 text-primary">
             <Award className="h-4 w-4" />
-            <span className="font-semibold">Сертификат доступен</span>
+            <span className="font-semibold">{s('certAvailableTitle')}</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Вы можете открыть и скачать сертификат об окончании этого курса.
+            {s('certAvailableBody')}
           </p>
           <Button
             type="button"
@@ -83,7 +86,7 @@ export const StudentCourseProgressSidebar = ({
             onClick={onViewCertificate}
           >
             <Download className="mr-2 h-4 w-4" />
-            Посмотреть сертификат
+            {s('viewCertificate')}
           </Button>
         </div>
       )}

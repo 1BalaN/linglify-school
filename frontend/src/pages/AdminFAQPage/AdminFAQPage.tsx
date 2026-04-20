@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
 import {
@@ -28,6 +29,7 @@ const initialState: FAQFormData = {
 }
 
 export const AdminFAQPage = () => {
+  const { t } = useTranslation('platform', { keyPrefix: 'admin.faq' })
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
 
@@ -71,17 +73,10 @@ export const AdminFAQPage = () => {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5">
         <div className="text-center rounded-2xl glass-card p-8 backdrop-blur-xl">
-          <h1 className="text-2xl font-bold text-foreground mb-4">
-            Доступ запрещён
-          </h1>
-          <p className="text-muted-foreground mb-6">
-            Только администраторы могут управлять FAQ
-          </p>
-          <button
-            className="btn"
-            onClick={() => navigate('/faq')}
-          >
-            Перейти к FAQ
+          <h1 className="text-2xl font-bold text-foreground mb-4">{t('forbidden')}</h1>
+          <p className="text-muted-foreground mb-6">{t('forbiddenBody')}</p>
+          <button type="button" className="btn" onClick={() => navigate('/faq')}>
+            {t('toFaq')}
           </button>
         </div>
       </div>
@@ -99,16 +94,16 @@ export const AdminFAQPage = () => {
           onCancel={resetForm}
           onCreate={async () => {
             if (!formData.question || !formData.answer || !formData.category) {
-              setErrorModal('Заполните все обязательные поля')
+              setErrorModal(t('fillRequired'))
               return
             }
 
             try {
               await createFAQ(formData).unwrap()
               resetForm()
-              setSuccessModal('FAQ успешно создан')
+              setSuccessModal(t('created'))
             } catch {
-              setErrorModal('Ошибка при создании FAQ')
+              setErrorModal(t('createError'))
             }
           }}
         />
@@ -116,7 +111,7 @@ export const AdminFAQPage = () => {
         {isLoading ? (
           <div className="rounded-2xl glass-card p-12 text-center backdrop-blur-xl">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <p className="text-muted-foreground">Загрузка FAQ...</p>
+            <p className="text-muted-foreground">{t('loading')}</p>
           </div>
         ) : (
           <div className="space-y-8">
@@ -135,9 +130,9 @@ export const AdminFAQPage = () => {
                   try {
                     await updateFAQ({ id, data: formData }).unwrap()
                     resetForm()
-                    setSuccessModal('FAQ успешно обновлён')
+                    setSuccessModal(t('updated'))
                   } catch {
-                    setErrorModal('Ошибка при обновлении FAQ')
+                    setErrorModal(t('updateError'))
                   }
                 }}
               />
@@ -153,23 +148,23 @@ export const AdminFAQPage = () => {
           if (!deleteModal) return
           try {
             await deleteFAQ(deleteModal).unwrap()
-            setSuccessModal('FAQ успешно удалён')
+            setSuccessModal(t('deleted'))
           } catch {
-            setErrorModal('Ошибка при удалении FAQ')
+            setErrorModal(t('deleteError'))
           }
           setDeleteModal(null)
         }}
-        title="Удалить FAQ?"
-        message="Вы уверены, что хотите удалить эту запись FAQ?"
-        confirmText="Удалить"
-        cancelText="Отмена"
+        title={t('deleteTitle')}
+        message={t('deleteMsg')}
+        confirmText={t('deleteConfirm')}
+        cancelText={t('cancel')}
         variant="danger"
       />
 
       <AlertModal
         isOpen={!!errorModal}
         onClose={() => setErrorModal(null)}
-        title="Ошибка"
+        title={t('modalError')}
         message={errorModal || ''}
         variant="error"
       />
@@ -177,7 +172,7 @@ export const AdminFAQPage = () => {
       <AlertModal
         isOpen={!!successModal}
         onClose={() => setSuccessModal(null)}
-        title="Успешно"
+        title={t('modalOk')}
         message={successModal || ''}
         variant="success"
       />

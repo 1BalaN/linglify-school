@@ -22,6 +22,8 @@ import {
   validateLearningOutcomes,
 } from '@/shared/lib/validation'
 import { AdminCoursesList, CourseFormCreating } from '@/features/admin/courses'
+import i18n from '@/shared/i18n/config'
+import { useTranslation } from 'react-i18next'
 
 
 const levels: CourseLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -46,6 +48,8 @@ export type FormState = {
   tagsInput: string
   learningOutcomesInput: string
   prerequisitesInput: string
+  requireFinalTestForCertificate: boolean
+  minProgressForCertificate: number
 }
 
 const initialFormState: FormState = {
@@ -53,7 +57,7 @@ const initialFormState: FormState = {
   shortDescription: '',
   description: '',
   level: 'A1',
-  language: 'Английский',
+  language: '',
   category: '',
   priceInput: '0',
   coverImage: '',
@@ -61,16 +65,22 @@ const initialFormState: FormState = {
   tagsInput: '',
   learningOutcomesInput: '',
   prerequisitesInput: '',
+  requireFinalTestForCertificate: true,
+  minProgressForCertificate: 100,
 }
 
 export const AdminCoursesPage = () => {
+  const { t } = useTranslation('platform')
   const navigate = useNavigate()
   const user = useSelector((state: RootState) => state.auth.user)
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated)
 
   const isTeacherOrAdmin = user?.role === 'TEACHER' || user?.role === 'ADMIN'
 
-  const [form, setForm] = useState<FormState>(initialFormState)
+  const [form, setForm] = useState<FormState>(() => ({
+    ...initialFormState,
+    language: i18n.t('defaults.teachingLanguage', { ns: 'platform' }),
+  }))
   const [formError, setFormError] = useState<string | null>(null)
   const [formSuccess, setFormSuccess] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -101,7 +111,7 @@ export const AdminCoursesPage = () => {
   const pagination = coursesData?.pagination
 
   const handleChange = useCallback(
-    (field: keyof FormState, value: string) => {
+    (field: keyof FormState, value: string | boolean | number) => {
       setForm(prev => ({ ...prev, [field]: value }))
     },
     []
@@ -109,28 +119,36 @@ export const AdminCoursesPage = () => {
 
   const validators: Partial<
     Record<keyof FormState, (value: string) => string | undefined>
-  > = {
-    title: v => validateCourseTitle(v).error,
-    description: v => validateCourseDescription(v).error,
-    shortDescription: v => validateShortDescription(v).error,
-    coverImage: v => (v.trim() ? validateUrl(v, 'Изображение').error : ''),
-    previewVideo: v => (v.trim() ? validateUrl(v, 'Видео').error : ''),
-    priceInput: v => validatePrice(v).error,
-    tagsInput: v => (v.trim() ? validateTags(v).error : ''),
-    learningOutcomesInput: v =>
-      v.trim() ? validateLearningOutcomes(v).error : '',
-  }
+  > = useMemo(
+    () => ({
+      title: v => validateCourseTitle(v).error,
+      description: v => validateCourseDescription(v).error,
+      shortDescription: v => validateShortDescription(v).error,
+      coverImage: v =>
+        v.trim() ? validateUrl(v, t('admin.courses.validateFieldImage')).error : '',
+      previewVideo: v =>
+        v.trim() ? validateUrl(v, t('admin.courses.validateFieldVideo')).error : '',
+      priceInput: v => validatePrice(v).error,
+      tagsInput: v => (v.trim() ? validateTags(v).error : ''),
+      learningOutcomesInput: v =>
+        v.trim() ? validateLearningOutcomes(v).error : '',
+    }),
+    [t],
+  )
 
   const validateField = (field: keyof FormState) => {
     const validator = validators[field]
     if (!validator) return
 
-    const error = validator(form[field]) || ''
+    const error = validator(form[field] as string) || ''
     setFieldErrors(prev => ({ ...prev, [field]: error }))
   }
 
   const resetForm = () => {
-    setForm(initialFormState)
+    setForm({
+      ...initialFormState,
+      language: i18n.t('defaults.teachingLanguage', { ns: 'platform' }),
+    })
     setFieldErrors({})
   }
 
@@ -144,7 +162,7 @@ export const AdminCoursesPage = () => {
       description: form.description.trim(),
       shortDescription: form.shortDescription.trim() || undefined,
       level: form.level,
-      language: form.language.trim() || 'Английский',
+      language: form.language.trim() || i18n.t('defaults.teachingLanguage', { ns: 'platform' }),
       category: form.category.trim() || undefined,
       coverImage: form.coverImage.trim() || undefined,
       previewVideo: form.previewVideo.trim() || undefined,
@@ -160,6 +178,8 @@ export const AdminCoursesPage = () => {
         .split('\n')
         .map(p => p.trim())
         .filter(Boolean),
+      requireFinalTestForCertificate: form.requireFinalTestForCertificate,
+      minProgressForCertificate: form.minProgressForCertificate,
     }
   }
 
@@ -170,13 +190,13 @@ export const AdminCoursesPage = () => {
 
     const validation = validateCourse(form)
     if (!validation.isValid) {
-      setFormError(validation.error || 'Ошибка валидации')
+      setFormError(validation.error || t('admin.courses.validationError'))
       return
     }
 
     try {
       const result = await createCourse(buildDto()).unwrap()
-      setFormSuccess('Курс успешно создан!')
+      setFormSuccess(t('admin.courses.createSuccess'))
       resetForm()
       refetch()
 
@@ -186,7 +206,7 @@ export const AdminCoursesPage = () => {
       }, 1200)
     } catch (error) {
       const err = error as { data?: { message?: string } }
-      setFormError(err?.data?.message || 'Не удалось создать курс.')
+      setFormError(err?.data?.message || t('admin.courses.createError'))
     }
     
   }
@@ -204,11 +224,11 @@ export const AdminCoursesPage = () => {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
             <AlertCircle className="h-6 w-6 text-red-500" />
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-foreground">Доступ запрещён</h1>
+          <h1 className="mb-2 text-2xl font-bold text-foreground">{t('admin.courses.accessDenied')}</h1>
           <p className="mb-6 text-muted-foreground">
-            Только преподаватели и администраторы могут управлять курсами.
+            {t('admin.courses.accessDeniedBody')}
           </p>
-          <Button onClick={() => navigate('/')}>На главную</Button>
+          <Button onClick={() => navigate('/')}>{t('admin.courses.home')}</Button>
         </div>
       </div>
     )
@@ -223,19 +243,19 @@ export const AdminCoursesPage = () => {
               <BookOpen className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gradient">Управление курсами</h1>
+              <h1 className="text-3xl font-bold text-gradient">{t('admin.courses.title')}</h1>
               <p className="text-muted-foreground">
-                Создавайте и управляйте своими курсами
+                {t('admin.courses.subtitle')}
               </p>
             </div>
           </div>
           <Button variant="outline" onClick={() => navigate('/courses')}>
-            Перейти в каталог
+            {t('admin.courses.toCatalog')}
           </Button>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr),minmax(0,3fr)]">
-          {/* Форма создания курса */}
+          {/* Create course form */}
           <CourseFormCreating 
             formError={formError} 
             formSuccess={formSuccess} 
@@ -248,7 +268,7 @@ export const AdminCoursesPage = () => {
             levels={levels} 
           />
 
-          {/* Список курсов */}
+          {/* Course list */}
           <AdminCoursesList
             courses={courses}
             isCoursesLoading={isCoursesLoading}

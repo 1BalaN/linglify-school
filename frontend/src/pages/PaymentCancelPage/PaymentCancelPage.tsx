@@ -1,8 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react'
 import { Button } from '@/shared/ui'
+import { useTranslation } from 'react-i18next'
 
 export const PaymentCancelPage = () => {
+  const { t } = useTranslation('platform')
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -15,13 +17,12 @@ export const PaymentCancelPage = () => {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300">
           <AlertCircle className="h-9 w-9" />
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Оплата не была завершена</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('payments.cancel.title')}</h1>
         <p className="text-sm text-muted-foreground">
-          Платёж был отменён или не прошёл. Курс пока недоступен. Вы можете вернуться к курсу и
-          попробовать оплатить ещё раз.
+          {t('payments.cancel.body')}
         </p>
         <div className="flex flex-col gap-3 pt-2">
-          {courseId && (
+          {courseId ? (
             <Button
               onClick={() => navigate(`/courses/${courseId}`)}
               className="w-full"
@@ -29,11 +30,11 @@ export const PaymentCancelPage = () => {
               variant="outline"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Вернуться к курсу
+              {t('payments.cancel.backToCourse')}
             </Button>
-          )}
+          ) : null}
           <Button onClick={() => navigate('/courses')} className="w-full" size="sm">
-            Перейти к каталогу
+            {t('payments.cancel.catalog')}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
@@ -41,4 +42,3 @@ export const PaymentCancelPage = () => {
     </div>
   )
 }
-

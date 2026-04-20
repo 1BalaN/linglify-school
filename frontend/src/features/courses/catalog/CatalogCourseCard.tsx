@@ -2,14 +2,17 @@ import { Link } from 'react-router-dom'
 import { memo } from 'react'
 import type { Course } from '@/shared/types/course'
 import { Clock, BookOpen, Star, Users } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface CatalogCourseCardProps {
   course: Course
 }
 
 export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
+  const { t, i18n } = useTranslation('courses')
+
   const formatPrice = (price: number) => {
-    if (price === 0) return 'Бесплатно'
+    if (price === 0) return t('card.free')
     return `${(price / 100).toFixed(2)} ${course.currency}`
   }
 
@@ -18,8 +21,19 @@ export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
     const totalMins = Math.floor(seconds / 60)
     const h = Math.floor(totalMins / 60)
     const m = totalMins % 60
-    if (h === 0) return `${totalMins} мин`
-    return m > 0 ? `${h} ч ${m} мин` : `${h} ч`
+    if (h === 0) return `${totalMins} ${t('card.minutes')}`
+    return m > 0
+      ? `${h} ${t('card.hours')} ${m} ${t('card.minutes')}`
+      : `${h} ${t('card.hours')}`
+  }
+
+  const getLessonsLabel = (count: number) => {
+    if (i18n.language.startsWith('ru')) {
+      if (count === 1) return t('card.lesson_one')
+      if (count < 5) return t('card.lesson_few')
+      return t('card.lesson_many')
+    }
+    return count === 1 ? t('card.lesson_one') : t('card.lesson_many')
   }
 
   const levelColors: Record<string, string> = {
@@ -59,7 +73,7 @@ export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
           {/* Enrolled */}
           {course.isEnrolled && (
             <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-emerald-500/90 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur-sm">
-              ✓ Записаны
+              ✓ {t('card.enrolled')}
             </span>
           )}
           {/* Rating overlay */}
@@ -75,16 +89,14 @@ export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
         <div className="flex flex-1 flex-col gap-3 p-4">
           <div className="flex-1 space-y-3">
             {/* Title & description */}
-            <h3 className="mb-1 line-clamp-2 text-base font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+            <h3 className="mb-1 min-h-[2.75rem] line-clamp-2 text-base font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
               {course.title}
             </h3>
-            {course.shortDescription && (
-              <p className="line-clamp-2 text-xs text-muted-foreground">
-                {course.shortDescription}
-              </p>
-            )}
+            <p className="min-h-[2.5rem] line-clamp-2 text-xs text-muted-foreground">
+              {course.shortDescription || ' '}
+            </p>
             {/* Teacher */}
-            <div className="flex items-center gap-2">
+            <div className="flex min-h-7 items-center gap-2">
               {course.teacher.avatar ? (
                 <img
                   src={course.teacher.avatar}
@@ -106,15 +118,10 @@ export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
             </div>
 
             {/* Stats row */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <div className="flex min-h-5 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <BookOpen className="h-3.5 w-3.5" />
-                {course.lessonsCount}{' '}
-                {course.lessonsCount === 1
-                  ? 'урок'
-                  : course.lessonsCount < 5
-                    ? 'урока'
-                    : 'уроков'}
+                {course.lessonsCount} {getLessonsLabel(course.lessonsCount)}
               </span>
               {course.duration && (
                 <span className="flex items-center gap-1">
@@ -143,7 +150,7 @@ export const CatalogCourseCard = memo(({ course }: CatalogCourseCardProps) => {
               {formatPrice(course.price)}
             </span>
             <span className="rounded-lg bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-              Подробнее →
+              {t('card.details')} →
             </span>
           </div>
         </div>
